@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(content=~{::main}, title='Error', activeNav='none', backUrl='/wardrobe', topTitle='', actionUrl='', actionIcon='')}">
+<body>
+<main class="error-page">
+  <div style="text-align:center;padding:var(--space-2xl) var(--space-md);">
+    <h1 th:text="${errorTitle}">Error</h1>
+    <p th:text="${errorMessage}" style="color:var(--text-muted);margin:var(--space-lg) 0;">Mensaje</p>
+    <a href="/wardrobe" class="btn">Volver al armario</a>
+  </div>
+</main>
+</body>
+</html>

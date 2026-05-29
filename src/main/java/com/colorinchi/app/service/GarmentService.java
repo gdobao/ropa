@@ -2,6 +2,8 @@ package com.colorinchi.app.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,11 @@ public class GarmentService {
     @Transactional(readOnly = true)
     public List<Garment> all() {
         return garmentRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Garment> all(Pageable pageable) {
+        return garmentRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     @Transactional(readOnly = true)

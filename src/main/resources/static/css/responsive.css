@@ -42,7 +42,7 @@
 
   .sidebar { display: flex; }
   .bottom-nav { display: none; }
-  .nav { display: none; } /* legacy */
+
   .top-bar { display: none; }
 
   .grid {
@@ -67,7 +67,7 @@
     min-height: 300px;
   }
 
-  .top { display: none; } /* hide legacy top bar, sidebar provides nav */
+
 
   .card p { font-size: var(--text-xs); }
 

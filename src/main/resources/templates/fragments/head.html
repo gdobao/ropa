@@ -10,6 +10,33 @@
   <link rel="stylesheet" th:href="@{/css/tokens.css}">
   <link rel="stylesheet" th:href="@{/css/app.css}">
   <link rel="stylesheet" th:href="@{/css/responsive.css}">
-  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous" defer></script>
+  <meta name="_csrf" th:content="${_csrf.token}" th:if="${_csrf != null}"/>
+  <meta name="_csrf_header" th:content="${_csrf.headerName}" th:if="${_csrf != null}"/>
+  <script>
+    document.addEventListener("htmx:configRequest", function(e) {
+        var token = document.querySelector('meta[name="_csrf"]')?.content;
+        var header = document.querySelector('meta[name="_csrf_header"]')?.content;
+        if (token && header) e.detail.headers[header] = token;
+    });
+
+    document.addEventListener("htmx:responseError", function(e) {
+        if (e.detail.xhr.status === 429) {
+            var toast = document.getElementById("rate-limit-toast");
+            if (!toast) {
+                var div = document.createElement("div");
+                div.id = "rate-limit-toast";
+                div.className = "notice error";
+                div.style.cssText = "position:fixed;top:var(--space-md);left:50%;transform:translateX(-50%);z-index:9999;max-width:400px;text-align:center;";
+                div.innerHTML = "<p><strong>Demasiadas solicitudes</strong></p><p style='font-size:.875rem;'>Esper\u00E1 unos minutos antes de intentar de nuevo.</p><a href='/wardrobe' class='btn' style='margin-top:var(--space-sm);'>Volver al armario</a>";
+                document.body.insertBefore(div, document.body.firstChild);
+            }
+            setTimeout(function() {
+                var t = document.getElementById("rate-limit-toast");
+                if (t) t.remove();
+            }, 8000);
+        }
+    });
+  </script>
 </head>
 </html>

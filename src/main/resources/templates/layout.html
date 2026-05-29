@@ -2,10 +2,11 @@
 <html lang="es" th:fragment="layout(content, title, activeNav, backUrl, topTitle, actionUrl, actionIcon)" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head(title=${title})}"></head>
 <body hx-boost="true">
+  <a href="#main-content" class="skip-link">Saltar al contenido</a>
   <th:block th:replace="~{fragments/sidebar :: sidebar(activeNav=${activeNav})}"></th:block>
   <div class="app-shell">
     <th:block th:if="${backUrl != null}" th:replace="~{fragments/top-bar :: topBar(backUrl=${backUrl}, title=${topTitle}, actionUrl=${actionUrl}, actionIcon=${actionIcon})}"></th:block>
-    <main class="app" th:insert="${content}"></main>
+    <main id="main-content" class="app" th:insert="${content}"></main>
   </div>
   <th:block th:replace="~{fragments/bottom-nav :: nav(activeNav=${activeNav})}"></th:block>
 </body>

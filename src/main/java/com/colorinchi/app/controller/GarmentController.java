@@ -21,6 +21,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.colorinchi.app.config.WardrobeProperties;
 import com.colorinchi.app.dto.AiClassificationResponse;
 import com.colorinchi.app.dto.AiRecommendationResponse;
 import com.colorinchi.app.dto.DashboardStats;
@@ -38,8 +39,6 @@ import com.colorinchi.app.upload.ImageStorageService;
 @Controller
 public class GarmentController {
 
-    private static final List<String> CATEGORIES = List.of("Top", "Pantalon", "Vestido", "Chaqueta", "Zapatos", "Accesorio", "Otro");
-
     private final GarmentService garmentService;
     private final ImageStorageService imageStorageService;
     private final AiClassificationService aiClassificationService;
@@ -47,6 +46,7 @@ public class GarmentController {
     private final WeekPlanService weekPlanService;
     private final GarmentCompatibilityService garmentCompatibilityService;
     private final InspirationService inspirationService;
+    private final WardrobeProperties wardrobeProperties;
 
     public GarmentController(
             GarmentService garmentService,
@@ -55,7 +55,8 @@ public class GarmentController {
             AiRecommendationService aiRecommendationService,
             WeekPlanService weekPlanService,
             GarmentCompatibilityService garmentCompatibilityService,
-            InspirationService inspirationService) {
+            InspirationService inspirationService,
+            WardrobeProperties wardrobeProperties) {
         this.garmentService = garmentService;
         this.imageStorageService = imageStorageService;
         this.aiClassificationService = aiClassificationService;
@@ -63,11 +64,12 @@ public class GarmentController {
         this.weekPlanService = weekPlanService;
         this.garmentCompatibilityService = garmentCompatibilityService;
         this.inspirationService = inspirationService;
+        this.wardrobeProperties = wardrobeProperties;
     }
 
     @ModelAttribute("categories")
     List<String> categories() {
-        return CATEGORIES;
+        return wardrobeProperties.categories();
     }
 
     @GetMapping("/")
@@ -241,7 +243,7 @@ public class GarmentController {
 
     @GetMapping("/weekly-plan")
     String weeklyPlan(Model model) {
-        model.addAttribute("days", List.of("Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"));
+        model.addAttribute("days", wardrobeProperties.days());
         model.addAttribute("plans", weekPlanService.getPlansByDay());
         model.addAttribute("allGarments", garmentService.all());
         return "weekly-plan";
@@ -301,7 +303,7 @@ public class GarmentController {
         if (aiType == null || aiType.isBlank()) {
             return "Otro";
         }
-        return CATEGORIES.stream()
+        return wardrobeProperties.categories().stream()
                 .filter(category -> category.equalsIgnoreCase(aiType.trim()))
                 .findFirst()
                 .orElse("Otro");

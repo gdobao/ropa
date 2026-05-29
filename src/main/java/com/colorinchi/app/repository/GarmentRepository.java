@@ -1,9 +1,13 @@
 package com.colorinchi.app.repository;
 
+import java.util.Collection;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.colorinchi.app.model.Garment;
 
@@ -16,6 +20,11 @@ public interface GarmentRepository extends JpaRepository<Garment, Long> {
     List<Garment> findByFavoriteTrueOrderByCreatedAtDesc();
 
     List<Garment> findAllByOrderByCreatedAtDesc();
+
+    Page<Garment> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    @Query("SELECT g FROM Garment g WHERE g.category IN :categories ORDER BY g.createdAt DESC")
+    List<Garment> findByCategoryIn(@Param("categories") Collection<String> categories);
 
     long count();
 

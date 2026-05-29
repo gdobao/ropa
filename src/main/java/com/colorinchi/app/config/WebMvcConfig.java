@@ -1,6 +1,7 @@
 package com.colorinchi.app.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -8,14 +9,22 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final UploadProperties uploadProperties;
+    private final RateLimitingInterceptor rateLimitingInterceptor;
 
-    public WebMvcConfig(UploadProperties uploadProperties) {
+    public WebMvcConfig(UploadProperties uploadProperties, RateLimitingInterceptor rateLimitingInterceptor) {
         this.uploadProperties = uploadProperties;
+        this.rateLimitingInterceptor = rateLimitingInterceptor;
     }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(uploadProperties.directory().toAbsolutePath().normalize().toUri().toString());
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(rateLimitingInterceptor)
+                .addPathPatterns("/wardrobe/analyze", "/recommendation");
     }
 }

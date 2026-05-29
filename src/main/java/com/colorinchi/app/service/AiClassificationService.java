@@ -41,7 +41,7 @@ public class AiClassificationService {
         this.objectMapper = objectMapper;
     }
 
-    @Cacheable(cacheNames = "garment-classifications", key = "#imageUrl")
+    @Cacheable(cacheNames = "garment-classifications", key = "#imageUrl", unless = "#result.error() != null")
     public AiClassificationResponse classify(String imageUrl) {
         if (!properties.enabled()) {
             return AiClassificationResponse.empty(properties.model(), "IA desactivada");
@@ -71,7 +71,7 @@ public class AiClassificationService {
                 "messages", List.of(Map.of(
                         "role", "user",
                         "content", List.of(
-                                Map.of("type", "text", "text", "Analiza la imagen para cargar una prenda en un armario digital. Si no hay una prenda clara, responde type=Otro y confidence menor a 0.5. Responde solo JSON con estos campos exactos: type, colorName, colorHex, confidence. type debe ser uno de: Top, Pantalon, Vestido, Chaqueta, Zapatos, Accesorio, Otro. colorName debe estar en espanol."),
+                                Map.of("type", "text", "text", "Analiza la imagen para cargar una prenda en un armario digital. Si no hay una prenda clara, responde type=Otro y confidence menor a 0.5. Responde solo JSON con estos campos exactos: type, colorName, colorHex, confidence. type debe ser uno de: Top, Pantalón, Vestido, Falda, Chaqueta, Abrigo, Camisa, Sudadera, Zapatos, Accesorio, Otro. colorName debe estar en español."),
                                 Map.of("type", "image_url", "image_url", Map.of("url", imageDataUrl))))));
     }
 
@@ -127,9 +127,14 @@ public class AiClassificationService {
     }
 
     private Path resolveImagePath(String imageUrl) {
-        if (imageUrl.startsWith("/uploads/")) {
-            return uploadProperties.directory().resolve(imageUrl.substring("/uploads/".length())).toAbsolutePath().normalize();
+        Path baseDir = uploadProperties.directory().toAbsolutePath().normalize();
+        if (!imageUrl.startsWith("/uploads/")) {
+            throw new SecurityException("Ruta de imagen no permitida: " + imageUrl);
         }
-        return Path.of(imageUrl).toAbsolutePath().normalize();
+        Path resolved = baseDir.resolve(imageUrl.substring("/uploads/".length())).toAbsolutePath().normalize();
+        if (!resolved.startsWith(baseDir)) {
+            throw new SecurityException("Intento de path traversal detectado: " + imageUrl);
+        }
+        return resolved;
     }
 }

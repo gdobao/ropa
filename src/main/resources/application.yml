@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:55432/ropa
     username: ropa
-    password: ropa
+    password: ${DB_PASSWORD:ropa}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -23,6 +23,9 @@ spring:
     type: caffeine
     caffeine:
       spec: maximumSize=500,expireAfterWrite=24h
+  security:
+    filter:
+      dispatcher-types: request, forward, error
 
 server:
   port: 8080
@@ -44,3 +47,14 @@ app:
       - image/jpeg
       - image/png
       - image/webp
+  wardrobe:
+    categories: Top, Pantalón, Vestido, Falda, Chaqueta, Abrigo, Camisa, Sudadera, Zapatos, Accesorio, Otro
+    days: Lunes, Martes, Miercoles, Jueves, Viernes, Sabado, Domingo
+    color-limit: 5
+  rate-limit:
+    analyze:
+      capacity: 10
+      refill-minutes: 60
+    recommendation:
+      capacity: 5
+      refill-minutes: 30

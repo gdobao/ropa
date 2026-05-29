@@ -9,25 +9,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.colorinchi.app.model.Garment;
+import com.colorinchi.app.repository.GarmentRepository;
 
 @Service
 public class GarmentCompatibilityService {
 
     private static final int RESULT_LIMIT = 6;
 
-    private static final Map<String, Set<String>> CATEGORY_COMPATIBILITY = Map.of(
-            "Top", Set.of("Pantalon", "Chaqueta", "Zapatos", "Accesorio"),
-            "Pantalon", Set.of("Top", "Chaqueta", "Zapatos"),
-            "Vestido", Set.of("Chaqueta", "Zapatos", "Accesorio"),
-            "Chaqueta", Set.of("Top", "Pantalon", "Vestido"),
-            "Zapatos", Set.of("Top", "Pantalon", "Vestido", "Chaqueta", "Accesorio"),
-            "Accesorio", Set.of("Top", "Pantalon", "Vestido", "Chaqueta", "Zapatos"),
-            "Otro", Set.of("Top", "Pantalon", "Vestido"));
+    private static final Map<String, Set<String>> CATEGORY_COMPATIBILITY = Map.ofEntries(
+            Map.entry("Top", Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio")),
+            Map.entry("Pantalón", Set.of("Top", "Chaqueta", "Zapatos")),
+            Map.entry("Vestido", Set.of("Chaqueta", "Zapatos", "Accesorio")),
+            Map.entry("Chaqueta", Set.of("Top", "Pantalón", "Vestido")),
+            Map.entry("Zapatos", Set.of("Top", "Pantalón", "Vestido", "Chaqueta", "Accesorio")),
+            Map.entry("Accesorio", Set.of("Top", "Pantalón", "Vestido", "Chaqueta", "Zapatos")),
+            Map.entry("Otro", Set.of("Top", "Pantalón", "Vestido")),
+            Map.entry("Falda", Set.of("Top", "Chaqueta", "Zapatos", "Accesorio")),
+            Map.entry("Abrigo", Set.of("Top", "Pantalón", "Zapatos", "Accesorio")),
+            Map.entry("Camisa", Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio")),
+            Map.entry("Sudadera", Set.of("Pantalón", "Zapatos", "Accesorio")));
 
-    private final GarmentService garmentService;
+    private final GarmentRepository garmentRepository;
 
-    public GarmentCompatibilityService(GarmentService garmentService) {
-        this.garmentService = garmentService;
+    public GarmentCompatibilityService(GarmentRepository garmentRepository) {
+        this.garmentRepository = garmentRepository;
     }
 
     @Transactional(readOnly = true)
@@ -43,9 +48,8 @@ public class GarmentCompatibilityService {
 
         String baseSeason = normalize(base.getSeason());
 
-        return garmentService.all().stream()
+        return garmentRepository.findByCategoryIn(candidateCategories).stream()
                 .filter(candidate -> base.getId() == null || !base.getId().equals(candidate.getId()))
-                .filter(candidate -> candidateCategories.contains(candidate.getCategory()))
                 .sorted(Comparator.comparing((Garment candidate) -> !sameSeason(baseSeason, candidate.getSeason())))
                 .limit(RESULT_LIMIT)
                 .toList();

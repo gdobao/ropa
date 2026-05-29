@@ -27,7 +27,7 @@ public class InspirationService {
         return List.of(
             new InspirationLook(1, "Cápsula oficina", "6 piezas para toda la semana laboral. Combiná neutros con un toque de color.",
                 List.of("Minimal", "Oficina"), "Oficina",
-                List.of("Top", "Pantalon", "Chaqueta", "Zapatos"),
+                List.of("Top", "Pantalón", "Chaqueta", "Zapatos"),
                 "var(--accent)", "var(--sand)", "var(--terracotta)"),
             new InspirationLook(2, "Cena elegante", "Look sofisticado con prendas que ya tenés. Vestido + tacon + cartera.",
                 List.of("Elegante", "Cena"), "Cena",
@@ -35,19 +35,19 @@ public class InspirationService {
                 "var(--fg)", "var(--teal)", "var(--accent)"),
             new InspirationLook(3, "Finde casual", "Outfit relajado para el fin de semana. Jeans + remera + zapatillas.",
                 List.of("Casual", "Finde"), "Casual",
-                List.of("Top", "Pantalon", "Zapatos"),
+                List.of("Top", "Pantalón", "Zapatos"),
                 "var(--sand)", "var(--border)", "var(--muted)"),
             new InspirationLook(4, "Capas de invierno", "Superposiciones para el frío sin perder estilo.",
                 List.of("Invierno", "Capas"), "Invierno",
-                List.of("Top", "Chaqueta", "Pantalon", "Zapatos"),
+                List.of("Top", "Chaqueta", "Pantalón", "Zapatos"),
                 "var(--terracotta)", "var(--fg)", "var(--sand)"),
             new InspirationLook(5, "Minimalista total", "Menos es más. Paleta monocromática con texturas.",
                 List.of("Minimal", "Elegante"), "Minimal",
-                List.of("Top", "Pantalon", "Zapatos"),
+                List.of("Top", "Pantalón", "Zapatos"),
                 "var(--surface)", "var(--border)", "var(--muted)"),
             new InspirationLook(6, "Sport chic", "Comodidad y estilo para el día a día activo.",
                 List.of("Sport", "Casual"), "Sport",
-                List.of("Top", "Pantalon", "Zapatos", "Accesorio"),
+                List.of("Top", "Pantalón", "Zapatos", "Accesorio"),
                 "var(--accent)", "var(--sand)", "var(--teal)")
         );
     }
