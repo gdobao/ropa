@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
+  <title>Tu armario · Armario Capsula</title>
+  <style>
+    :root {
+      --bg: #FFFDF9;
+      --surface: #FFFFFF;
+      --fg: #1F2933;
+      --muted: #6B6F72;
+      --border: #E8E2DC;
+      --accent: #FF6B5F;
+      --sand: #F7F1EA;
+      --teal: #009D8F;
+      --sage: #A7C7B7;
+      --terracotta: #E76F51;
+      --font-display: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+      --font-body: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --radius: 24px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg); font-family: var(--font-body); }
+    button, input { font: inherit; }
+    .app { width: min(430px, 100vw); min-height: 100vh; margin: 0 auto; padding: 18px 18px 96px; background: radial-gradient(circle at 20% 0%, color-mix(in oklch, var(--sand) 70%, transparent), transparent 38%), var(--bg); }
+    .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .icon { width: 42px; height: 42px; border: 1px solid var(--border); border-radius: 15px; background: color-mix(in oklch, var(--surface) 84%, transparent); display: grid; place-items: center; color: var(--fg); }
+    .dot { width: 9px; height: 9px; background: var(--accent); border-radius: 50%; position: absolute; transform: translate(10px,-10px); }
+    .hello { color: var(--muted); font-size: 13px; margin: 0; }
+    h1, h2, h3 { margin: 0; font-family: var(--font-display); letter-spacing: -0.025em; }
+    h1 { font-size: 32px; line-height: 1; margin-top: 4px; }
+    .lead { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+    .hero-card { margin-top: 20px; border-radius: 26px; padding: 22px; color: var(--surface); background: linear-gradient(135deg, var(--accent), color-mix(in oklch, var(--terracotta) 72%, var(--sand))); box-shadow: 0 18px 36px color-mix(in oklch, var(--accent) 22%, transparent); display: grid; grid-template-columns: 1.1fr .9fr; gap: 10px; overflow: hidden; }
+    .big-num { font-size: 34px; font-weight: 800; line-height: 1; }
+    .hero-card p { margin: 8px 0 0; font-size: 12px; }
+    .ring { width: 106px; height: 106px; border-radius: 50%; background: conic-gradient(var(--surface) 0 82%, color-mix(in oklch, var(--surface) 25%, transparent) 82%); display: grid; place-items: center; justify-self: end; align-self: center; }
+    .ring::after { content: ''; width: 76px; height: 76px; background: color-mix(in oklch, var(--accent) 70%, var(--terracotta)); border-radius: 50%; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin: 18px 0; background: var(--border); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
+    .stat { background: color-mix(in oklch, var(--surface) 92%, var(--sand)); padding: 15px 10px; text-align: center; }
+    .stat strong { display: block; font-size: 22px; }
+    .stat span { color: var(--muted); font-size: 11px; }
+    .section-title { display: flex; justify-content: space-between; align-items: baseline; margin: 24px 0 12px; }
+    .section-title h2 { font-size: 20px; }
+    .section-title a { color: var(--teal); font-size: 12px; font-weight: 700; text-decoration: none; }
+    .insight-list { display: grid; gap: 10px; }
+    .insight { display: grid; grid-template-columns: 44px 1fr; gap: 12px; padding: 14px; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); }
+    .mark { width: 44px; height: 44px; border-radius: 15px; display: grid; place-items: center; background: color-mix(in oklch, var(--teal) 12%, var(--surface)); color: var(--teal); }
+    .insight:nth-child(2) .mark { background: color-mix(in oklch, var(--terracotta) 14%, var(--surface)); color: var(--terracotta); }
+    .insight:nth-child(3) .mark { background: color-mix(in oklch, var(--accent) 14%, var(--surface)); color: var(--accent); }
+    .insight h3 { font-size: 13px; letter-spacing: 0; }
+    .insight p { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .challenge { display: grid; grid-template-columns: 1fr 104px; gap: 12px; align-items: center; margin-top: 16px; padding: 18px; background: linear-gradient(135deg, var(--teal), color-mix(in oklch, var(--teal) 72%, var(--fg))); color: var(--surface); border-radius: 24px; }
+    .challenge h2 { font-size: 20px; }
+    .challenge p { margin: 8px 0 14px; font-size: 12px; color: color-mix(in oklch, var(--surface) 86%, transparent); }
+    .mini-btn { border: 0; border-radius: 999px; background: var(--surface); color: var(--teal); padding: 10px 14px; font-weight: 800; font-size: 12px; }
+    .outfit { height: 90px; border-radius: 18px; background: color-mix(in oklch, var(--sand) 82%, var(--surface)); position: relative; }
+    .outfit::before, .outfit::after { content: ''; position: absolute; border-radius: 14px; background: var(--sand); border: 1px solid color-mix(in oklch, var(--border) 75%, var(--fg)); }
+    .outfit::before { width: 46px; height: 58px; left: 12px; top: 18px; background: color-mix(in oklch, var(--terracotta) 22%, var(--sand)); }
+    .outfit::after { width: 34px; height: 68px; right: 18px; top: 12px; background: color-mix(in oklch, var(--teal) 12%, var(--sand)); }
+    .nav { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(430px, 100vw); height: 78px; background: color-mix(in oklch, var(--surface) 92%, transparent); border-top: 1px solid var(--border); backdrop-filter: blur(16px); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; padding: 7px 10px 10px; }
+    .nav a { text-decoration: none; color: var(--muted); display: grid; place-items: center; gap: 3px; font-size: 10px; font-weight: 700; }
+    .nav a.active { color: var(--accent); }
+    .plus { width: 54px; height: 54px; border-radius: 50%; border: 0; background: var(--accent); color: var(--surface); font-size: 28px; box-shadow: 0 12px 28px color-mix(in oklch, var(--accent) 32%, transparent); }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="top" data-od-id="topbar">
+      <button class="icon" aria-label="Menu">☰</button>
+      <button class="icon" aria-label="Notificaciones">♡<span class="dot"></span></button>
+    </section>
+    <section data-od-id="hero">
+      <p class="hello">¡Hola, Laura! 👋</p>
+      <h1>Tu armario</h1>
+      <p class="lead">Resumen de tu estilo hoy</p>
+      <article class="hero-card">
+        <div>
+          <span class="big-num">82%</span>
+          <p>Indice de uso</p>
+          <p><strong>Excelente:</strong> estas aprovechando tu armario.</p>
+        </div>
+        <div class="ring" aria-label="82 por ciento de uso"></div>
+      </article>
+      <div class="stats">
+        <div class="stat"><strong>128</strong><span>Prendas</span></div>
+        <div class="stat"><strong>312</strong><span>Combinaciones</span></div>
+        <div class="stat"><strong>18</strong><span>Dias planificados</span></div>
+      </div>
+    </section>
+    <section data-od-id="insights">
+      <div class="section-title"><h2>Insights para ti</h2><a href="profile-stats.html">Esta semana</a></div>
+      <div class="insight-list">
+        <article class="insight"><div class="mark">♙</div><div><h3>Has usado mas tus blusas los martes y jueves.</h3><p>Ver detalle de uso por ocasion.</p></div></article>
+        <article class="insight"><div class="mark">♢</div><div><h3>Tienes 24 looks que no has usado aun.</h3><p>Animate con una combinacion nueva.</p></div></article>
+        <article class="insight"><div class="mark">●</div><div><h3>Colores que mas usas: tonos tierra y neutros.</h3><p>Buen equilibrio con coral y teal.</p></div></article>
+      </div>
+    </section>
+    <section class="challenge" data-od-id="capsule-challenge">
+      <div><h2>Reto capsula</h2><p>7 dias · 7 looks creados solo con lo que ya tienes.</p><button class="mini-btn">Ver progreso</button></div>
+      <div class="outfit" aria-label="Look capsula"></div>
+    </section>
+  </main>
+  <nav class="nav" data-od-id="bottom-nav">
+    <a class="active" href="dashboard.html"><span>⌂</span>Tu armario</a>
+    <a href="inspiration.html"><span>✧</span>Inspiracion</a>
+    <a href="wardrobe.html"><button class="plus" aria-label="Anadir prenda">+</button></a>
+    <a href="weekly-plan.html"><span>▦</span>Plan semanal</a>
+    <a href="profile-stats.html"><span>♙</span>Perfil</a>
+  </nav>
+  <script>
+    document.querySelector('.mini-btn').addEventListener('click', () => {
+      document.querySelector('.mini-btn').textContent = '4 / 7 looks listos';
+    });
+  </script>
+</body>
+</html>
