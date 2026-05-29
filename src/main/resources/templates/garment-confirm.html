@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Confirmar prenda', activeNav='add', backUrl='/wardrobe/new', topTitle='Confirmar', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+  <div class="preview"><img th:src="${garmentReviewForm.imageUrl}" alt="Imagen de prenda"></div>
+  <p class="notice">Revisá los datos sugeridos. La foto puede cambiar el color por la luz o las sombras.</p>
+  <p class="notice" th:if="${garmentReviewForm.aiConfidence != null && garmentReviewForm.aiConfidence > 0 && garmentReviewForm.aiType != null && !garmentReviewForm.aiType.isBlank()}">Detectamos la prenda automaticamente. Revisa y corrige antes de guardar.</p>
+  <p class="notice error" th:if="${aiError}" th:text="${aiError}" role="alert" aria-live="polite">Error IA</p>
+  <form th:action="@{/wardrobe}" th:object="${garmentReviewForm}" method="post" class="section">
+    <input type="hidden" th:field="*{imageUrl}">
+    <input type="hidden" th:field="*{aiType}">
+    <input type="hidden" th:field="*{aiColorName}">
+    <input type="hidden" th:field="*{aiColorHex}">
+    <input type="hidden" th:field="*{aiConfidence}">
+    <input type="hidden" th:field="*{aiModel}">
+    <label class="field"><span>Nombre</span><input th:field="*{name}" required placeholder="Ej: Blazer lino arena" th:attr="aria-describedby=${#fields.hasErrors('name')} ? 'name-error' : null"></label>
+    <p id="name-error" class="upload-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" role="alert" aria-live="polite">Error</p>
+    <label class="field"><span>Tipo</span><select th:field="*{category}" required th:attr="aria-describedby=${#fields.hasErrors('category')} ? 'category-error' : null"><option th:each="category : ${categories}" th:value="${category}" th:text="${category}"></option></select></label>
+    <p id="category-error" class="upload-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}" role="alert" aria-live="polite">Error</p>
+    <label class="field"><span>Color principal</span><input th:field="*{colorName}" required placeholder="Ej: arena" th:attr="aria-describedby=${#fields.hasErrors('colorName')} ? 'colorName-error' : null"></label>
+    <p id="colorName-error" class="upload-error" th:if="${#fields.hasErrors('colorName')}" th:errors="*{colorName}" role="alert" aria-live="polite">Error</p>
+    <label class="field"><span>HEX aproximado</span><input th:field="*{colorHex}" placeholder="#F2E9E4" maxlength="7"></label>
+    <label class="field"><span>Material</span><input th:field="*{material}" placeholder="Lino, algodon, denim..."></label>
+    <label class="field"><span>Temporada</span><input th:field="*{season}" placeholder="Primavera/verano"></label>
+    <button class="btn primary full" type="submit">Guardar prenda</button>
+  </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,141 @@
+/* ---- Mobile first (< 820px) — defaults ---- */
+
+.sidebar { display: none; }
+
+/* ---- Small tablet (≥ 600px) ---- */
+@media (min-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .thumb {
+    height: 160px;
+  }
+
+  .photo {
+    height: 380px;
+  }
+
+  .preview {
+    height: 300px;
+  }
+
+  .app {
+    padding: var(--space-lg) var(--space-lg) calc(var(--nav-h) + var(--space-md));
+  }
+}
+
+/* ---- Tablet portrait (≥ 820px) — sidebar visible, nav hidden ---- */
+@media (min-width: 820px) {
+  body {
+    overflow-y: auto;
+  }
+
+  .app-shell {
+    padding-left: var(--sidebar-w);
+  }
+
+  .app {
+    padding: var(--space-lg) var(--space-xl);
+    max-width: 1200px;
+  }
+
+  .sidebar { display: flex; }
+  .bottom-nav { display: none; }
+  .nav { display: none; } /* legacy */
+  .top-bar { display: none; }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .thumb {
+    height: 180px;
+  }
+
+  .photo {
+    height: 440px;
+    border-radius: var(--radius-xl);
+  }
+
+  .preview {
+    height: 340px;
+  }
+
+  .upload-drop {
+    min-height: 300px;
+  }
+
+  .top { display: none; } /* hide legacy top bar, sidebar provides nav */
+
+  .card p { font-size: var(--text-xs); }
+
+  .actions {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+/* ---- Tablet landscape (≥ 1024px) ---- */
+@media (min-width: 1024px) {
+  .app {
+    max-width: 960px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
+  .thumb {
+    height: 200px;
+  }
+
+  .photo {
+    height: 500px;
+    max-width: 700px;
+  }
+
+
+}
+
+/* ---- Laptop (≥ 1366px) ---- */
+@media (min-width: 1366px) {
+  .app {
+    max-width: 1100px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--space-md);
+  }
+
+  .thumb {
+    height: 220px;
+  }
+}
+
+/* ---- Desktop (≥ 1440px) ---- */
+@media (min-width: 1440px) {
+  .app {
+    max-width: 1200px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  }
+
+  .thumb {
+    height: 240px;
+  }
+}
+
+/* ---- Wide (≥ 1920px) ---- */
+@media (min-width: 1920px) {
+  .app {
+    max-width: 1400px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}

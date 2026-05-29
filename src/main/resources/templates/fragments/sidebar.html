@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<aside th:fragment="sidebar(activeNav)" class="sidebar">
+  <a class="sidebar-brand" th:href="@{/dashboard}">
+    <span class="sidebar-logo">A</span>
+    <span class="sidebar-label">Armario<br>Capsula</span>
+  </a>
+  <nav class="sidebar-nav">
+    <a th:href="@{/dashboard}" th:classappend="${activeNav == 'dashboard'} ? 'active'">
+      <span class="sidebar-icon">⌂</span>
+      <span>Inicio</span>
+    </a>
+    <a th:href="@{/wardrobe}" th:classappend="${activeNav == 'wardrobe'} ? 'active'">
+      <span class="sidebar-icon">👔</span>
+      <span>Prendas</span>
+    </a>
+    <a th:href="@{/wardrobe/new}" th:classappend="${activeNav == 'add'} ? 'active'">
+      <span class="sidebar-icon">+</span>
+      <span>Añadir</span>
+    </a>
+    <a th:href="@{/inspiration}" th:classappend="${activeNav == 'inspiration'} ? 'active'">
+      <span class="sidebar-icon">✧</span>
+      <span>Inspiracion</span>
+    </a>
+    <a th:href="@{/recommendation}" th:classappend="${activeNav == 'recommendation'} ? 'active'">
+      <span class="sidebar-icon">✦</span>
+      <span>Sugerencias</span>
+    </a>
+    <a th:href="@{/weekly-plan}" th:classappend="${activeNav == 'weekly'} ? 'active'">
+      <span class="sidebar-icon">▦</span>
+      <span>Plan semanal</span>
+    </a>
+    <a th:href="@{/profile}" th:classappend="${activeNav == 'profile'} ? 'active'">
+      <span class="sidebar-icon">♙</span>
+      <span>Perfil</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="chip">Single-user</span>
+  </div>
+</aside>
+</html>

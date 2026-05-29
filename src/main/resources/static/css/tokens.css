@@ -1,0 +1,46 @@
+:root {
+  --bg: #FFFDF9;
+  --surface: #FFFFFF;
+  --fg: #1F2933;
+  --muted: #6B6F72;
+  --border: #E8E2DC;
+  --accent: #FF6B5F;
+  --sand: #F7F1EA;
+  --teal: #009D8F;
+  --sage: #A7C7B7;
+  --terracotta: #E76F51;
+  --font-display: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  --sidebar-w: 260px;
+  --nav-h: 78px;
+  --top-bar-h: 60px;
+
+  --radius-sm: 15px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  --shadow-card: 0 4px 16px color-mix(in oklch, var(--fg) 6%, transparent);
+  --shadow-hero: 0 18px 36px color-mix(in oklch, var(--accent) 22%, transparent);
+  --shadow-plus: 0 12px 28px color-mix(in oklch, var(--accent) 32%, transparent);
+
+  --text-xs: clamp(10px, 1.2vw, 12px);
+  --text-sm: clamp(12px, 1.4vw, 14px);
+  --text-base: clamp(13px, 1.6vw, 16px);
+  --text-md: clamp(15px, 2vw, 18px);
+  --text-lg: clamp(20px, 3vw, 34px);
+  --text-xl: clamp(28px, 5vw, 42px);
+
+  --bp-sm: 600px;
+  --bp-md: 820px;
+  --bp-lg: 1024px;
+  --bp-xl: 1366px;
+}

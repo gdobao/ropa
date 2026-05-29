@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<nav th:fragment="nav(activeNav)" class="bottom-nav">
+  <a th:href="@{/wardrobe}" th:classappend="${activeNav == 'wardrobe' || activeNav == 'dashboard'} ? 'active'">
+    <span>⌂</span>Armario
+  </a>
+  <a th:href="@{/inspiration}" th:classappend="${activeNav == 'inspiration'} ? 'active'">
+    <span>✧</span>Inspirar
+  </a>
+  <a th:href="@{/wardrobe/new}" th:classappend="${activeNav == 'add'} ? 'active'" class="nav-plus" aria-label="Añadir prenda">
+    <span class="plus">+</span>
+  </a>
+  <a th:href="@{/weekly-plan}" th:classappend="${activeNav == 'weekly'} ? 'active'">
+    <span>▦</span>Plan
+  </a>
+  <a th:href="@{/profile}" th:classappend="${activeNav == 'profile'} ? 'active'">
+    <span>♙</span>Perfil
+  </a>
+</nav>
+</html>

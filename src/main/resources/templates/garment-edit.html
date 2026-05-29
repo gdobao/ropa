@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Editar prenda', activeNav='wardrobe', backUrl=@{/wardrobe/{id}(id=${garment.id})}, topTitle='Editar prenda', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+  <section>
+    <div class="photo" style="max-width:280px; margin:0 auto 20px;">
+      <img th:src="${garment.imageUrl}" th:alt="${garment.name}" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:var(--radius-lg);">
+    </div>
+    <p class="notice">Revisá los datos sugeridos. La foto puede cambiar el color por la luz o las sombras.</p>
+    <form th:action="@{/wardrobe/{id}(id=${garment.id})}" th:object="${garmentReviewForm}" method="post">
+      <input type="hidden" name="_method" value="put">
+      <input type="hidden" th:field="*{imageUrl}">
+      <input type="hidden" th:field="*{aiType}">
+      <input type="hidden" th:field="*{aiColorName}">
+      <input type="hidden" th:field="*{aiColorHex}">
+      <input type="hidden" th:field="*{aiConfidence}">
+      <input type="hidden" th:field="*{aiModel}">
+      <div class="field">
+        <label for="name">Nombre</label>
+        <input id="name" type="text" th:field="*{name}" required th:attr="aria-describedby=${#fields.hasErrors('name')} ? 'name-error' : null">
+        <p id="name-error" class="upload-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}" role="alert" aria-live="polite">Error</p>
+      </div>
+      <div class="field">
+        <label for="category">Categoria</label>
+        <select id="category" th:field="*{category}" required th:attr="aria-describedby=${#fields.hasErrors('category')} ? 'category-error' : null">
+          <option value="">Seleccionar</option>
+          <option th:each="cat : ${categories}" th:value="${cat}" th:text="${cat}">Top</option>
+        </select>
+        <p id="category-error" class="upload-error" th:if="${#fields.hasErrors('category')}" th:errors="*{category}" role="alert" aria-live="polite">Error</p>
+      </div>
+      <div class="field">
+        <label for="colorName">Color</label>
+        <input id="colorName" type="text" th:field="*{colorName}" required th:attr="aria-describedby=${#fields.hasErrors('colorName')} ? 'colorName-error' : null">
+        <p id="colorName-error" class="upload-error" th:if="${#fields.hasErrors('colorName')}" th:errors="*{colorName}" role="alert" aria-live="polite">Error</p>
+      </div>
+      <div class="field">
+        <label for="colorHex">Color hex</label>
+        <input id="colorHex" type="text" th:field="*{colorHex}" placeholder="#000000">
+      </div>
+      <div class="field">
+        <label for="material">Tela</label>
+        <input id="material" type="text" th:field="*{material}" placeholder="Algodon, lana, etc.">
+      </div>
+      <div class="field">
+        <label for="season">Temporada</label>
+        <input id="season" type="text" th:field="*{season}" placeholder="Verano, invierno, todo el año">
+      </div>
+      <div class="actions" style="margin-top:var(--space-lg);">
+        <button type="submit" class="btn primary full">Guardar cambios</button>
+      </div>
+    </form>
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Añadir prenda', activeNav='add', backUrl='/wardrobe', topTitle='Añadir prenda', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+  <h1>Nueva prenda</h1>
+  <p class="lead">Sacá o subí una foto clara de una sola prenda. Después vas a poder revisar y corregir los datos antes de guardarla.</p>
+  <p class="notice error" th:if="${error}" th:text="${error}" role="alert" aria-live="polite">Error</p>
+  <form class="upload-card" id="garment-upload-form" th:action="@{/wardrobe/analyze}" method="post" enctype="multipart/form-data" novalidate>
+    <label class="upload-drop" for="image-upload">
+      <span><strong>Seleccionar imagen</strong><br><small>JPG, PNG o WebP · máximo 8 MB</small></span>
+      <input id="image-upload" class="visually-hidden-input" type="file" name="image" accept="image/jpeg,image/png,image/webp" capture="environment" required>
+    </label>
+    <div class="upload-preview" id="upload-preview" hidden>
+      <img id="upload-preview-image" alt="Vista previa de la prenda seleccionada">
+    </div>
+    <p class="upload-meta" id="upload-meta" aria-live="polite">Todavía no seleccionaste una imagen.</p>
+    <p class="upload-warning" id="upload-warning" aria-live="polite" hidden></p>
+    <p class="upload-error" id="upload-error" role="alert" aria-live="polite" hidden></p>
+    <ul class="photo-tips" aria-label="Consejos para una buena foto">
+      <li>Usá buena luz.</li>
+      <li>Poné la prenda completa dentro del cuadro.</li>
+      <li>Usá un fondo liso y contrastante.</li>
+      <li>Evitá sombras fuertes o varias prendas juntas.</li>
+    </ul>
+    <button class="btn primary full" id="upload-submit" style="margin-top:16px" type="submit" disabled>Analizar prenda</button>
+  </form>
+  <script>
+(function () {
+  var form = document.getElementById('garment-upload-form');
+  var input = document.getElementById('image-upload');
+  var submit = document.getElementById('upload-submit');
+  var preview = document.getElementById('upload-preview');
+  var previewImage = document.getElementById('upload-preview-image');
+  var meta = document.getElementById('upload-meta');
+  var warning = document.getElementById('upload-warning');
+  var error = document.getElementById('upload-error');
+  var objectUrl = null;
+  var maxSize = 8 * 1024 * 1024;
+  var validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+  function formatSize(bytes) {
+    return (bytes / (1024 * 1024)).toFixed(1).replace('.', ',') + ' MB';
+  }
+
+  function setError(message) {
+    error.textContent = message || '';
+    error.hidden = !message;
+  }
+
+  function setWarning(message) {
+    warning.textContent = message || '';
+    warning.hidden = !message;
+  }
+
+  function resetPreview() {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = null;
+    preview.hidden = true;
+    previewImage.removeAttribute('src');
+    submit.disabled = true;
+  }
+
+  input.addEventListener('change', function () {
+    var file = input.files && input.files[0];
+    resetPreview();
+    setError('');
+    setWarning('');
+
+    if (!file) {
+      meta.textContent = 'Todavía no seleccionaste una imagen.';
+      setError('Seleccioná una imagen para continuar.');
+      return;
+    }
+
+    meta.textContent = file.name + ' · ' + formatSize(file.size);
+
+    if (!validTypes.includes(file.type)) {
+      setError('El archivo debe ser JPG, PNG o WebP.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setError('La imagen no puede superar los 8 MB.');
+      return;
+    }
+
+    objectUrl = URL.createObjectURL(file);
+    previewImage.onload = function () {
+      preview.hidden = false;
+      submit.disabled = false;
+      if (previewImage.naturalWidth < 600 || previewImage.naturalHeight < 600) {
+        setWarning('La imagen es chica. Si podés, usá una foto de al menos 600 × 600 px para mejorar el análisis.');
+      }
+    };
+    previewImage.src = objectUrl;
+  });
+
+  form.addEventListener('submit', function (event) {
+    if (submit.disabled) {
+      event.preventDefault();
+      setError('Seleccioná una imagen válida para continuar.');
+      return;
+    }
+    submit.disabled = true;
+    submit.textContent = 'Analizando...';
+  });
+})();
+  </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Prendas', activeNav='wardrobe', backUrl='/dashboard', topTitle='Prendas', actionUrl='/wardrobe/new', actionIcon='+')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+  <section>
+    <div class="chips" id="filter-chips" hx-target="#wardrobe-grid" hx-swap="outerHTML" hx-indicator="#wardrobe-loading" hx-disabled-elt="#filter-chips button">
+      <button type="button" class="chip" th:classappend="${activeCategory == ''} ? 'active'" th:attr="aria-pressed=${activeCategory == ''}, hx-get=@{/wardrobe/filter}" hx-trigger="click">Todas</button>
+      <button type="button" class="chip" th:classappend="${activeCategory == 'Top'} ? 'active'" th:attr="aria-pressed=${activeCategory == 'Top'}, hx-get=@{/wardrobe/filter(category='Top')}" hx-trigger="click">Top</button>
+      <button type="button" class="chip" th:classappend="${activeCategory == 'Pantalon'} ? 'active'" th:attr="aria-pressed=${activeCategory == 'Pantalon'}, hx-get=@{/wardrobe/filter(category='Pantalon')}" hx-trigger="click">Pantalon</button>
+      <button type="button" class="chip" th:classappend="${activeCategory == 'Vestido'} ? 'active'" th:attr="aria-pressed=${activeCategory == 'Vestido'}, hx-get=@{/wardrobe/filter(category='Vestido')}" hx-trigger="click">Vestido</button>
+      <button type="button" class="chip" th:classappend="${activeCategory == 'Chaqueta'} ? 'active'" th:attr="aria-pressed=${activeCategory == 'Chaqueta'}, hx-get=@{/wardrobe/filter(category='Chaqueta')}" hx-trigger="click">Chaqueta</button>
+      <button type="button" class="chip" th:classappend="${activeCategory == 'Zapatos'} ? 'active'" th:attr="aria-pressed=${activeCategory == 'Zapatos'}, hx-get=@{/wardrobe/filter(category='Zapatos')}" hx-trigger="click">Zapatos</button>
+      <button type="button" class="chip" th:classappend="${activeCategory == 'Accesorio'} ? 'active'" th:attr="aria-pressed=${activeCategory == 'Accesorio'}, hx-get=@{/wardrobe/filter(category='Accesorio')}" hx-trigger="click">Accesorio</button>
+      <button type="button" class="chip" th:classappend="${activeCategory == 'favoritos'} ? 'active'" th:attr="aria-pressed=${activeCategory == 'favoritos'}, hx-get=@{/wardrobe/filter(category='favoritos')}" hx-trigger="click">Favoritos</button>
+    </div>
+    <p id="wardrobe-loading" class="htmx-indicator meta" role="status" aria-live="polite">Actualizando...</p>
+  </section>
+
+  <section id="wardrobe-grid" th:fragment="grid">
+    <p class="meta" th:if="${garments != null}"><strong th:text="${#lists.size(garments)}">0</strong> prendas</p>
+    <div class="grid" th:if="${!garments.isEmpty()}">
+      <div class="card" th:each="garment : ${garments}">
+        <button class="fav-btn" th:classappend="${garment.favorite} ? 'active'"
+                hx-target="#wardrobe-grid" hx-swap="outerHTML"
+                hx-disabled-elt="this"
+                aria-live="polite"
+                th:attr="hx-post=@{/wardrobe/{id}/favorite(id=${garment.id})}, aria-label=${garment.favorite} ? 'Quitar favorito' : 'Agregar favorito'">
+          <span th:text="${garment.favorite} ? '&#10084;' : '&#9825;'">&#9825;</span>
+        </button>
+        <button class="del-btn"
+                th:attr="hx-delete=@{/wardrobe/{id}(id=${garment.id}, source='card')}, hx-confirm='¿Eliminar &quot;' + ${garment.name} + '&quot;?'"
+                hx-target="closest .card"
+                hx-swap="delete swap:0.3s"
+                hx-disabled-elt="this"
+                aria-label="Eliminar prenda"
+                aria-live="polite">✕</button>
+        <a th:href="@{/wardrobe/{id}(id=${garment.id})}" style="text-decoration:none;color:inherit;display:block">
+          <div class="thumb"><img th:src="${garment.imageUrl}" th:alt="${garment.name}" loading="lazy" decoding="async"></div>
+          <h2 th:text="${garment.name}">Blusa satinada</h2>
+          <p th:text="${garment.colorName}">Beige</p>
+        </a>
+      </div>
+    </div>
+    <div class="empty" th:if="${garments.isEmpty() and !#strings.isEmpty(activeCategory)}">
+      <p class="empty-emoji">🔍</p>
+      <h3>Sin resultados</h3>
+      <p class="meta">No hay prendas con ese filtro</p>
+    </div>
+    <div class="empty" th:if="${garments.isEmpty() and #strings.isEmpty(activeCategory)}">
+      <div>
+        <h2>Tu armario esta esperando</h2>
+        <p class="meta">Carga tu primera prenda con una foto y confirma tipo/color.</p>
+        <a class="btn primary" th:href="@{/wardrobe/new}">Añadir prenda</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+  if (evt.detail.target.id !== 'wardrobe-grid') return;
+  var url = new URL(evt.detail.requestConfig.path, window.location.origin);
+  var category = url.searchParams.get('category') || '';
+  document.querySelectorAll('.chips .chip').forEach(function(chip) {
+    var href = chip.getAttribute('hx-get') || '';
+    var active = false;
+    if (!category && !href.includes('category=')) {
+      chip.classList.add('active');
+      active = true;
+    } else if (href.includes('category=' + category)) {
+      chip.classList.add('active');
+      active = true;
+    } else {
+      chip.classList.remove('active');
+    }
+    chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+});
+  </script>
+</main>
+</body>
+</html>

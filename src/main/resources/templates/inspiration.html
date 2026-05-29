@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Inspiración', activeNav='inspiration', backUrl='/dashboard', topTitle='Inspiración', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+  <h1>Inspiracion</h1>
+  <p class="lead">Descubri ideas para combinar prendas y recrearlas con tu armario.</p>
+
+  <section class="search" aria-label="Buscar inspiracion">
+    <span class="search-icon" aria-hidden="true">⌕</span>
+    <input type="search" placeholder="Buscar looks, estilos o colores" aria-label="Buscar inspiracion" />
+  </section>
+
+  <section class="chips" aria-label="Filtros por etiquetas">
+    <span class="chip active">Todas</span>
+    <span class="chip" th:each="tag : ${allTags}" th:text="${tag}">Casual</span>
+  </section>
+
+  <section class="inspiration-grid" th:if="${inspirations != null and !inspirations.isEmpty()}" aria-label="Galeria de inspiracion">
+    <article class="inspiration-card" th:each="look : ${inspirations}">
+      <div class="inspiration-visual" aria-hidden="true">
+        <span class="block block-1" th:style="|background-color:${look.color1};|"></span>
+        <span class="block block-2" th:style="|background-color:${look.color2};|"></span>
+        <span class="block block-3" th:style="|background-color:${look.color3};|"></span>
+      </div>
+
+      <div class="inspiration-body">
+        <h2 th:text="${look.name}">Look urbano</h2>
+        <p class="meta" th:text="${look.description}">Una combinacion equilibrada para el dia a dia.</p>
+
+        <div class="chips inspiration-chips" th:if="${look.tags != null and !look.tags.isEmpty()}">
+          <span class="chip" th:each="tag : ${look.tags}" th:text="${tag}">Neutros</span>
+        </div>
+
+        <a class="btn" th:href="@{/wardrobe}">Ver como recrearlo</a>
+      </div>
+    </article>
+  </section>
+
+  <section class="empty section" th:if="${inspirations == null or inspirations.isEmpty()}">
+    <div>
+      <h2>Aun no hay inspiracion disponible</h2>
+      <p class="meta">Sumaremos nuevos looks en breve para que puedas recrearlos con tu armario.</p>
+      <a class="btn primary" th:href="@{/wardrobe}">Ver como recrearlo</a>
+    </div>
+  </section>
+</main>
+</body>
+</html>

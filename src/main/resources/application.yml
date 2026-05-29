@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: ropa
+  datasource:
+    url: jdbc:postgresql://localhost:55432/ropa
+    username: ropa
+    password: ropa
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 8MB
+  flyway:
+    enabled: true
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=24h
+
+server:
+  port: 8080
+
+app:
+  ai:
+    enabled: true
+    base-url: https://api.nan.builders
+    chat-path: /v1/chat/completions
+    model: qwen3.6
+    api-key: ${NAN_API_KEY:}
+    max-tokens: 500
+    connect-timeout: 5s
+    read-timeout: 20s
+  upload:
+    directory: uploads
+    max-size: 8MB
+    allowed-content-types:
+      - image/jpeg
+      - image/png
+      - image/webp

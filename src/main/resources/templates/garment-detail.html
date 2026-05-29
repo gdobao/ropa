@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title=${garment.name}, activeNav='wardrobe', backUrl='/wardrobe', topTitle='Prenda', actionUrl='/wardrobe/new', actionIcon='+')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+  <div class="photo"><img th:src="${garment.imageUrl}" th:alt="${garment.name}" loading="lazy" decoding="async"></div>
+  <h1 th:text="${garment.name}">Blazer lino</h1>
+  <p class="meta"><span th:text="${garment.category}">Chaqueta</span> · <span th:text="${garment.colorName}">Arena</span> · <span th:text="${garment.season ?: 'Sin temporada'}">Primavera/verano</span></p>
+  <div class="chips">
+    <span class="chip" th:if="${garment.material}" th:text="${garment.material}">Lino</span>
+    <span class="chip active">Confirmada</span>
+    <span class="chip" th:if="${garment.aiModel}" th:text="${garment.aiModel}">qwen</span>
+  </div>
+  <section class="section">
+    <h2>Deteccion IA</h2>
+    <p class="meta">Tipo sugerido: <strong th:text="${garment.aiType ?: 'sin dato'}">Chaqueta</strong></p>
+    <p class="meta">Color sugerido: <strong th:text="${garment.aiColorName ?: 'sin dato'}">Arena</strong></p>
+    <p class="meta">Confianza: <strong th:text="${garment.aiConfidence ?: 0}">0.92</strong></p>
+  </section>
+  <div class="actions">
+    <a class="btn" th:href="@{/wardrobe}">Ver armario</a>
+    <a class="btn primary" th:href="@{/wardrobe/new}">Añadir otra</a>
+    <a class="btn" th:href="@{/wardrobe/{id}/edit(id=${garment.id})}">Editar</a>
+  </div>
+  <div class="actions" style="margin-top:8px">
+    <button class="btn" style="border-color:var(--accent)"
+            th:attr="hx-delete=@{/wardrobe/{id}(id=${garment.id}, source='detail')}"
+            hx-confirm="¿Eliminar esta prenda del armario?">Eliminar</button>
+    <th:block th:replace="~{garment-detail :: favDetailButton(garment=${garment})}"></th:block>
+  </div>
+
+  <section class="section">
+    <h2>Combina con</h2>
+    <div class="compat-scroll" th:if="${not #lists.isEmpty(compatibleGarments)}">
+      <a class="compat-card" th:each="compatible : ${compatibleGarments}"
+         th:href="@{/wardrobe/{id}(id=${compatible.id})}">
+        <img class="compat-thumb" th:src="${compatible.imageUrl}" th:alt="${compatible.name}" loading="lazy" decoding="async">
+        <span class="compat-name" th:text="${compatible.name}">Prenda compatible</span>
+      </a>
+    </div>
+    <p class="meta" th:unless="${not #lists.isEmpty(compatibleGarments)}">No hay prendas compatibles por ahora.</p>
+  </section>
+
+  <section class="section">
+    <h2>Usada en looks</h2>
+    <div class="looks-chips" th:if="${not #lists.isEmpty(companionGarments)}">
+      <a class="look-chip" th:each="companion : ${companionGarments}"
+         th:href="@{/wardrobe/{id}(id=${companion.id})}"
+         th:text="${companion.name}">Prenda compañera</a>
+    </div>
+    <p class="meta" th:unless="${not #lists.isEmpty(companionGarments)}">Todavía no la usaste en ningún look.</p>
+  </section>
+</main>
+
+<th:block th:fragment="favDetailButton(garment)">
+  <button class="btn fav-detail-btn" th:classappend="${garment.favorite} ? 'active'"
+          th:attr="hx-post=@{/wardrobe/{id}/favorite(id=${garment.id}, variant='detail')}"
+          hx-target="this" hx-swap="outerHTML">
+    <span th:text="${garment.favorite} ? '&#10084; Favorito' : '&#9825; Favorito'">&#9825; Favorito</span>
+  </button>
+</th:block>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Perfil', activeNav='profile', backUrl='/dashboard', topTitle='Perfil', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+
+  <h1>Perfil</h1>
+
+  <!-- Empty state -->
+  <section class="empty section" th:if="${stats == null or stats.totalGarments() == 0}">
+    <p class="empty-emoji">👤</p>
+    <h3>Aún no hay datos</h3>
+    <p class="meta">Agregá tus primeras prendas para ver estadísticas.</p>
+    <a class="btn primary" th:href="@{/wardrobe/new}">Añadir prenda</a>
+  </section>
+
+  <!-- Stats -->
+  <th:block th:if="${stats != null and stats.totalGarments() > 0}">
+
+    <!-- Donut card -->
+    <article class="score-card">
+      <div class="donut" th:style="'--donut-pct:' + ${usagePercent}">
+        <span class="donut-label" th:text="${usagePercent + '%'}">0%</span>
+      </div>
+      <div>
+        <h2>Uso semanal</h2>
+        <p class="meta" th:text="${usageMessage}">Arrancá a planificar</p>
+      </div>
+    </article>
+
+    <!-- 2x2 stat grid -->
+    <section class="stat-grid">
+      <article class="card stat-card">
+        <strong class="stat-num" th:text="${stats.totalGarments()}">0</strong>
+        <span>Total prendas</span>
+      </article>
+      <article class="card stat-card">
+        <strong class="stat-num" th:text="${stats.favoriteCount()}">0</strong>
+        <span>Favoritos</span>
+      </article>
+      <article class="card stat-card">
+        <strong class="stat-num" th:text="${stats.plannedDays() + '/7'}">0/7</strong>
+        <span>Días planif.</span>
+      </article>
+      <article class="card stat-card">
+        <strong class="stat-num" th:text="${stats.plannedItems()}">0</strong>
+        <span>Looks creados</span>
+      </article>
+    </section>
+
+    <!-- Category breakdown -->
+    <section class="section" th:if="${!stats.categoryBreakdown().isEmpty()}">
+      <h2>Categorías</h2>
+      <div class="cat-bars">
+        <div class="cat-bar-row" th:each="cat : ${stats.categoryBreakdown()}">
+          <span class="cat-label" th:text="${cat.category()}">Top</span>
+          <div class="cat-bar-track">
+            <div class="cat-bar-fill"
+                 th:style="|width: ${maxCategoryCount > 0 ? (cat.count() * 100 / maxCategoryCount) : 0}%|"></div>
+          </div>
+          <span class="cat-count" th:text="${cat.count()}">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Color frequency -->
+    <section class="section" th:if="${topColors != null and !topColors.isEmpty()}">
+      <h2>Colores frecuentes</h2>
+      <div class="color-legend">
+        <span class="color-legend-item" th:each="c : ${topColors}" th:if="${c[0] != null}">
+          <span class="color-dot" th:style="'background:' + (${c[1]} ?: 'var(--sand)')"></span>
+          <span th:text="${c[0]} + ' · ' + ${c[2]}">Blanco · 5</span>
+        </span>
+      </div>
+    </section>
+
+  </th:block>
+
+</main>
+</body>
+</html>

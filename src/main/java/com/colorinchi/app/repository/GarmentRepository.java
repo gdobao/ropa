@@ -1,0 +1,29 @@
+package com.colorinchi.app.repository;
+
+import java.util.List;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+import com.colorinchi.app.model.Garment;
+
+public interface GarmentRepository extends JpaRepository<Garment, Long> {
+
+    List<Garment> findTop12ByOrderByCreatedAtDesc();
+
+    List<Garment> findByCategoryOrderByCreatedAtDesc(String category);
+
+    List<Garment> findByFavoriteTrueOrderByCreatedAtDesc();
+
+    List<Garment> findAllByOrderByCreatedAtDesc();
+
+    long count();
+
+    long countByFavoriteTrue();
+
+    @Query("SELECT g.category, COUNT(g) FROM Garment g GROUP BY g.category")
+    List<Object[]> countByCategoryGrouped();
+
+    @Query("SELECT g.colorName, g.colorHex, COUNT(g) FROM Garment g WHERE g.colorHex IS NOT NULL GROUP BY g.colorName, g.colorHex ORDER BY COUNT(g) DESC")
+    List<Object[]> countByColorGrouped();
+}

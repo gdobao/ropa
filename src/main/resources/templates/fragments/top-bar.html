@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<header th:fragment="topBar(backUrl, title, actionUrl, actionIcon)" class="top-bar">
+  <a th:href="${backUrl}" class="icon" aria-label="Volver">‹</a>
+  <h1 th:text="${title}">Titulo</h1>
+  <a th:if="${actionUrl != null and !actionUrl.isEmpty()}" th:href="${actionUrl}" class="icon" th:attr="aria-label=${actionIcon == '+' ? 'Añadir prenda' : 'Acción principal'}" th:text="${actionIcon}">+</a>
+  <span th:unless="${actionUrl != null and !actionUrl.isEmpty()}"></span>
+</header>
+</html>
