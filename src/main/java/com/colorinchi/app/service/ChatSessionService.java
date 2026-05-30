@@ -42,7 +42,7 @@ public class ChatSessionService {
         ChatSession session = new ChatSession();
         session.setOwnerId(currentOwnerId());
         session.setTitle(request.title() != null ? request.title() : "Nueva conversación");
-        session.setModel(request.model() != null ? request.model() : "gpt-4o");
+        session.setModel(request.model() != null ? request.model() : "qwen3.6");
         session.setStatus("active");
         ChatSession saved = chatSessionRepository.save(session);
         recordSessionCreated(saved);
@@ -64,7 +64,7 @@ public class ChatSessionService {
 
     @Transactional(readOnly = true)
     public List<ChatSession> listByOwner() {
-        return chatSessionRepository.findAllByOwnerIdOrderByUpdatedAtDesc(currentOwnerId());
+        return chatSessionRepository.findAllByOwnerIdAndArchivedFalseOrderByUpdatedAtDesc(currentOwnerId());
     }
 
     @Transactional(readOnly = true)
@@ -85,6 +85,18 @@ public class ChatSessionService {
         if (chatSessionRepository.deleteByIdAndOwnerId(id, currentOwnerId()) == 0) {
             throw new IllegalArgumentException("Chat session not found");
         }
+    }
+
+    /**
+     * Refresh {@code updatedAt} so retention policies don't archive a session
+     * that has recent chat activity (messages or runs).
+     */
+    @Transactional
+    public void touch(UUID sessionId) {
+        chatSessionRepository.findById(sessionId).ifPresent(session -> {
+            // @PreUpdate on the entity will set updatedAt to now on save
+            chatSessionRepository.save(session);
+        });
     }
 
     private UUID currentOwnerId() {

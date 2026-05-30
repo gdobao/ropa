@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,15 +27,18 @@ public class ChatRunService {
     private final CurrentOwnerAccessor currentOwnerAccessor;
     private final ChatAnalyticsService chatAnalyticsService;
     private final ChatMetricsService chatMetricsService;
+    private final ChatSessionService chatSessionService;
 
     public ChatRunService(ChatRunRepository chatRunRepository,
-                          CurrentOwnerAccessor currentOwnerAccessor,
-                          ChatAnalyticsService chatAnalyticsService,
-                          ChatMetricsService chatMetricsService) {
+                           CurrentOwnerAccessor currentOwnerAccessor,
+                           ChatAnalyticsService chatAnalyticsService,
+                           ChatMetricsService chatMetricsService,
+                           @Lazy ChatSessionService chatSessionService) {
         this.chatRunRepository = chatRunRepository;
         this.currentOwnerAccessor = currentOwnerAccessor;
         this.chatAnalyticsService = chatAnalyticsService;
         this.chatMetricsService = chatMetricsService;
+        this.chatSessionService = chatSessionService;
     }
 
     @Transactional
@@ -65,6 +69,7 @@ public class ChatRunService {
         run.setTotalTokens(totalTokens);
         run.setCompletedAt(OffsetDateTime.now());
         ChatRun saved = chatRunRepository.save(run);
+        chatSessionService.touch(run.getSessionId());
         recordRunCompleted(saved);
         return saved;
     }
@@ -76,6 +81,44 @@ public class ChatRunService {
         run.setErrorMessage(errorMessage);
         run.setCompletedAt(OffsetDateTime.now());
         ChatRun saved = chatRunRepository.save(run);
+        chatSessionService.touch(run.getSessionId());
+        recordRunFailed(saved);
+        return saved;
+    }
+
+    /**
+     * Complete a run with an explicit owner ID — safe for use on non-request
+     * threads (e.g. Reactor callbacks) where {@link CurrentOwnerAccessor} has
+     * no HTTP request context.
+     */
+    @Transactional
+    public ChatRun complete(UUID id, UUID ownerId, String modelResolved, int totalTokens) {
+        ChatRun run = chatRunRepository.findByIdAndOwnerId(id, ownerId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat run not found"));
+        run.setStatus("completed");
+        run.setModelResolved(modelResolved);
+        run.setTotalTokens(totalTokens);
+        run.setCompletedAt(OffsetDateTime.now());
+        ChatRun saved = chatRunRepository.save(run);
+        chatSessionService.touch(run.getSessionId());
+        recordRunCompleted(saved);
+        return saved;
+    }
+
+    /**
+     * Fail a run with an explicit owner ID — safe for use on non-request
+     * threads (e.g. Reactor callbacks) where {@link CurrentOwnerAccessor} has
+     * no HTTP request context.
+     */
+    @Transactional
+    public ChatRun fail(UUID id, UUID ownerId, String errorMessage) {
+        ChatRun run = chatRunRepository.findByIdAndOwnerId(id, ownerId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat run not found"));
+        run.setStatus("failed");
+        run.setErrorMessage(errorMessage);
+        run.setCompletedAt(OffsetDateTime.now());
+        ChatRun saved = chatRunRepository.save(run);
+        chatSessionService.touch(run.getSessionId());
         recordRunFailed(saved);
         return saved;
     }

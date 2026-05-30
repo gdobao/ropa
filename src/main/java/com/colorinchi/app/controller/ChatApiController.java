@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -95,6 +96,29 @@ public class ChatApiController {
             log.error("Failed to create session", e);
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of("create_failed", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/sessions/{id}/title")
+    public ResponseEntity<?> updateTitle(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+        try {
+            String title = body.get("title");
+            if (title == null || title.isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("invalid_request", "Title is required"));
+            }
+            ChatSession session = chatSessionService.updateTitle(id, title);
+            ChatSessionResponse response = ChatSessionResponse.from(
+                    session.getId(), session.getTitle(), session.getModel(),
+                    session.getStatus(), session.getCreatedAt(), session.getUpdatedAt());
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.of("not_found", e.getMessage()));
+        } catch (Exception e) {
+            log.error("Failed to update title for session {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ErrorResponse.of("update_failed", "Failed to update session title"));
         }
     }
 
@@ -240,6 +264,12 @@ public class ChatApiController {
 
         log.debug("Starting AI stream for run {} with model {}", runId, run.getModelRequested());
 
+        // Capture owner context BEFORE subscribing — Reactor threads have no
+        // HTTP request attributes, so CurrentOwnerAccessor would fail inside
+        // the reactive callbacks.
+        UUID capturedOwnerId = run.getOwnerId();
+        UUID sessionId = run.getSessionId();
+
         // Subscribe to the reactive Flux and feed into the SseEmitter
         Disposable subscription = streamingChatClient
                 .stream(run.getModelRequested(), aiMessages)
@@ -258,7 +288,7 @@ public class ChatApiController {
                     error -> {
                         log.error("Stream error for run {}: {}", runId, error.getMessage());
                         try {
-                            chatRunService.fail(runId, error.getMessage());
+                            chatRunService.fail(runId, capturedOwnerId, error.getMessage());
                             emitter.send(SseEmitter.event()
                                     .name("error")
                                     .data(StreamChunk.error(error.getMessage())));
@@ -273,8 +303,9 @@ public class ChatApiController {
                             String fullContent = accumulated.toString();
                             int tokens = fullContent.length() / 4; // rough estimate
                             ChatMessage assistantMsg = chatMessageService.create(
-                                    run.getSessionId(), "assistant", fullContent, tokens);
-                            chatRunService.complete(runId, run.getModelRequested(), tokens);
+                                    sessionId, capturedOwnerId, "assistant", fullContent, tokens);
+                            chatRunService.complete(runId, capturedOwnerId,
+                                    run.getModelRequested(), tokens);
 
                             emitter.send(SseEmitter.event()
                                     .name("done")
@@ -296,7 +327,7 @@ public class ChatApiController {
                 subscription.dispose();
             }
             try {
-                chatRunService.fail(runId, "Stream timeout");
+                chatRunService.fail(runId, capturedOwnerId, "Stream timeout");
             } catch (Exception e) {
                 log.warn("Error marking run {} as failed on timeout", runId);
             }

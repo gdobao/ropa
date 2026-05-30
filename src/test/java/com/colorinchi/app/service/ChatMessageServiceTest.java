@@ -37,6 +37,9 @@ class ChatMessageServiceTest {
     @Mock
     private ChatMetricsService chatMetricsService;
 
+    @Mock
+    private ChatSessionService chatSessionService;
+
     @InjectMocks
     private ChatMessageService service;
 

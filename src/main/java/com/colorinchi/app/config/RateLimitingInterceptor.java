@@ -99,7 +99,7 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
         if ("/recommendation".equals(path) && "GET".equalsIgnoreCase(method)) {
             return "recommendation";
         }
-        if ("/api/chat/stream".equals(path) && "POST".equalsIgnoreCase(method)) {
+        if (path.startsWith("/api/chat/stream/") && "GET".equalsIgnoreCase(method)) {
             return "chat";
         }
         // Per-owner rate limited endpoints

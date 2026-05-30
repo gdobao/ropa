@@ -86,12 +86,12 @@ class ChatSessionServiceTest {
         ChatSession result = service.create(request);
 
         assertThat(result.getTitle()).isEqualTo("Nueva conversación");
-        assertThat(result.getModel()).isEqualTo("gpt-4o");
+        assertThat(result.getModel()).isEqualTo("qwen3.6");
     }
 
     @Test
     void listByOwnerReturnsAllSessions() {
-        when(repository.findAllByOwnerIdOrderByUpdatedAtDesc(ownerId)).thenReturn(List.of(sampleSession));
+        when(repository.findAllByOwnerIdAndArchivedFalseOrderByUpdatedAtDesc(ownerId)).thenReturn(List.of(sampleSession));
 
         List<ChatSession> result = service.listByOwner();
 

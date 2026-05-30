@@ -127,8 +127,8 @@ class RateLimitingInterceptorTest {
 
     @Test
     void allowsChatWithinCapacity() {
-        when(request.getRequestURI()).thenReturn("/api/chat/stream");
-        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/api/chat/stream/00000000-0000-0000-0000-000000000001");
+        when(request.getMethod()).thenReturn("GET");
         when(request.getRemoteAddr()).thenReturn("192.168.1.10");
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
 
@@ -139,8 +139,8 @@ class RateLimitingInterceptorTest {
 
     @Test
     void throwsWhenChatExceedsCapacity() {
-        when(request.getRequestURI()).thenReturn("/api/chat/stream");
-        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/api/chat/stream/00000000-0000-0000-0000-000000000001");
+        when(request.getMethod()).thenReturn("GET");
         when(request.getRemoteAddr()).thenReturn("10.0.0.10");
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
 
@@ -156,8 +156,8 @@ class RateLimitingInterceptorTest {
 
     @Test
     void differentOwnersHaveSeparatePerOwnerLimits() {
-        when(request.getRequestURI()).thenReturn("/api/chat/stream");
-        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/api/chat/stream/00000000-0000-0000-0000-000000000001");
+        when(request.getMethod()).thenReturn("GET");
         when(request.getRemoteAddr()).thenReturn("10.0.0.20");
 
         // First owner hits the per-owner limit
@@ -177,8 +177,8 @@ class RateLimitingInterceptorTest {
 
     @Test
     void perOwnerLimitFallsBackToIpWhenOwnerUnavailable() {
-        when(request.getRequestURI()).thenReturn("/api/chat/stream");
-        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/api/chat/stream/00000000-0000-0000-0000-000000000001");
+        when(request.getMethod()).thenReturn("GET");
         when(request.getRemoteAddr()).thenReturn("10.0.0.30");
         when(currentOwnerAccessor.getCurrentOwnerId()).thenThrow(new IllegalStateException("Owner context unavailable"));
 

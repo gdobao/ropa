@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -44,14 +45,18 @@ public class ChatAnalyticsService {
 
     private final ChatAnalyticsEventRepository repository;
     private final ObjectMapper objectMapper;
+    private final ChatAnalyticsService self;
     private final ConcurrentLinkedQueue<ChatAnalyticsEvent> buffer;
 
     /** Tracks stream start times per run ID for latency computation. */
     private final ConcurrentHashMap<UUID, OffsetDateTime> streamStartTimes;
 
-    public ChatAnalyticsService(ChatAnalyticsEventRepository repository, ObjectMapper objectMapper) {
+    public ChatAnalyticsService(ChatAnalyticsEventRepository repository,
+                                ObjectMapper objectMapper,
+                                @Lazy ChatAnalyticsService self) {
         this.repository = repository;
         this.objectMapper = objectMapper;
+        this.self = self;
         this.buffer = new ConcurrentLinkedQueue<>();
         this.streamStartTimes = new ConcurrentHashMap<>();
     }
@@ -83,7 +88,7 @@ public class ChatAnalyticsService {
         buffer.add(event);
 
         if (buffer.size() >= BATCH_SIZE) {
-            flushAsync();
+            self.flushAsync();
         }
     }
 

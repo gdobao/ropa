@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,15 +26,18 @@ public class ChatMessageService {
     private final CurrentOwnerAccessor currentOwnerAccessor;
     private final ChatAnalyticsService chatAnalyticsService;
     private final ChatMetricsService chatMetricsService;
+    private final ChatSessionService chatSessionService;
 
     public ChatMessageService(ChatMessageRepository chatMessageRepository,
                               CurrentOwnerAccessor currentOwnerAccessor,
                               ChatAnalyticsService chatAnalyticsService,
-                              ChatMetricsService chatMetricsService) {
+                              ChatMetricsService chatMetricsService,
+                              @Lazy ChatSessionService chatSessionService) {
         this.chatMessageRepository = chatMessageRepository;
         this.currentOwnerAccessor = currentOwnerAccessor;
         this.chatAnalyticsService = chatAnalyticsService;
         this.chatMetricsService = chatMetricsService;
+        this.chatSessionService = chatSessionService;
     }
 
     @Transactional
@@ -45,6 +49,26 @@ public class ChatMessageService {
         message.setContent(content);
         message.setTokens(tokens);
         ChatMessage saved = chatMessageRepository.save(message);
+        chatSessionService.touch(sessionId);
+        recordMessageSent(saved);
+        return saved;
+    }
+
+    /**
+     * Create a message with an explicit owner ID — safe for use on non-request
+     * threads (e.g. Reactor callbacks) where {@link CurrentOwnerAccessor} has
+     * no HTTP request context.
+     */
+    @Transactional
+    public ChatMessage create(UUID sessionId, UUID ownerId, String role, String content, int tokens) {
+        ChatMessage message = new ChatMessage();
+        message.setSessionId(sessionId);
+        message.setOwnerId(ownerId);
+        message.setRole(role);
+        message.setContent(content);
+        message.setTokens(tokens);
+        ChatMessage saved = chatMessageRepository.save(message);
+        chatSessionService.touch(sessionId);
         recordMessageSent(saved);
         return saved;
     }

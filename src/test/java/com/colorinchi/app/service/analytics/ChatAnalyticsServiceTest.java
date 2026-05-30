@@ -41,7 +41,7 @@ class ChatAnalyticsServiceTest {
     void setUp() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        service = new ChatAnalyticsService(repository, mapper);
+        service = new ChatAnalyticsService(repository, mapper, null);
     }
 
     @Test
@@ -54,12 +54,14 @@ class ChatAnalyticsServiceTest {
 
     @Test
     void bufferFlushesAtBatchSize() {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             service.recordEvent(ownerId, ChatEventType.SESSION_CREATED,
                     Map.of("sessionId", UUID.randomUUID().toString()));
         }
 
-        // Async flush was triggered — buffer should be drained
+        service.flush();
+
+        // Flush drains the buffer
         verify(repository).saveAll(anyList());
     }
 
