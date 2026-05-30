@@ -36,6 +36,9 @@ public class ChatSession {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(nullable = false)
+    private boolean archived = false;
+
     @PrePersist
     void onCreate() {
         if (id == null) {
@@ -68,4 +71,7 @@ public class ChatSession {
 
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+
+    public boolean isArchived() { return archived; }
+    public void setArchived(boolean archived) { this.archived = archived; }
 }

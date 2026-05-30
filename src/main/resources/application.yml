@@ -35,6 +35,18 @@ spring:
 server:
   port: 8081
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+      show-components: when-authorized
+      probes:
+        enabled: true
+
 app:
   ai:
     enabled: true
@@ -79,3 +91,11 @@ app:
     chat:
       capacity: 30
       refill-minutes: 1
+    chat-per-owner:
+      capacity: 10
+      refill-minutes: 1
+  chat:
+    retention:
+      analytics-events-days: 90
+      session-inactive-days: 180
+      orphan-upload-cleanup: false

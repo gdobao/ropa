@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -97,34 +98,63 @@ public class StreamingChatClient {
     public Flux<String> stream(String model, List<Map<String, String>> messages, UUID runId, UUID ownerId) {
         Flux<String> base = stream(model, messages);
 
-        chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_STARTED,
-                Map.of("runId", runId.toString(), "model", model));
-        chatAnalyticsService.recordStreamStart(runId);
+        try {
+            MDC.put("runId", runId.toString());
+            MDC.put("model", model);
 
-        return base
-                .doOnComplete(() -> {
-                    long latencyMs = chatAnalyticsService.trackLatency(runId);
-                    chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_COMPLETED,
-                            Map.of("runId", runId.toString(), "latencyMs", latencyMs));
-                    if (latencyMs >= 0) {
-                        chatMetricsService.recordLatency(latencyMs);
-                    }
-                    chatMetricsService.increment(ChatMetricsService.STREAMS_COMPLETED);
-                    log.debug(LogSanitizer.sanitize("Stream completed for run {}"), runId);
-                })
-                .doOnError(error -> {
-                    chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_DISCONNECTED,
-                            Map.of("runId", runId.toString(),
-                                   "errorType", error.getClass().getSimpleName()));
-                    chatMetricsService.increment(ChatMetricsService.STREAMS_DISCONNECTED);
-                    log.warn(LogSanitizer.sanitize("Stream error for run {}: {}"),
-                            runId, error.getClass().getSimpleName());
-                })
-                .doOnCancel(() -> {
-                    chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_DISCONNECTED,
-                            Map.of("runId", runId.toString(), "reason", "cancelled"));
-                    chatMetricsService.increment(ChatMetricsService.STREAMS_DISCONNECTED);
-                    log.debug(LogSanitizer.sanitize("Stream cancelled for run {}"), runId);
-                });
+            chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_STARTED,
+                    Map.of("runId", runId.toString(), "model", model));
+            chatAnalyticsService.recordStreamStart(runId);
+
+            return base
+                    .doOnComplete(() -> {
+                        try {
+                            MDC.put("runId", runId.toString());
+                            MDC.put("model", model);
+                            long latencyMs = chatAnalyticsService.trackLatency(runId);
+                            chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_COMPLETED,
+                                    Map.of("runId", runId.toString(), "latencyMs", latencyMs));
+                            if (latencyMs >= 0) {
+                                chatMetricsService.recordLatency(latencyMs);
+                            }
+                            chatMetricsService.increment(ChatMetricsService.STREAMS_COMPLETED);
+                            log.debug(LogSanitizer.sanitize("Stream completed for run {}"), runId);
+                        } finally {
+                            MDC.remove("runId");
+                            MDC.remove("model");
+                        }
+                    })
+                    .doOnError(error -> {
+                        try {
+                            MDC.put("runId", runId.toString());
+                            MDC.put("model", model);
+                            chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_DISCONNECTED,
+                                    Map.of("runId", runId.toString(),
+                                           "errorType", error.getClass().getSimpleName()));
+                            chatMetricsService.increment(ChatMetricsService.STREAMS_DISCONNECTED);
+                            log.warn(LogSanitizer.sanitize("Stream error for run {}: {}"),
+                                    runId, error.getClass().getSimpleName());
+                        } finally {
+                            MDC.remove("runId");
+                            MDC.remove("model");
+                        }
+                    })
+                    .doOnCancel(() -> {
+                        try {
+                            MDC.put("runId", runId.toString());
+                            MDC.put("model", model);
+                            chatAnalyticsService.recordEvent(ownerId, ChatEventType.STREAM_DISCONNECTED,
+                                    Map.of("runId", runId.toString(), "reason", "cancelled"));
+                            chatMetricsService.increment(ChatMetricsService.STREAMS_DISCONNECTED);
+                            log.debug(LogSanitizer.sanitize("Stream cancelled for run {}"), runId);
+                        } finally {
+                            MDC.remove("runId");
+                            MDC.remove("model");
+                        }
+                    });
+        } finally {
+            MDC.remove("runId");
+            MDC.remove("model");
+        }
     }
 }

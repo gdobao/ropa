@@ -6,6 +6,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
 @Configuration
 @EnableWebSecurity
@@ -18,8 +19,32 @@ public class SecurityConfig {
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
             )
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/admin/**")
+                    .access((authentication, context) -> {
+                        var request = context.getRequest();
+                        String remoteAddr = request.getRemoteAddr();
+                        if ("127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr)
+                                || "0:0:0:0:0:0:0:1".equals(remoteAddr)) {
+                            return new org.springframework.security.authorization.AuthorizationDecision(true);
+                        }
+                        return new org.springframework.security.authorization.AuthorizationDecision(false);
+                    })
                 .anyRequest().permitAll()
             )
+            .headers(headers -> {
+                headers.frameOptions(frame -> frame
+                    .deny()
+                );
+                headers.contentSecurityPolicy(csp -> csp
+                    .policyDirectives("default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'")
+                );
+                headers.referrerPolicy(referrer -> referrer
+                    .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                );
+                headers.permissionsPolicyHeader(permissions -> permissions
+                    .policy("camera=(), microphone=(), geolocation=()")
+                );
+            })
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable());
         return http.build();

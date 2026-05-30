@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -115,6 +116,7 @@ public class ChatApiController {
 
     @GetMapping("/sessions/{sessionId}/messages")
     public ResponseEntity<?> listMessages(@PathVariable UUID sessionId) {
+        MDC.put("sessionId", sessionId.toString());
         try {
             List<ChatMessageResponse> result = chatMessageService.listBySession(sessionId).stream()
                     .map(m -> new ChatMessageResponse(
@@ -126,6 +128,8 @@ public class ChatApiController {
             log.error("Failed to list messages for session {}", sessionId, e);
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of("list_failed", e.getMessage()));
+        } finally {
+            MDC.remove("sessionId");
         }
     }
 
@@ -136,6 +140,7 @@ public class ChatApiController {
             @PathVariable UUID sessionId,
             @RequestBody Map<String, String> body) {
 
+        MDC.put("sessionId", sessionId.toString());
         try {
             ChatSession session = chatSessionService.getById(sessionId);
             String content = body.getOrDefault("content", "").trim();
@@ -182,6 +187,8 @@ public class ChatApiController {
             log.error("Failed to send message in session {}", sessionId, e);
             return ResponseEntity.internalServerError()
                     .body(ErrorResponse.of("send_failed", e.getMessage()));
+        } finally {
+            MDC.remove("sessionId");
         }
     }
 

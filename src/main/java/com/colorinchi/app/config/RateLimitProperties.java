@@ -6,7 +6,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record RateLimitProperties(
     EndpointConfig analyze,
     EndpointConfig recommendation,
-    EndpointConfig chat
+    EndpointConfig chat,
+    EndpointConfig chatPerOwner
 ) {
     public record EndpointConfig(int capacity, int refillMinutes) {}
 }
