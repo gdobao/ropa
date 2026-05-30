@@ -38,7 +38,9 @@ public class ChatAnalyticsEvent {
         if (id == null) {
             id = UUID.randomUUID();
         }
-        createdAt = OffsetDateTime.now();
+        if (createdAt == null) {
+            createdAt = OffsetDateTime.now();
+        }
     }
 
     public UUID getId() { return id; }

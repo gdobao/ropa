@@ -13,6 +13,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -471,7 +472,7 @@ class GarmentControllerTest {
                 "image", "test.jpg", MediaType.IMAGE_JPEG_VALUE, "fake-image".getBytes());
 
         mockMvc.perform(multipart("/wardrobe/analyze").file(file).with(csrf()))
-                .andExpect(status().isOk())
+                .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()))
                 .andExpect(view().name("error"))
                 .andExpect(model().attributeExists("errorTitle"))
                 .andExpect(model().attributeExists("errorMessage"));
@@ -486,7 +487,7 @@ class GarmentControllerTest {
                         "Demasiadas solicitudes. Esper\u00E1 1 minutos antes de intentar de nuevo."));
 
         mockMvc.perform(get("/recommendation").with(csrf()))
-                .andExpect(status().isOk())
+                .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()))
                 .andExpect(view().name("error"))
                 .andExpect(model().attributeExists("errorTitle"))
                 .andExpect(model().attributeExists("errorMessage"));
