@@ -2,6 +2,7 @@ package com.colorinchi.app.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.colorinchi.app.model.AnonymousOwner;
 import com.colorinchi.app.model.Garment;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,12 +21,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class GarmentRepositoryTest {
 
+    private static final UUID OWNER_ID = UUID.fromString("00000000-0000-0000-0000-000000000001");
+    private static final UUID OTHER_OWNER_ID = UUID.fromString("00000000-0000-0000-0000-000000000099");
+
     @Autowired
     private GarmentRepository repository;
+
+    @Autowired
+    private AnonymousOwnerRepository anonymousOwnerRepository;
 
     @BeforeEach
     void setUp() {
         repository.deleteAll();
+        anonymousOwnerRepository.save(createOwner(OTHER_OWNER_ID));
     }
 
     @Test
@@ -34,7 +43,7 @@ class GarmentRepositoryTest {
 
         assertThat(saved.getId()).isNotNull();
 
-        Optional<Garment> found = repository.findById(saved.getId());
+        Optional<Garment> found = repository.findByIdAndOwnerId(saved.getId(), OWNER_ID);
         assertThat(found).isPresent();
         assertThat(found.get().getName()).isEqualTo("Top Rojo");
     }
@@ -45,7 +54,7 @@ class GarmentRepositoryTest {
         repository.save(createGarment("Pantalón Azul", "Pantalón", "Azul", "#0000FF", null, false));
         repository.save(createGarment("Top Verde", "Top", "Verde", "#00FF00", null, false));
 
-        List<Garment> tops = repository.findByCategoryOrderByCreatedAtDesc("Top");
+        List<Garment> tops = repository.findByOwnerIdAndCategoryOrderByCreatedAtDesc(OWNER_ID, "Top");
 
         assertThat(tops).hasSize(2);
         assertThat(tops).allMatch(g -> "Top".equals(g.getCategory()));
@@ -57,7 +66,7 @@ class GarmentRepositoryTest {
         repository.save(createGarment("Not Fav", "Pantalón", "Azul", "#0000FF", null, false));
         repository.save(createGarment("Fav 2", "Chaqueta", "Negro", "#000000", null, true));
 
-        List<Garment> favorites = repository.findByFavoriteTrueOrderByCreatedAtDesc();
+        List<Garment> favorites = repository.findByOwnerIdAndFavoriteTrueOrderByCreatedAtDesc(OWNER_ID);
 
         assertThat(favorites).hasSize(2);
         assertThat(favorites).allMatch(Garment::isFavorite);
@@ -68,7 +77,7 @@ class GarmentRepositoryTest {
         repository.save(createGarment("A", "Top", "Rojo", "#FF0000", null, false));
         repository.save(createGarment("B", "Pantalón", "Azul", "#0000FF", null, false));
 
-        List<Garment> all = repository.findAllByOrderByCreatedAtDesc();
+        List<Garment> all = repository.findAllByOwnerIdOrderByCreatedAtDesc(OWNER_ID);
 
         assertThat(all).hasSize(2);
     }
@@ -79,7 +88,7 @@ class GarmentRepositoryTest {
         repository.save(createGarment("T2", "Top", "Verde", "#00FF00", null, false));
         repository.save(createGarment("P1", "Pantalón", "Azul", "#0000FF", null, false));
 
-        List<Object[]> counts = repository.countByCategoryGrouped();
+        List<Object[]> counts = repository.countByCategoryGrouped(OWNER_ID);
 
         assertThat(counts).hasSize(2);
         for (Object[] row : counts) {
@@ -99,7 +108,7 @@ class GarmentRepositoryTest {
         repository.save(createGarment("T2", "Top", "Rojo", "#FF0000", null, false));
         repository.save(createGarment("P1", "Pantalón", "Azul", "#0000FF", null, false));
 
-        List<Object[]> counts = repository.countByColorGrouped();
+        List<Object[]> counts = repository.countByColorGrouped(OWNER_ID);
 
         assertThat(counts).hasSize(2);
         assertThat((String) counts.get(0)[0]).isEqualTo("Rojo");
@@ -112,7 +121,7 @@ class GarmentRepositoryTest {
         repository.save(createGarment("A", "Top", "Rojo", "#FF0000", null, false));
         repository.save(createGarment("B", "Pantalón", "Azul", "#0000FF", null, false));
 
-        long count = repository.count();
+        long count = repository.countByOwnerId(OWNER_ID);
 
         assertThat(count).isEqualTo(2);
     }
@@ -122,7 +131,7 @@ class GarmentRepositoryTest {
         repository.save(createGarment("A", "Top", "Rojo", "#FF0000", null, true));
         repository.save(createGarment("B", "Pantalón", "Azul", "#0000FF", null, false));
 
-        long favCount = repository.countByFavoriteTrue();
+        long favCount = repository.countByOwnerIdAndFavoriteTrue(OWNER_ID);
 
         assertThat(favCount).isEqualTo(1);
     }
@@ -133,7 +142,7 @@ class GarmentRepositoryTest {
             repository.save(createGarment("G" + i, "Top", "Color" + i, "#000000", null, false));
         }
 
-        List<Garment> top = repository.findTop12ByOrderByCreatedAtDesc();
+        List<Garment> top = repository.findTop12ByOwnerIdOrderByCreatedAtDesc(OWNER_ID);
 
         assertThat(top).hasSize(12);
     }
@@ -141,16 +150,41 @@ class GarmentRepositoryTest {
     @Test
     void deleteByIdRemovesGarment() {
         Garment saved = repository.save(createGarment("To Delete", "Top", "Rojo", "#FF0000", null, false));
-        assertThat(repository.findById(saved.getId())).isPresent();
+        assertThat(repository.findByIdAndOwnerId(saved.getId(), OWNER_ID)).isPresent();
 
-        repository.deleteById(saved.getId());
+        long deleted = repository.deleteByIdAndOwnerId(saved.getId(), OWNER_ID);
 
-        assertThat(repository.findById(saved.getId())).isNotPresent();
+        assertThat(deleted).isEqualTo(1);
+        assertThat(repository.findByIdAndOwnerId(saved.getId(), OWNER_ID)).isNotPresent();
+    }
+
+    @Test
+    void ownerScopedQueriesDoNotReturnForeignGarments() {
+        repository.save(createGarment("Owner A", "Top", "Rojo", "#FF0000", null, false));
+        repository.save(createGarmentForOwner(OTHER_OWNER_ID, "Owner B", "Top", "Azul", "#0000FF", null, false));
+
+        List<Garment> visible = repository.findAllByOwnerIdOrderByCreatedAtDesc(OWNER_ID);
+
+        assertThat(visible).extracting(Garment::getName).containsExactly("Owner A");
+    }
+
+    @Test
+    void deleteByIdAndOwnerIdDoesNotDeleteForeignGarment() {
+        Garment foreign = repository.save(createGarmentForOwner(OTHER_OWNER_ID, "Foreign", "Top", "Azul", "#0000FF", null, false));
+
+        long deleted = repository.deleteByIdAndOwnerId(foreign.getId(), OWNER_ID);
+
+        assertThat(deleted).isZero();
+        assertThat(repository.findByIdAndOwnerId(foreign.getId(), OTHER_OWNER_ID)).isPresent();
     }
 
     // --- Helper ---
 
     private Garment createGarment(String name, String category, String colorName, String colorHex, String material, boolean favorite) {
+        return createGarmentForOwner(OWNER_ID, name, category, colorName, colorHex, material, favorite);
+    }
+
+    private Garment createGarmentForOwner(UUID ownerId, String name, String category, String colorName, String colorHex, String material, boolean favorite) {
         Garment g = new Garment();
         g.setName(name);
         g.setCategory(category);
@@ -159,7 +193,15 @@ class GarmentRepositoryTest {
         if (material != null) g.setMaterial(material);
         g.setImageUrl("/uploads/" + name + ".jpg");
         g.setFavorite(favorite);
+        g.setOwnerId(ownerId);
         g.setUserConfirmed(true);
         return g;
+    }
+
+    private AnonymousOwner createOwner(UUID ownerId) {
+        AnonymousOwner owner = new AnonymousOwner();
+        owner.setId(ownerId);
+        owner.setBootstrap(false);
+        return owner;
     }
 }

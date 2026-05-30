@@ -22,7 +22,8 @@ class RateLimitingInterceptorTest {
     void setUp() {
         var analyze = new RateLimitProperties.EndpointConfig(2, 1);
         var recommend = new RateLimitProperties.EndpointConfig(3, 5);
-        properties = new RateLimitProperties(analyze, recommend);
+        var chat = new RateLimitProperties.EndpointConfig(10, 1);
+        properties = new RateLimitProperties(analyze, recommend, chat);
         interceptor = new RateLimitingInterceptor(properties);
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
@@ -113,5 +114,31 @@ class RateLimitingInterceptorTest {
     void exceptionCarriesMessage() {
         var ex = new RateLimitExceededException("test message");
         assertThat(ex.getMessage()).isEqualTo("test message");
+    }
+
+    @Test
+    void allowsChatWithinCapacity() {
+        when(request.getRequestURI()).thenReturn("/api/chat/stream");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("192.168.1.10");
+
+        boolean result = interceptor.preHandle(request, response, null);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void throwsWhenChatExceedsCapacity() {
+        when(request.getRequestURI()).thenReturn("/api/chat/stream");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.10");
+
+        for (int i = 0; i < 10; i++) {
+            interceptor.preHandle(request, response, null);
+        }
+
+        assertThatThrownBy(() -> interceptor.preHandle(request, response, null))
+                .isInstanceOf(RateLimitExceededException.class)
+                .hasMessageContaining("Demasiadas");
     }
 }

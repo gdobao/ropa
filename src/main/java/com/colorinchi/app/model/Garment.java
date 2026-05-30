@@ -2,6 +2,7 @@ package com.colorinchi.app.model;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -64,6 +65,9 @@ public class Garment {
     @Column(nullable = false)
     private boolean favorite;
 
+    @Column(name = "owner_id", nullable = false)
+    private UUID ownerId;
+
     @Column(name = "user_confirmed", nullable = false)
     private boolean userConfirmed;
 
@@ -112,8 +116,12 @@ public class Garment {
     public void setAiModel(String aiModel) { this.aiModel = aiModel; }
     public boolean isFavorite() { return favorite; }
     public void setFavorite(boolean favorite) { this.favorite = favorite; }
+    public UUID getOwnerId() { return ownerId; }
+    public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
     public boolean isUserConfirmed() { return userConfirmed; }
     public void setUserConfirmed(boolean userConfirmed) { this.userConfirmed = userConfirmed; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

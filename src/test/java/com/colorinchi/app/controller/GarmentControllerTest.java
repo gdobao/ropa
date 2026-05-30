@@ -32,6 +32,7 @@ import com.colorinchi.app.dto.OutfitSuggestion;
 import com.colorinchi.app.model.Garment;
 import com.colorinchi.app.service.AiClassificationService;
 import com.colorinchi.app.service.AiRecommendationService;
+import com.colorinchi.app.service.AnonymousOwnerService;
 import com.colorinchi.app.service.GarmentCompatibilityService;
 import com.colorinchi.app.service.GarmentService;
 import com.colorinchi.app.service.InspirationService;
@@ -87,6 +88,9 @@ class GarmentControllerTest {
 
     @MockitoBean
     private RateLimitingInterceptor rateLimitingInterceptor;
+
+    @MockitoBean
+    private AnonymousOwnerService anonymousOwnerService;
 
     private Garment sampleGarment;
     private AiClassificationResponse sampleAiResponse;
@@ -516,7 +520,7 @@ class GarmentControllerTest {
             return new WardrobeProperties(
                     List.of("Top", "Pantalón", "Vestido", "Falda", "Chaqueta", "Abrigo", "Camisa", "Sudadera", "Zapatos", "Accesorio", "Otro"),
                     List.of("Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"),
-                    5);
+                    5, 30, 3);
         }
     }
 }

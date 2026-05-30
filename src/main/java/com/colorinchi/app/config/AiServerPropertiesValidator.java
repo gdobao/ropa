@@ -31,5 +31,22 @@ public class AiServerPropertiesValidator implements ApplicationRunner {
         if (!StringUtils.hasText(properties.model())) {
             throw new IllegalStateException("app.ai.model is required when app.ai.enabled=true");
         }
+
+        // Validate the model catalog when configured
+        if (properties.models() != null && !properties.models().isEmpty()) {
+            boolean atLeastOneDefault = properties.models().stream()
+                    .anyMatch(AiModelConfig::isDefault);
+            long defaultCount = properties.models().stream()
+                    .filter(AiModelConfig::isDefault)
+                    .count();
+            if (!atLeastOneDefault) {
+                throw new IllegalStateException(
+                        "At least one model must be marked as default in app.ai.models");
+            }
+            if (defaultCount > 1) {
+                throw new IllegalStateException(
+                        "Only one model can be marked as default in app.ai.models");
+            }
+        }
     }
 }

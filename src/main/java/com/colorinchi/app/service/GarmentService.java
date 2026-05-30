@@ -1,6 +1,7 @@
 package com.colorinchi.app.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,24 +17,26 @@ import com.colorinchi.app.repository.GarmentRepository;
 public class GarmentService {
 
     private final GarmentRepository garmentRepository;
+    private final CurrentOwnerAccessor currentOwnerAccessor;
 
-    public GarmentService(GarmentRepository garmentRepository) {
+    public GarmentService(GarmentRepository garmentRepository, CurrentOwnerAccessor currentOwnerAccessor) {
         this.garmentRepository = garmentRepository;
+        this.currentOwnerAccessor = currentOwnerAccessor;
     }
 
     @Transactional(readOnly = true)
     public List<Garment> latest() {
-        return garmentRepository.findTop12ByOrderByCreatedAtDesc();
+        return garmentRepository.findTop12ByOwnerIdOrderByCreatedAtDesc(currentOwnerId());
     }
 
     @Transactional(readOnly = true)
     public List<Garment> all() {
-        return garmentRepository.findAllByOrderByCreatedAtDesc();
+        return garmentRepository.findAllByOwnerIdOrderByCreatedAtDesc(currentOwnerId());
     }
 
     @Transactional(readOnly = true)
     public Page<Garment> all(Pageable pageable) {
-        return garmentRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return garmentRepository.findAllByOwnerIdOrderByCreatedAtDesc(currentOwnerId(), pageable);
     }
 
     @Transactional(readOnly = true)
@@ -41,20 +44,21 @@ public class GarmentService {
         if (category == null || category.isBlank()) {
             return all();
         }
-        return garmentRepository.findByCategoryOrderByCreatedAtDesc(category);
+        return garmentRepository.findByOwnerIdAndCategoryOrderByCreatedAtDesc(currentOwnerId(), category);
     }
 
     @Transactional(readOnly = true)
     public List<Garment> favorites() {
-        return garmentRepository.findByFavoriteTrueOrderByCreatedAtDesc();
+        return garmentRepository.findByOwnerIdAndFavoriteTrueOrderByCreatedAtDesc(currentOwnerId());
     }
 
     @Transactional(readOnly = true)
     public DashboardStats getDashboardStats(long plannedDays, long plannedItems) {
-        long total = garmentRepository.count();
-        long favorites = garmentRepository.countByFavoriteTrue();
+        UUID ownerId = currentOwnerId();
+        long total = garmentRepository.countByOwnerId(ownerId);
+        long favorites = garmentRepository.countByOwnerIdAndFavoriteTrue(ownerId);
         int usagePercent = total > 0 ? (int) ((plannedDays * 100) / 7) : 0;
-        var categories = garmentRepository.countByCategoryGrouped().stream()
+        var categories = garmentRepository.countByCategoryGrouped(ownerId).stream()
             .map(r -> new DashboardStats.CategoryCount((String) r[0], (Long) r[1]))
             .toList();
         return new DashboardStats(total, favorites, usagePercent, plannedDays, plannedItems, categories);
@@ -62,12 +66,12 @@ public class GarmentService {
 
     @Transactional(readOnly = true)
     public List<Object[]> getTopColors() {
-        return garmentRepository.countByColorGrouped();
+        return garmentRepository.countByColorGrouped(currentOwnerId());
     }
 
     @Transactional(readOnly = true)
     public Garment get(Long id) {
-        return garmentRepository.findById(id)
+        return garmentRepository.findByIdAndOwnerId(id, currentOwnerId())
                 .orElseThrow(() -> new IllegalArgumentException("Prenda no encontrada"));
     }
 
@@ -86,6 +90,7 @@ public class GarmentService {
         garment.setAiColorHex(form.getAiColorHex());
         garment.setAiConfidence(form.getAiConfidence());
         garment.setAiModel(form.getAiModel());
+        garment.setOwnerId(currentOwnerId());
         garment.setUserConfirmed(true);
         return garmentRepository.save(garment);
     }
@@ -113,6 +118,12 @@ public class GarmentService {
 
     @Transactional
     public void delete(Long id) {
-        garmentRepository.deleteById(id);
+        if (garmentRepository.deleteByIdAndOwnerId(id, currentOwnerId()) == 0) {
+            throw new IllegalArgumentException("Prenda no encontrada");
+        }
+    }
+
+    private UUID currentOwnerId() {
+        return currentOwnerAccessor.getCurrentOwnerId();
     }
 }

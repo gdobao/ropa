@@ -177,7 +177,8 @@ class AiRecommendationServiceTest {
                 500,
                 enabled,
                 Duration.ofSeconds(1),
-                readTimeout);
+                readTimeout,
+                null);
         WebClient webClient = WebClient.builder()
                 .baseUrl(properties.baseUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

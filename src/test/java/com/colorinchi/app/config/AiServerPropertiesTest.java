@@ -12,7 +12,8 @@ class AiServerPropertiesTest {
     void holdsAllValues() {
         var props = new AiServerProperties(
                 "http://localhost", "/chat", "gpt-4", "sk-123",
-                2000, true, Duration.ofSeconds(5), Duration.ofSeconds(20)
+                2000, true, Duration.ofSeconds(5), Duration.ofSeconds(20),
+                null
         );
         assertThat(props.baseUrl()).isEqualTo("http://localhost");
         assertThat(props.chatPath()).isEqualTo("/chat");
@@ -26,7 +27,7 @@ class AiServerPropertiesTest {
 
     @Test
     void disabledWhenEnabledFalse() {
-        var props = new AiServerProperties(null, null, null, null, 0, false, null, null);
+        var props = new AiServerProperties(null, null, null, null, 0, false, null, null, null);
         assertThat(props.enabled()).isFalse();
     }
 }

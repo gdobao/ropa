@@ -2,6 +2,7 @@ package com.colorinchi.app.service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import com.colorinchi.app.model.Garment;
 import com.colorinchi.app.repository.GarmentRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -23,10 +25,14 @@ class GarmentCompatibilityServiceTest {
     @Mock
     private GarmentRepository garmentRepository;
 
+    @Mock
+    private CurrentOwnerAccessor currentOwnerAccessor;
+
     @InjectMocks
     private GarmentCompatibilityService service;
 
     private List<Garment> allGarments;
+    private final UUID ownerId = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @BeforeEach
     void setUp() {
@@ -52,6 +58,7 @@ class GarmentCompatibilityServiceTest {
                 createGarment(19L, "Otro", "Verano"),
                 createGarment(20L, "Otro", "Todas"),
                 createGarment(21L, "Accesorio", "Otono"));
+        lenient().when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
     }
 
     @Test
@@ -71,7 +78,7 @@ class GarmentCompatibilityServiceTest {
 
         // Top compatibility: Pantalón, Chaqueta, Zapatos, Accesorio
         var expectedCategories = Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio");
-        when(garmentRepository.findByCategoryIn(expectedCategories)).thenReturn(
+        when(garmentRepository.findByOwnerIdAndCategoryIn(ownerId, expectedCategories)).thenReturn(
                 allGarments.stream()
                         .filter(g -> expectedCategories.contains(g.getCategory()))
                         .toList());
@@ -86,7 +93,7 @@ class GarmentCompatibilityServiceTest {
     void findCompatibleExcludesSameGarment() {
         Garment base = createGarment(1L, "Top", "Verano");
         var expectedCategories = Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio");
-        when(garmentRepository.findByCategoryIn(expectedCategories)).thenReturn(
+        when(garmentRepository.findByOwnerIdAndCategoryIn(ownerId, expectedCategories)).thenReturn(
                 allGarments.stream()
                         .filter(g -> expectedCategories.contains(g.getCategory()))
                         .toList());
@@ -100,7 +107,7 @@ class GarmentCompatibilityServiceTest {
         // Use lowercased season since production code normalizes candidate but not base
         Garment base = createGarment(1L, "Top", "verano");
         var expectedCategories = Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio");
-        when(garmentRepository.findByCategoryIn(expectedCategories)).thenReturn(
+        when(garmentRepository.findByOwnerIdAndCategoryIn(ownerId, expectedCategories)).thenReturn(
                 allGarments.stream()
                         .filter(g -> expectedCategories.contains(g.getCategory()))
                         .toList());
@@ -122,7 +129,7 @@ class GarmentCompatibilityServiceTest {
         Garment base = createGarment(1L, "Top", "Verano");
         var expectedCategories = Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio");
         List<Garment> manyCandidates = createManyGarments(20);
-        when(garmentRepository.findByCategoryIn(expectedCategories)).thenReturn(manyCandidates);
+        when(garmentRepository.findByOwnerIdAndCategoryIn(ownerId, expectedCategories)).thenReturn(manyCandidates);
 
         var result = service.findCompatible(base);
         assertThat(result).hasSizeLessThanOrEqualTo(6);
@@ -148,7 +155,7 @@ class GarmentCompatibilityServiceTest {
     void normalizeNullIsHandledGracefully() {
         Garment base = createGarment(1L, "Top", null);
         var expectedCategories = Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio");
-        when(garmentRepository.findByCategoryIn(expectedCategories)).thenReturn(
+        when(garmentRepository.findByOwnerIdAndCategoryIn(ownerId, expectedCategories)).thenReturn(
                 allGarments.stream()
                         .filter(g -> expectedCategories.contains(g.getCategory()))
                         .toList());
@@ -168,6 +175,7 @@ class GarmentCompatibilityServiceTest {
         g.setColorName("Test");
         g.setColorHex("#000000");
         g.setImageUrl("/uploads/test.jpg");
+        g.setOwnerId(ownerId);
         return g;
     }
 
@@ -179,6 +187,7 @@ class GarmentCompatibilityServiceTest {
         g.setColorName("Test");
         g.setColorHex("#000000");
         g.setImageUrl("/uploads/test.jpg");
+        g.setOwnerId(ownerId);
         return g;
     }
 

@@ -3,6 +3,7 @@ package com.colorinchi.app.service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,10 +30,14 @@ class GarmentServiceTest {
     @Mock
     private GarmentRepository repository;
 
+    @Mock
+    private CurrentOwnerAccessor currentOwnerAccessor;
+
     @InjectMocks
     private GarmentService service;
 
     private Garment sampleGarment;
+    private final UUID ownerId = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @BeforeEach
     void setUp() {
@@ -51,12 +56,14 @@ class GarmentServiceTest {
         sampleGarment.setAiConfidence(new BigDecimal("0.95"));
         sampleGarment.setAiModel("qwen3.6");
         sampleGarment.setFavorite(false);
+        sampleGarment.setOwnerId(ownerId);
         sampleGarment.setUserConfirmed(true);
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
     }
 
     @Test
     void allReturnsAllGarmentsOrderedByCreatedAtDesc() {
-        when(repository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(sampleGarment));
+        when(repository.findAllByOwnerIdOrderByCreatedAtDesc(ownerId)).thenReturn(List.of(sampleGarment));
 
         var result = service.all();
 
@@ -66,7 +73,7 @@ class GarmentServiceTest {
 
     @Test
     void latestReturnsTop12() {
-        when(repository.findTop12ByOrderByCreatedAtDesc()).thenReturn(List.of(sampleGarment));
+        when(repository.findTop12ByOwnerIdOrderByCreatedAtDesc(ownerId)).thenReturn(List.of(sampleGarment));
 
         var result = service.latest();
 
@@ -75,7 +82,7 @@ class GarmentServiceTest {
 
     @Test
     void filterByCategoryReturnsFilteredResults() {
-        when(repository.findByCategoryOrderByCreatedAtDesc("Top")).thenReturn(List.of(sampleGarment));
+        when(repository.findByOwnerIdAndCategoryOrderByCreatedAtDesc(ownerId, "Top")).thenReturn(List.of(sampleGarment));
 
         var result = service.filterByCategory("Top");
 
@@ -85,7 +92,7 @@ class GarmentServiceTest {
 
     @Test
     void filterByEmptyCategoryReturnsAll() {
-        when(repository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(sampleGarment));
+        when(repository.findAllByOwnerIdOrderByCreatedAtDesc(ownerId)).thenReturn(List.of(sampleGarment));
 
         var result = service.filterByCategory("");
 
@@ -94,7 +101,7 @@ class GarmentServiceTest {
 
     @Test
     void filterByNullCategoryReturnsAll() {
-        when(repository.findAllByOrderByCreatedAtDesc()).thenReturn(List.of(sampleGarment));
+        when(repository.findAllByOwnerIdOrderByCreatedAtDesc(ownerId)).thenReturn(List.of(sampleGarment));
 
         var result = service.filterByCategory(null);
 
@@ -103,7 +110,7 @@ class GarmentServiceTest {
 
     @Test
     void favoritesReturnsFavoritesOnly() {
-        when(repository.findByFavoriteTrueOrderByCreatedAtDesc()).thenReturn(List.of(sampleGarment));
+        when(repository.findByOwnerIdAndFavoriteTrueOrderByCreatedAtDesc(ownerId)).thenReturn(List.of(sampleGarment));
 
         var result = service.favorites();
 
@@ -112,9 +119,9 @@ class GarmentServiceTest {
 
     @Test
     void getDashboardStatsWithGarmentsReturnsCorrectStats() {
-        when(repository.count()).thenReturn(10L);
-        when(repository.countByFavoriteTrue()).thenReturn(3L);
-        when(repository.countByCategoryGrouped()).thenReturn(List.of(
+        when(repository.countByOwnerId(ownerId)).thenReturn(10L);
+        when(repository.countByOwnerIdAndFavoriteTrue(ownerId)).thenReturn(3L);
+        when(repository.countByCategoryGrouped(ownerId)).thenReturn(List.of(
                 new Object[]{"Top", 5L},
                 new Object[]{"Pantalón", 3L}));
 
@@ -132,9 +139,9 @@ class GarmentServiceTest {
 
     @Test
     void getDashboardStatsWithZeroGarmentsReturnsZeroStats() {
-        when(repository.count()).thenReturn(0L);
-        when(repository.countByFavoriteTrue()).thenReturn(0L);
-        when(repository.countByCategoryGrouped()).thenReturn(List.of());
+        when(repository.countByOwnerId(ownerId)).thenReturn(0L);
+        when(repository.countByOwnerIdAndFavoriteTrue(ownerId)).thenReturn(0L);
+        when(repository.countByCategoryGrouped(ownerId)).thenReturn(List.of());
 
         DashboardStats stats = service.getDashboardStats(0L, 0L);
 
@@ -151,7 +158,7 @@ class GarmentServiceTest {
         List<Object[]> rawColors = List.of(
                 new Object[]{"Rojo", "#FF0000", 3L},
                 new Object[]{"Azul", "#0000FF", 2L});
-        when(repository.countByColorGrouped()).thenReturn(rawColors);
+        when(repository.countByColorGrouped(ownerId)).thenReturn(rawColors);
 
         List<Object[]> colors = service.getTopColors();
 
@@ -163,7 +170,7 @@ class GarmentServiceTest {
 
     @Test
     void getWhenExistsReturnsGarment() {
-        when(repository.findById(1L)).thenReturn(Optional.of(sampleGarment));
+        when(repository.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.of(sampleGarment));
 
         Garment result = service.get(1L);
 
@@ -172,7 +179,7 @@ class GarmentServiceTest {
 
     @Test
     void getWhenNotFoundThrowsIllegalArgument() {
-        when(repository.findById(999L)).thenReturn(Optional.empty());
+        when(repository.findByIdAndOwnerId(999L, ownerId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.get(999L))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -182,7 +189,7 @@ class GarmentServiceTest {
     @Test
     void toggleFavoriteFlipsAndSaves() {
         sampleGarment.setFavorite(false);
-        when(repository.findById(1L)).thenReturn(Optional.of(sampleGarment));
+        when(repository.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.of(sampleGarment));
         when(repository.save(any(Garment.class))).thenReturn(sampleGarment);
 
         boolean result = service.toggleFavorite(1L);
@@ -195,7 +202,7 @@ class GarmentServiceTest {
     @Test
     void toggleFavoriteWhenAlreadyFavoriteFlipsToFalse() {
         sampleGarment.setFavorite(true);
-        when(repository.findById(1L)).thenReturn(Optional.of(sampleGarment));
+        when(repository.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.of(sampleGarment));
         when(repository.save(any(Garment.class))).thenReturn(sampleGarment);
 
         boolean result = service.toggleFavorite(1L);
@@ -238,6 +245,7 @@ class GarmentServiceTest {
         assertThat(result.getSeason()).isEqualTo("Todas");
         assertThat(result.getImageUrl()).isEqualTo("/uploads/pantalon.jpg");
         assertThat(result.getAiType()).isEqualTo("Pantalón");
+        assertThat(result.getOwnerId()).isEqualTo(ownerId);
         assertThat(result.isUserConfirmed()).isTrue();
     }
 
@@ -256,7 +264,8 @@ class GarmentServiceTest {
         existing.setImageUrl("/uploads/original.jpg");
         existing.setAiType("Original");
 
-        when(repository.findById(1L)).thenReturn(Optional.of(existing));
+        existing.setOwnerId(ownerId);
+        when(repository.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.of(existing));
         when(repository.save(any(Garment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Garment result = service.update(1L, form);
@@ -274,8 +283,20 @@ class GarmentServiceTest {
     }
 
     @Test
-    void deleteCallsRepositoryDeleteById() {
+    void deleteCallsRepositoryDeleteByIdAndOwnerId() {
+        when(repository.deleteByIdAndOwnerId(1L, ownerId)).thenReturn(1L);
+
         service.delete(1L);
-        verify(repository).deleteById(1L);
+
+        verify(repository).deleteByIdAndOwnerId(1L, ownerId);
+    }
+
+    @Test
+    void deleteThrowsWhenGarmentBelongsToAnotherOwner() {
+        when(repository.deleteByIdAndOwnerId(1L, ownerId)).thenReturn(0L);
+
+        assertThatThrownBy(() -> service.delete(1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Prenda no encontrada");
     }
 }

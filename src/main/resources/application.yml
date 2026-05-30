@@ -1,6 +1,11 @@
 spring:
   application:
     name: ropa
+  task:
+    execution:
+      pool:
+        core-size: 2
+        max-size: 4
   datasource:
     url: jdbc:postgresql://localhost:55432/ropa
     username: ropa
@@ -40,6 +45,19 @@ app:
     max-tokens: 2000
     connect-timeout: 5s
     read-timeout: 60s
+    models:
+      - id: gemma4
+        name: Gemma 4
+        provider: google
+        default: false
+      - id: qwen3.6
+        name: Qwen 3.6
+        provider: alibaba
+        default: true
+      - id: deepseek-v4-flash
+        name: DeepSeek V4 Flash
+        provider: deepseek
+        default: false
   upload:
     directory: uploads
     max-size: 8MB
@@ -58,3 +76,6 @@ app:
     recommendation:
       capacity: 5
       refill-minutes: 30
+    chat:
+      capacity: 30
+      refill-minutes: 1

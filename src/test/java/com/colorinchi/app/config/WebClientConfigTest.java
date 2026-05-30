@@ -14,7 +14,7 @@ class WebClientConfigTest {
     void aiWebClientUsesDefaultsWhenTimeoutsAreNull() {
         var props = new AiServerProperties(
                 "http://localhost:8080", "/chat", "gpt-4", null,
-                2000, true, null, null
+                2000, true, null, null, null
         );
         var client = config.aiWebClient(props);
         assertThat(client).isNotNull();
@@ -24,7 +24,8 @@ class WebClientConfigTest {
     void aiWebClientUsesProvidedTimeouts() {
         var props = new AiServerProperties(
                 "http://localhost:8080", "/chat", "gpt-4", "sk-123",
-                2000, true, Duration.ofSeconds(10), Duration.ofSeconds(30)
+                2000, true, Duration.ofSeconds(10), Duration.ofSeconds(30),
+                null
         );
         var client = config.aiWebClient(props);
         assertThat(client).isNotNull();
@@ -34,7 +35,8 @@ class WebClientConfigTest {
     void aiWebClientWithEmptyApiKey() {
         var props = new AiServerProperties(
                 "http://localhost:8080", "/chat", "gpt-4", "",
-                2000, true, Duration.ofSeconds(5), Duration.ofSeconds(20)
+                2000, true, Duration.ofSeconds(5), Duration.ofSeconds(20),
+                null
         );
         var client = config.aiWebClient(props);
         assertThat(client).isNotNull();

@@ -25,6 +25,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(rateLimitingInterceptor)
-                .addPathPatterns("/wardrobe/analyze", "/recommendation");
+                .addPathPatterns("/wardrobe/analyze", "/recommendation", "/api/chat/stream");
     }
 }

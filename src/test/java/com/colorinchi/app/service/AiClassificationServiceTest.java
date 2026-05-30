@@ -56,7 +56,7 @@ class AiClassificationServiceTest {
         AiServerProperties disabledProps = new AiServerProperties(
                 wireMockServer.baseUrl(), "/v1/chat/completions", "qwen3.6", "test-key", 500,
                 false,
-                Duration.ofSeconds(1), Duration.ofSeconds(3));
+                Duration.ofSeconds(1), Duration.ofSeconds(3), null);
         WebClient wc = WebClient.builder()
                 .baseUrl(disabledProps.baseUrl())
                 .build();
@@ -236,7 +236,8 @@ class AiClassificationServiceTest {
                 500,
                 true,
                 Duration.ofSeconds(1),
-                readTimeout);
+                readTimeout,
+                null);
         WebClient webClient = WebClient.builder()
                 .baseUrl(properties.baseUrl())
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)

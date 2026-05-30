@@ -2,6 +2,7 @@ package com.colorinchi.app.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class WeekPlanServiceTest {
     @Mock
     private GarmentRepository garmentRepo;
 
+    @Mock
+    private CurrentOwnerAccessor currentOwnerAccessor;
+
     @InjectMocks
     private WeekPlanService service;
 
@@ -45,6 +49,7 @@ class WeekPlanServiceTest {
     private ArgumentCaptor<List<WeekPlan>> planListCaptor;
 
     private Garment sampleGarment;
+    private final UUID ownerId = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @BeforeEach
     void setUp() {
@@ -55,13 +60,15 @@ class WeekPlanServiceTest {
         sampleGarment.setColorName("Rojo");
         sampleGarment.setColorHex("#FF0000");
         sampleGarment.setImageUrl("/uploads/test.jpg");
+        sampleGarment.setOwnerId(ownerId);
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
     }
 
     // --- getPlansByDay ---
 
     @Test
     void getPlansByDayReturnsEmptyMapWhenNoPlans() {
-        when(repo.findAllByOrderByDayOfWeekAscPositionAsc()).thenReturn(List.of());
+        when(repo.findAllByOwnerIdOrderByDayOfWeekAscPositionAsc(ownerId)).thenReturn(List.of());
 
         var plans = service.getPlansByDay();
         assertThat(plans).isEmpty();
@@ -73,7 +80,7 @@ class WeekPlanServiceTest {
         WeekPlan lunes2 = createPlan(2L, sampleGarment, "Lunes", 1);
         WeekPlan martes1 = createPlan(3L, sampleGarment, "Martes", 0);
 
-        when(repo.findAllByOrderByDayOfWeekAscPositionAsc()).thenReturn(List.of(lunes1, lunes2, martes1));
+        when(repo.findAllByOwnerIdOrderByDayOfWeekAscPositionAsc(ownerId)).thenReturn(List.of(lunes1, lunes2, martes1));
 
         var plans = service.getPlansByDay();
 
@@ -86,27 +93,28 @@ class WeekPlanServiceTest {
 
     @Test
     void assignGarmentSavesNewPlan() {
-        when(garmentRepo.findById(1L)).thenReturn(Optional.of(sampleGarment));
+        when(garmentRepo.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.of(sampleGarment));
 
         service.assignGarment(1L, "Lunes", 0);
 
-        verify(repo).deleteByGarmentId(1L);
+        verify(repo).deleteByOwnerIdAndGarmentId(ownerId, 1L);
         verify(repo).save(planCaptor.capture());
         WeekPlan saved = planCaptor.getValue();
         assertThat(saved.getGarment().getId()).isEqualTo(1L);
         assertThat(saved.getDayOfWeek()).isEqualTo("Lunes");
         assertThat(saved.getPosition()).isEqualTo(0);
+        assertThat(saved.getOwnerId()).isEqualTo(ownerId);
     }
 
     @Test
     void assignGarmentThrowsWhenGarmentNotFound() {
-        when(garmentRepo.findById(999L)).thenReturn(Optional.empty());
+        when(garmentRepo.findByIdAndOwnerId(999L, ownerId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.assignGarment(999L, "Lunes", 0))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Prenda no encontrada");
 
-        verify(repo).deleteByGarmentId(999L);
+        verify(repo).deleteByOwnerIdAndGarmentId(ownerId, 999L);
         verify(repo, never()).save(any());
     }
 
@@ -114,8 +122,20 @@ class WeekPlanServiceTest {
 
     @Test
     void removeDeletesById() {
+        when(repo.deleteByIdAndOwnerId(1L, ownerId)).thenReturn(1L);
+
         service.remove(1L);
-        verify(repo).deleteById(1L);
+
+        verify(repo).deleteByIdAndOwnerId(1L, ownerId);
+    }
+
+    @Test
+    void removeThrowsWhenPlanBelongsToAnotherOwner() {
+        when(repo.deleteByIdAndOwnerId(1L, ownerId)).thenReturn(0L);
+
+        assertThatThrownBy(() -> service.remove(1L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Plan no encontrado");
     }
 
     // --- reorderDay ---
@@ -126,7 +146,7 @@ class WeekPlanServiceTest {
         WeekPlan plan2 = createPlan(2L, sampleGarment, "Lunes", 1);
         WeekPlan plan3 = createPlan(3L, sampleGarment, "Lunes", 2);
 
-        when(repo.findByDayOfWeekOrderByPositionAsc("Lunes"))
+        when(repo.findByOwnerIdAndDayOfWeekOrderByPositionAsc(ownerId, "Lunes"))
                 .thenReturn(List.of(plan1, plan2, plan3));
 
         service.reorderDay("Lunes", List.of(3L, 1L, 2L));
@@ -147,7 +167,7 @@ class WeekPlanServiceTest {
         WeekPlan plan1 = createPlan(1L, sampleGarment, "Lunes", 0);
         WeekPlan plan2 = createPlan(2L, sampleGarment, "Lunes", 1);
 
-        when(repo.findByDayOfWeekOrderByPositionAsc("Lunes"))
+        when(repo.findByOwnerIdAndDayOfWeekOrderByPositionAsc(ownerId, "Lunes"))
                 .thenReturn(List.of(plan1, plan2));
 
         service.reorderDay("Lunes", List.of(1L, 999L));
@@ -170,7 +190,7 @@ class WeekPlanServiceTest {
 
     @Test
     void countDistinctDaysPlannedDelegatesToRepo() {
-        when(repo.countDistinctDays()).thenReturn(3L);
+        when(repo.countDistinctDays(ownerId)).thenReturn(3L);
 
         long count = service.countDistinctDaysPlanned();
 
@@ -181,7 +201,7 @@ class WeekPlanServiceTest {
 
     @Test
     void countPlannedDelegatesToRepo() {
-        when(repo.count()).thenReturn(10L);
+        when(repo.countByOwnerId(ownerId)).thenReturn(10L);
 
         long count = service.countPlanned();
 
@@ -192,7 +212,7 @@ class WeekPlanServiceTest {
 
     @Test
     void findCompanionGarmentsWithNoPlansReturnsEmpty() {
-        when(repo.findByGarmentId(1L)).thenReturn(List.of());
+        when(repo.findByOwnerIdAndGarmentId(ownerId, 1L)).thenReturn(List.of());
 
         var result = service.findCompanionGarments(1L);
 
@@ -217,8 +237,8 @@ class WeekPlanServiceTest {
         companionPlan2.setGarment(g3);
         companionPlan2.setDayOfWeek("Lunes");
 
-        when(repo.findByGarmentId(1L)).thenReturn(List.of(basePlan));
-        when(repo.findByDayOfWeekInOrderByDayOfWeekAscPositionAsc(List.of("Lunes")))
+        when(repo.findByOwnerIdAndGarmentId(ownerId, 1L)).thenReturn(List.of(basePlan));
+        when(repo.findByOwnerIdAndDayOfWeekInOrderByDayOfWeekAscPositionAsc(ownerId, List.of("Lunes")))
                 .thenReturn(List.of(basePlan, companionPlan1, companionPlan2));
 
         var result = service.findCompanionGarments(1L);
@@ -247,8 +267,8 @@ class WeekPlanServiceTest {
         allPlans.add(basePlan);
         allPlans.addAll(manyPlans);
 
-        when(repo.findByGarmentId(1L)).thenReturn(List.of(basePlan));
-        when(repo.findByDayOfWeekInOrderByDayOfWeekAscPositionAsc(List.of("Lunes")))
+        when(repo.findByOwnerIdAndGarmentId(ownerId, 1L)).thenReturn(List.of(basePlan));
+        when(repo.findByOwnerIdAndDayOfWeekInOrderByDayOfWeekAscPositionAsc(ownerId, List.of("Lunes")))
                 .thenReturn(allPlans);
 
         var result = service.findCompanionGarments(1L);
@@ -273,8 +293,8 @@ class WeekPlanServiceTest {
         companionPlan2.setGarment(sameCompanion);
         companionPlan2.setDayOfWeek("Martes");
 
-        when(repo.findByGarmentId(1L)).thenReturn(List.of(basePlan));
-        when(repo.findByDayOfWeekInOrderByDayOfWeekAscPositionAsc(List.of("Lunes")))
+        when(repo.findByOwnerIdAndGarmentId(ownerId, 1L)).thenReturn(List.of(basePlan));
+        when(repo.findByOwnerIdAndDayOfWeekInOrderByDayOfWeekAscPositionAsc(ownerId, List.of("Lunes")))
                 .thenReturn(List.of(basePlan, companionPlan1, companionPlan2));
 
         var result = service.findCompanionGarments(1L);
@@ -292,6 +312,7 @@ class WeekPlanServiceTest {
         wp.setGarment(garment);
         wp.setDayOfWeek(day);
         wp.setPosition(position);
+        wp.setOwnerId(ownerId);
         return wp;
     }
 
@@ -303,6 +324,7 @@ class WeekPlanServiceTest {
         g.setColorName("Test");
         g.setColorHex("#000000");
         g.setImageUrl("/uploads/test.jpg");
+        g.setOwnerId(ownerId);
         return g;
     }
 }

@@ -1,0 +1,344 @@
+package com.colorinchi.app.controller;
+
+import java.nio.file.Path;
+import java.time.OffsetDateTime;
+
+import org.springframework.util.unit.DataSize;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import com.colorinchi.app.config.AiModelConfig;
+import com.colorinchi.app.config.RateLimitingInterceptor;
+import com.colorinchi.app.config.UploadProperties;
+import org.springframework.test.util.ReflectionTestUtils;
+import com.colorinchi.app.dto.chat.ChatFeedbackRequest;
+import com.colorinchi.app.dto.chat.CreateSessionRequest;
+import com.colorinchi.app.dto.chat.PolicyDecision;
+import com.colorinchi.app.dto.chat.WardrobeContext;
+import com.colorinchi.app.model.ChatFeedback;
+import com.colorinchi.app.model.ChatMessage;
+import com.colorinchi.app.model.ChatRun;
+import com.colorinchi.app.model.ChatSession;
+import com.colorinchi.app.service.AnonymousOwnerService;
+import com.colorinchi.app.service.ChatFeedbackService;
+import com.colorinchi.app.service.ChatMessageService;
+import com.colorinchi.app.service.ChatPolicyService;
+import com.colorinchi.app.service.ChatPromptFactory;
+import com.colorinchi.app.service.ChatRunService;
+import com.colorinchi.app.service.ChatSessionService;
+import com.colorinchi.app.service.ModelRouter;
+import com.colorinchi.app.service.StreamingChatClient;
+import com.colorinchi.app.service.WardrobeContextAssembler;
+
+import reactor.core.publisher.Flux;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(ChatApiController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(ChatApiControllerTest.TestConfig.class)
+class ChatApiControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private ChatSessionService chatSessionService;
+
+    @MockitoBean
+    private ChatMessageService chatMessageService;
+
+    @MockitoBean
+    private ChatRunService chatRunService;
+
+    @MockitoBean
+    private ChatFeedbackService chatFeedbackService;
+
+    @MockitoBean
+    private ChatPolicyService chatPolicyService;
+
+    @MockitoBean
+    private ChatPromptFactory chatPromptFactory;
+
+    @MockitoBean
+    private ModelRouter modelRouter;
+
+    @MockitoBean
+    private StreamingChatClient streamingChatClient;
+
+    @MockitoBean
+    private RateLimitingInterceptor rateLimitingInterceptor;
+
+    @MockitoBean
+    private AnonymousOwnerService anonymousOwnerService;
+
+    private UUID sessionId;
+    private UUID runId;
+    private ChatSession sampleSession;
+    private ChatMessage sampleMessage;
+    private ChatRun sampleRun;
+    private AiModelConfig defaultModel;
+
+    @BeforeEach
+    void setUp() {
+        sessionId = UUID.randomUUID();
+        runId = UUID.randomUUID();
+
+        sampleSession = new ChatSession();
+        sampleSession.setId(sessionId);
+        sampleSession.setTitle("Test Chat");
+        sampleSession.setModel("deepseek-v4-flash");
+        sampleSession.setStatus("active");
+
+        sampleMessage = new ChatMessage();
+        sampleMessage.setId(UUID.randomUUID());
+        sampleMessage.setSessionId(sessionId);
+        sampleMessage.setRole("user");
+        sampleMessage.setContent("Hola");
+
+        sampleRun = new ChatRun();
+        sampleRun.setId(runId);
+        sampleRun.setSessionId(sessionId);
+        sampleRun.setModelRequested("deepseek-v4-flash");
+        sampleRun.setStatus("running");
+
+        defaultModel = new AiModelConfig();
+        defaultModel.setId("deepseek-v4-flash");
+        defaultModel.setName("DeepSeek V4 Flash");
+        defaultModel.setDefault(true);
+
+        when(rateLimitingInterceptor.preHandle(any(), any(), any())).thenReturn(true);
+        when(modelRouter.resolve((String) any())).thenReturn(defaultModel);
+        when(modelRouter.resolve(eq("deepseek-v4-flash"))).thenReturn(defaultModel);
+        when(modelRouter.getAvailableModels()).thenReturn(List.of(defaultModel));
+        when(modelRouter.findDefault()).thenReturn(defaultModel);
+    }
+
+    // ---- Create session ----
+
+    @Test
+    void createSessionReturnsCreatedSession() throws Exception {
+        when(chatSessionService.create(any(CreateSessionRequest.class))).thenReturn(sampleSession);
+
+        mockMvc.perform(post("/api/chat/sessions").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Test Chat\",\"model\":\"deepseek-v4-flash\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(sessionId.toString()))
+                .andExpect(jsonPath("$.title").value("Test Chat"))
+                .andExpect(jsonPath("$.model").value("deepseek-v4-flash"))
+                .andExpect(jsonPath("$.status").value("active"));
+    }
+
+    @Test
+    void createSessionWithEmptyBodyReturnsSession() throws Exception {
+        when(chatSessionService.create(any(CreateSessionRequest.class))).thenReturn(sampleSession);
+
+        mockMvc.perform(post("/api/chat/sessions").with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(sessionId.toString()));
+    }
+
+    // ---- List sessions ----
+
+    @Test
+    void listSessionsReturnsEmptyList() throws Exception {
+        when(chatSessionService.listByOwner()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/chat/sessions").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    void listSessionsWithData() throws Exception {
+        when(chatSessionService.listByOwner()).thenReturn(List.of(sampleSession));
+
+        mockMvc.perform(get("/api/chat/sessions").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(sessionId.toString()))
+                .andExpect(jsonPath("$[0].title").value("Test Chat"))
+                .andExpect(jsonPath("$[0].model").value("deepseek-v4-flash"));
+    }
+
+    // ---- List messages ----
+
+    @Test
+    void listMessagesReturnsEmptyForNewSession() throws Exception {
+        when(chatMessageService.listBySession(sessionId)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    void listMessagesWithData() throws Exception {
+        when(chatMessageService.listBySession(sessionId)).thenReturn(List.of(sampleMessage));
+
+        mockMvc.perform(get("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].role").value("user"))
+                .andExpect(jsonPath("$[0].content").value("Hola"));
+    }
+
+    // ---- Send message ----
+
+    @Test
+    void sendMessageCreatesRunAndReturnsRunId() throws Exception {
+        when(chatSessionService.getById(sessionId)).thenReturn(sampleSession);
+        when(chatPolicyService.evaluate(anyString())).thenReturn(PolicyDecision.allow("test"));
+        when(chatMessageService.create(eq(sessionId), eq("user"), anyString(), anyInt())).thenReturn(sampleMessage);
+        when(chatRunService.create(eq(sessionId), anyString())).thenReturn(sampleRun);
+
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Hola, necesito ayuda\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.runId").value(runId.toString()))
+                .andExpect(jsonPath("$.blocked").value(false));
+    }
+
+    @Test
+    void sendMessageBlockedByPolicy() throws Exception {
+        when(chatSessionService.getById(sessionId)).thenReturn(sampleSession);
+        when(chatPolicyService.evaluate(anyString()))
+                .thenReturn(PolicyDecision.block("outfit_request", "No puedo elegir un outfit por vos"));
+
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Elegime un outfit\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.blocked").value(true))
+                .andExpect(jsonPath("$.refusalMessage").value("No puedo elegir un outfit por vos"));
+    }
+
+    @Test
+    void sendMessageWithEmptyContentReturnsError() throws Exception {
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
+    }
+
+    // ---- Feedback ----
+
+    @Test
+    void submitFeedbackReturnsOk() throws Exception {
+        when(chatRunService.getById(runId)).thenReturn(sampleRun);
+        when(chatFeedbackService.create(eq(runId), eq(sessionId), any(ChatFeedbackRequest.class)))
+                .thenReturn(new ChatFeedback());
+
+        mockMvc.perform(post("/api/chat/runs/{runId}/feedback", runId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rating\":\"up\",\"comment\":\"Great advice\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
+
+    // ---- Delete session ----
+
+    @Test
+    void deleteSessionReturnsOk() throws Exception {
+        mockMvc.perform(delete("/api/chat/sessions/{sessionId}", sessionId).with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+
+        verify(chatSessionService).delete(sessionId);
+    }
+
+    @Test
+    void deleteNonExistentSessionReturnsError() throws Exception {
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Chat session not found"))
+                .when(chatSessionService).delete(sessionId);
+
+        mockMvc.perform(delete("/api/chat/sessions/{sessionId}", sessionId).with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("not_found"));
+    }
+
+    // ---- Available models ----
+
+    @Test
+    void availableModelsReturnsList() throws Exception {
+        AiModelConfig model2 = new AiModelConfig();
+        model2.setId("gemma4");
+        model2.setName("Gemma 4");
+        model2.setDefault(false);
+
+        when(modelRouter.getAvailableModels()).thenReturn(List.of(defaultModel, model2));
+
+        mockMvc.perform(get("/api/chat/models").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("deepseek-v4-flash"))
+                .andExpect(jsonPath("$[0].isDefault").value(true))
+                .andExpect(jsonPath("$[1].id").value("gemma4"))
+                .andExpect(jsonPath("$[1].isDefault").value(false));
+    }
+
+    // ---- List messages for non-existent session ----
+
+    @Test
+    void listMessagesForNonExistentSessionReturnsError() throws Exception {
+        when(chatMessageService.listBySession(sessionId))
+                .thenThrow(new IllegalArgumentException("Chat session not found"));
+
+        mockMvc.perform(get("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("list_failed"));
+    }
+
+    // ---- Send message with invalid model ----
+
+    @Test
+    void sendMessageWithInvalidModelReturnsError() throws Exception {
+        when(chatSessionService.getById(sessionId)).thenReturn(sampleSession);
+        when(modelRouter.resolve(anyString()))
+                .thenThrow(new IllegalArgumentException("Modelo no soportado: bad-model"));
+
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Hello\",\"model\":\"bad-model\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("invalid_model"));
+    }
+
+    @TestConfiguration
+    static class TestConfig {
+        @Bean
+        WardrobeContext dummyWardrobeContext() {
+            return new WardrobeContext(0L, List.of(), List.of(), List.of(), java.util.Map.of(), 0L, 0L, 0L, null, List.of());
+        }
+        @Bean
+        UploadProperties uploadProperties() {
+            return new UploadProperties(Path.of("/tmp"), DataSize.ofMegabytes(8), List.of("image/jpeg"));
+        }
+    }
+}

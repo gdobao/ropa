@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,9 +31,11 @@ public class GarmentCompatibilityService {
             Map.entry("Sudadera", Set.of("Pantalón", "Zapatos", "Accesorio")));
 
     private final GarmentRepository garmentRepository;
+    private final CurrentOwnerAccessor currentOwnerAccessor;
 
-    public GarmentCompatibilityService(GarmentRepository garmentRepository) {
+    public GarmentCompatibilityService(GarmentRepository garmentRepository, CurrentOwnerAccessor currentOwnerAccessor) {
         this.garmentRepository = garmentRepository;
+        this.currentOwnerAccessor = currentOwnerAccessor;
     }
 
     @Transactional(readOnly = true)
@@ -48,7 +51,9 @@ public class GarmentCompatibilityService {
 
         String baseSeason = normalize(base.getSeason());
 
-        return garmentRepository.findByCategoryIn(candidateCategories).stream()
+        UUID ownerId = currentOwnerAccessor.getCurrentOwnerId();
+
+        return garmentRepository.findByOwnerIdAndCategoryIn(ownerId, candidateCategories).stream()
                 .filter(candidate -> base.getId() == null || !base.getId().equals(candidate.getId()))
                 .sorted(Comparator.comparing((Garment candidate) -> !sameSeason(baseSeason, candidate.getSeason())))
                 .limit(RESULT_LIMIT)

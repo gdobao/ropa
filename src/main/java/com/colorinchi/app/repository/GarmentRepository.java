@@ -2,6 +2,8 @@ package com.colorinchi.app.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,26 +15,30 @@ import com.colorinchi.app.model.Garment;
 
 public interface GarmentRepository extends JpaRepository<Garment, Long> {
 
-    List<Garment> findTop12ByOrderByCreatedAtDesc();
+    List<Garment> findTop12ByOwnerIdOrderByCreatedAtDesc(UUID ownerId);
 
-    List<Garment> findByCategoryOrderByCreatedAtDesc(String category);
+    List<Garment> findByOwnerIdAndCategoryOrderByCreatedAtDesc(UUID ownerId, String category);
 
-    List<Garment> findByFavoriteTrueOrderByCreatedAtDesc();
+    List<Garment> findByOwnerIdAndFavoriteTrueOrderByCreatedAtDesc(UUID ownerId);
 
-    List<Garment> findAllByOrderByCreatedAtDesc();
+    List<Garment> findAllByOwnerIdOrderByCreatedAtDesc(UUID ownerId);
 
-    Page<Garment> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    Page<Garment> findAllByOwnerIdOrderByCreatedAtDesc(UUID ownerId, Pageable pageable);
 
-    @Query("SELECT g FROM Garment g WHERE g.category IN :categories ORDER BY g.createdAt DESC")
-    List<Garment> findByCategoryIn(@Param("categories") Collection<String> categories);
+    Optional<Garment> findByIdAndOwnerId(Long id, UUID ownerId);
 
-    long count();
+    long deleteByIdAndOwnerId(Long id, UUID ownerId);
 
-    long countByFavoriteTrue();
+    @Query("SELECT g FROM Garment g WHERE g.ownerId = :ownerId AND g.category IN :categories ORDER BY g.createdAt DESC")
+    List<Garment> findByOwnerIdAndCategoryIn(@Param("ownerId") UUID ownerId, @Param("categories") Collection<String> categories);
 
-    @Query("SELECT g.category, COUNT(g) FROM Garment g GROUP BY g.category")
-    List<Object[]> countByCategoryGrouped();
+    long countByOwnerId(UUID ownerId);
 
-    @Query("SELECT g.colorName, g.colorHex, COUNT(g) FROM Garment g WHERE g.colorHex IS NOT NULL GROUP BY g.colorName, g.colorHex ORDER BY COUNT(g) DESC")
-    List<Object[]> countByColorGrouped();
+    long countByOwnerIdAndFavoriteTrue(UUID ownerId);
+
+    @Query("SELECT g.category, COUNT(g) FROM Garment g WHERE g.ownerId = :ownerId GROUP BY g.category")
+    List<Object[]> countByCategoryGrouped(@Param("ownerId") UUID ownerId);
+
+    @Query("SELECT g.colorName, g.colorHex, COUNT(g) FROM Garment g WHERE g.ownerId = :ownerId AND g.colorHex IS NOT NULL GROUP BY g.colorName, g.colorHex ORDER BY COUNT(g) DESC")
+    List<Object[]> countByColorGrouped(@Param("ownerId") UUID ownerId);
 }

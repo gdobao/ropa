@@ -21,7 +21,8 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
 
         long maxRefillMinutes = Math.max(
                 properties.analyze().refillMinutes(),
-                properties.recommendation().refillMinutes()
+                Math.max(properties.recommendation().refillMinutes(),
+                        properties.chat().refillMinutes())
         );
         long expireMinutes = Math.max(maxRefillMinutes, 60);
 
@@ -37,9 +38,7 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        RateLimitProperties.EndpointConfig config = "analyze".equals(endpointKey)
-                ? properties.analyze()
-                : properties.recommendation();
+        RateLimitProperties.EndpointConfig config = configForKey(endpointKey);
 
         String clientIp = request.getRemoteAddr();
 
@@ -63,6 +62,19 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
         if ("/recommendation".equals(path) && "GET".equalsIgnoreCase(method)) {
             return "recommendation";
         }
+        if ("/api/chat/stream".equals(path) && "POST".equalsIgnoreCase(method)) {
+            return "chat";
+        }
         return null;
+    }
+
+    // visible for testing
+    RateLimitProperties.EndpointConfig configForKey(String key) {
+        return switch (key) {
+            case "analyze" -> properties.analyze();
+            case "recommendation" -> properties.recommendation();
+            case "chat" -> properties.chat();
+            default -> throw new IllegalArgumentException("Unknown key: " + key);
+        };
     }
 }

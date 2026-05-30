@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Chat', activeNav='chat', backUrl='/dashboard', topTitle='Chat', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<main>
+  <input type="hidden" id="chat-session-id" th:value="${currentSession != null ? currentSession.id : ''}"/>
+
+  <div class="chat-layout">
+    <!-- Session rail (desktop) -->
+    <aside class="chat-session-rail">
+      <div class="chat-session-rail-header">
+        <h2>Conversaciones</h2>
+        <button class="chat-new-btn" onclick="Chat.createNewSession()" title="Nueva conversación" aria-label="Nueva conversación">+</button>
+      </div>
+      <div class="chat-session-list" id="chat-session-list">
+        <th:block th:each="chatSession : ${sessions}">
+          <a th:href="@{/chat/{id}(id=${chatSession.id})}"
+             th:classappend="${currentSession != null and chatSession.id == currentSession.id} ? 'chat-session-active' : ''"
+             class="chat-session-item">
+            <span class="chat-session-title" th:text="${chatSession.title}">Sesión</span>
+            <span class="chat-session-meta" th:text="${#temporals.format(chatSession.updatedAt, 'dd/MM HH:mm')}">fecha</span>
+          </a>
+        </th:block>
+        <th:block th:if="${#lists.isEmpty(sessions)}">
+          <div style="padding: var(--space-md); text-align: center; color: var(--muted); font-size: var(--text-xs);">
+            Sin conversaciones todavía
+          </div>
+        </th:block>
+      </div>
+    </aside>
+
+    <!-- Thread container -->
+    <div class="chat-thread-container">
+      <!-- Mobile: session toggle + current title -->
+      <div class="chat-mobile-toggle">
+        <button class="chat-mobile-toggle-btn" type="button" onclick="document.querySelector('.chat-session-rail').style.display = document.querySelector('.chat-session-rail').style.display === 'flex' ? 'none' : 'flex'" aria-label="Mostrar conversaciones">
+          ☰ <span th:if="${currentSession != null}" th:text="${currentSession.title}">Chat</span>
+          <span th:if="${currentSession == null}">Conversaciones</span>
+        </button>
+        <div style="flex:1"></div>
+        <!-- Wardrobe context badge -->
+        <span th:if="${wardrobeContext != null and wardrobeContext.totalGarments() > 0}"
+              class="chat-badge" id="chat-context-badge" role="button" tabindex="0" aria-label="Contexto del armario">
+          <span class="chat-badge-info">📋</span>
+          Usando tu armario (<span th:text="${wardrobeContext.totalGarments()}">0</span> prendas)
+        </span>
+      </div>
+
+      <!-- Thread -->
+      <div class="chat-thread" id="chat-thread">
+        <!-- Empty state -->
+        <div th:if="${currentSession == null or #lists.isEmpty(messages)}" class="chat-empty" id="chat-empty">
+          <div>
+            <div class="chat-empty-icon">💬</div>
+            <h2>Asistente de Moda</h2>
+            <p th:if="${currentSession == null}">
+              Iniciá una conversación sobre moda. Consultá sobre combinaciones, colores, o pedí consejos de estilo usando tu armario como referencia.
+            </p>
+            <p th:if="${currentSession != null}">
+              Enviá un mensaje para empezar. Consultá sobre tus prendas, combinaciones, o pedí consejos de estilo.
+            </p>
+          </div>
+        </div>
+
+        <!-- Existing messages -->
+        <th:block th:if="${messages != null}">
+          <th:block th:each="msg : ${messages}">
+            <div th:classappend="${msg.role == 'user'} ? 'chat-message-user' : 'chat-message-assistant'"
+                 class="chat-message"
+                 th:attr="data-message-id=${msg.id}, data-role=${msg.role}">
+              <div class="chat-message-role">
+                <th:block th:if="${msg.role == 'user'}">Vos</th:block>
+                <th:block th:if="${msg.role == 'assistant'}">Asistente</th:block>
+              </div>
+              <div class="chat-message-content" th:text="${msg.content}">contenido</div>
+              <div class="chat-message-time" th:text="${#temporals.format(msg.createdAt, 'HH:mm')}">hora</div>
+              <!-- Feedback for assistant messages -->
+              <div th:if="${msg.role == 'assistant'}" class="chat-feedback visible" th:attr="data-run-id=${msg.id}">
+                <button class="chat-feedback-btn" data-rating="up" title="Útil">👍</button>
+                <button class="chat-feedback-btn" data-rating="down" title="No útil">👎</button>
+              </div>
+            </div>
+          </th:block>
+        </th:block>
+
+        <!-- Context transparency card (hidden by default) -->
+        <div th:if="${wardrobeContext != null}" class="chat-context-card" id="chat-context-card">
+          <h4>📋 Contexto del armario incluido</h4>
+          <ul>
+            <li><strong><span th:text="${wardrobeContext.totalGarments()}">0</span></strong> prendas en total</li>
+            <li th:if="${wardrobeContext.favoritesCount() > 0}"><strong><span th:text="${wardrobeContext.favoritesCount()}">0</span></strong> favoritas</li>
+            <li th:if="${wardrobeContext.plannedItems() > 0}"><strong><span th:text="${wardrobeContext.plannedItems()}">0</span></strong> prendas planificadas esta semana</li>
+          </ul>
+          <th:block th:if="${!wardrobeContext.categories().isEmpty()}">
+            <h4>Categorías</h4>
+            <ul>
+              <li th:each="cat : ${wardrobeContext.categories()}" th:text="${cat.category() + ': ' + cat.count()}">cat: 0</li>
+            </ul>
+          </th:block>
+        </div>
+      </div>
+
+      <!-- Error state (hidden by default) -->
+      <div class="chat-error" id="chat-error" style="display:none">
+        <p></p>
+        <button class="chat-retry-btn" id="chat-retry-btn">Reintentar</button>
+      </div>
+
+      <!-- Reconnecting state (hidden by default) -->
+      <div class="chat-reconnecting" id="chat-reconnecting" style="display:none">
+        <span class="chat-reconnecting-dot"></span>
+        Reconectando...
+      </div>
+
+      <!-- Copy banner -->
+      <div class="chat-copy-banner">
+        <span>✨</span> Te ayudo a pensar el look, no a elegirlo por vos
+      </div>
+
+      <!-- Input area -->
+      <div th:if="${currentSession != null}" class="chat-input-area">
+        <div class="chat-input-wrapper">
+          <div class="chat-input-row">
+            <form id="chat-form" style="display:contents;">
+              <textarea class="chat-input" id="chat-input" rows="1" placeholder="Consultá sobre moda..." aria-label="Mensaje"></textarea>
+              <button class="chat-send-btn" id="chat-send-btn" type="submit" aria-label="Enviar">→</button>
+            </form>
+          </div>
+          <div class="chat-model-selector">
+            <span>Modelo:</span>
+            <select id="chat-model-select">
+              <th:block th:each="m : ${models}">
+                <option th:value="${m.id}" th:selected="${m.isDefault or (currentSession != null and m.id == currentSession.model)}" th:text="${m.name != null ? m.name : m.id}">model</option>
+              </th:block>
+            </select>
+
+            <!-- Wardrobe context badge (desktop) -->
+            <span th:if="${wardrobeContext != null and wardrobeContext.totalGarments() > 0}"
+                  class="chat-badge" id="chat-context-badge-desktop" role="button" tabindex="0" aria-label="Contexto del armario"
+                  style="margin-left:auto; cursor:pointer;" onclick="Chat.toggleContextCard()">
+              <span class="chat-badge-info">📋</span>
+              <span th:text="${wardrobeContext.totalGarments()}">0</span> prendas
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- No session selected state -->
+      <div th:if="${currentSession == null}" style="padding: var(--space-md); text-align: center; color: var(--muted); font-size: var(--text-sm); border-top: 1px solid var(--border);">
+        Seleccioná una conversación o <a href="#" onclick="Chat.createNewSession(); return false;" style="color: var(--accent); font-weight: 700;">creá una nueva</a>
+      </div>
+    </div>
+  </div>
+
+  <script th:src="@{/js/chat.js}"></script>
+</main>
+</body>
+</html>

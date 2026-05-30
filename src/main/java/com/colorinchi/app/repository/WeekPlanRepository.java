@@ -2,24 +2,30 @@ package com.colorinchi.app.repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.colorinchi.app.model.WeekPlan;
 
 public interface WeekPlanRepository extends JpaRepository<WeekPlan, Long> {
 
-    List<WeekPlan> findByDayOfWeekOrderByPositionAsc(String dayOfWeek);
+    List<WeekPlan> findByOwnerIdAndDayOfWeekOrderByPositionAsc(UUID ownerId, String dayOfWeek);
 
-    List<WeekPlan> findByGarmentId(Long garmentId);
+    List<WeekPlan> findByOwnerIdAndGarmentId(UUID ownerId, Long garmentId);
 
-    List<WeekPlan> findByDayOfWeekInOrderByDayOfWeekAscPositionAsc(Collection<String> days);
+    List<WeekPlan> findByOwnerIdAndDayOfWeekInOrderByDayOfWeekAscPositionAsc(UUID ownerId, Collection<String> days);
 
-    List<WeekPlan> findAllByOrderByDayOfWeekAscPositionAsc();
+    List<WeekPlan> findAllByOwnerIdOrderByDayOfWeekAscPositionAsc(UUID ownerId);
 
-    void deleteByGarmentId(Long garmentId);
+    long deleteByOwnerIdAndGarmentId(UUID ownerId, Long garmentId);
 
-    @Query("SELECT COUNT(DISTINCT w.dayOfWeek) FROM WeekPlan w")
-    long countDistinctDays();
+    long deleteByIdAndOwnerId(Long id, UUID ownerId);
+
+    long countByOwnerId(UUID ownerId);
+
+    @Query("SELECT COUNT(DISTINCT w.dayOfWeek) FROM WeekPlan w WHERE w.ownerId = :ownerId")
+    long countDistinctDays(@Param("ownerId") UUID ownerId);
 }

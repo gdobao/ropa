@@ -1,6 +1,7 @@
 package com.colorinchi.app.config;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -13,5 +14,6 @@ public record AiServerProperties(
         int maxTokens,
         boolean enabled,
         Duration connectTimeout,
-        Duration readTimeout) {
+        Duration readTimeout,
+        List<AiModelConfig> models) {
 }
