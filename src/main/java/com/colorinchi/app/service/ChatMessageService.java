@@ -99,6 +99,12 @@ public class ChatMessageService {
                 .orElseThrow(() -> new IllegalArgumentException("Chat message not found"));
     }
 
+    @Transactional(readOnly = true)
+    public ChatMessage getById(UUID id) {
+        return chatMessageRepository.findByIdAndOwnerId(id, currentOwnerId())
+                .orElseThrow(() -> new IllegalArgumentException("Chat message not found"));
+    }
+
     private UUID currentOwnerId() {
         return currentOwnerAccessor.getCurrentOwnerId();
     }

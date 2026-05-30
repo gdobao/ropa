@@ -112,7 +112,7 @@ class GarmentControllerTest {
                 "Top", "Rojo", "#FF0000", new BigDecimal("0.95"), "qwen3.6", null);
 
         sampleStats = new DashboardStats(
-                10L, 3L, 42, 3L, 6L,
+                10L, 3L, 42, 3L, 6L, 60L, 7L,
                 List.of(new DashboardStats.CategoryCount("Top", 5L)));
 
         when(rateLimitingInterceptor.preHandle(any(), any(), any())).thenReturn(true);
@@ -500,7 +500,7 @@ class GarmentControllerTest {
         when(weekPlanService.countDistinctDaysPlanned()).thenReturn(0L);
         when(weekPlanService.countPlanned()).thenReturn(0L);
         when(garmentService.getDashboardStats(anyLong(), anyLong())).thenReturn(
-                new DashboardStats(0L, 0L, 0, 0L, 0L, List.of()));
+                new DashboardStats(0L, 0L, 0, 0L, 0L, 0L, 0L, List.of()));
         when(garmentService.latest()).thenReturn(List.of());
 
         mockMvc.perform(get("/dashboard").with(csrf()))

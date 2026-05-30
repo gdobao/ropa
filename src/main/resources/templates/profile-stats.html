@@ -45,6 +45,14 @@
         <strong class="stat-num" th:text="${stats.plannedItems()}">0</strong>
         <span>Looks creados</span>
       </article>
+      <article class="card stat-card">
+        <strong class="stat-num" th:text="${stats.plannedCoveragePercent() + '%'}">0%</strong>
+        <span>Cobertura del armario</span>
+      </article>
+      <article class="card stat-card">
+        <strong class="stat-num" th:text="${stats.nonFavoriteCount()}">0</strong>
+        <span>No favoritos</span>
+      </article>
     </section>
 
     <!-- Category breakdown -->

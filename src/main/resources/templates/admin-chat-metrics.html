@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Chat Metrics', activeNav='dashboard', backUrl='/dashboard', topTitle='Métricas de chat', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<body>
+<main>
+  <h1>Métricas de chat</h1>
+  <section class="section">
+    <h2>Operativas (proceso actual)</h2>
+    <div class="stat-grid">
+      <article class="card stat-card" th:each="metric : ${liveMetrics}">
+        <strong class="stat-num" th:text="${metric.value}">0</strong>
+        <span th:text="${metric.key}">key</span>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Histórico derivado (últimos <span th:text="${history.days()}">14</span> días)</h2>
+    <div class="cat-bars" th:if="${!history.eventsByDay().isEmpty()}">
+      <div class="cat-bar-row" th:each="point : ${history.eventsByDay()}">
+        <span class="cat-label" th:text="${point.key}">2026-01-01</span>
+        <div class="cat-bar-track">
+          <div class="cat-bar-fill" th:style="|width:${history.maxDailyEvents() > 0 ? (point.value * 100 / history.maxDailyEvents()) : 0}%|"></div>
+        </div>
+        <span class="cat-count" th:text="${point.value}">0</span>
+      </div>
+    </div>
+    <p class="meta" th:if="${history.eventsByDay().isEmpty()}">Aún no hay eventos históricos.</p>
+  </section>
+
+  <section class="section" th:if="${!history.totalsByType().isEmpty()}">
+    <h2>Eventos por tipo</h2>
+    <div class="color-legend">
+      <span class="color-legend-item" th:each="entry : ${history.totalsByType()}" th:text="${entry.key + ' · ' + entry.value}">RUN_COMPLETED · 12</span>
+    </div>
+  </section>
+</main>
+</body>
+</html>

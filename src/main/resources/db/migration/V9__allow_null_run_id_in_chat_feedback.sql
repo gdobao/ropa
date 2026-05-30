@@ -1,0 +1,1 @@
+ALTER TABLE chat_feedback ALTER COLUMN run_id DROP NOT NULL;

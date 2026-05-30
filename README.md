@@ -765,6 +765,8 @@ app:
 mvn spring-boot:run
 ```
 
+> **Regla del proyecto:** ejecutar siempre en `http://localhost:8081`. No levantar la app en otros puertos para desarrollo ni validación Playwright.
+
 5. **Abrir en el navegador:**
 
 ```text

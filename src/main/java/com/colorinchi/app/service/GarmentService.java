@@ -61,7 +61,9 @@ public class GarmentService {
         var categories = garmentRepository.countByCategoryGrouped(ownerId).stream()
             .map(r -> new DashboardStats.CategoryCount((String) r[0], (Long) r[1]))
             .toList();
-        return new DashboardStats(total, favorites, usagePercent, plannedDays, plannedItems, categories);
+        long plannedCoveragePercent = total > 0 ? Math.min(100, (plannedItems * 100) / total) : 0;
+        long nonFavoriteCount = Math.max(0, total - favorites);
+        return new DashboardStats(total, favorites, usagePercent, plannedDays, plannedItems, plannedCoveragePercent, nonFavoriteCount, categories);
     }
 
     @Transactional(readOnly = true)

@@ -14,6 +14,7 @@
     accumulatedContent: '',
     streamingMsgEl: null,
     isStreaming: false,
+    isSending: false,
   };
 
   // ---- DOM refs (cached on first call) ----
@@ -106,7 +107,7 @@
 
     // Feedback thumbs for assistant messages
     if (!isUser && !isPolicy) {
-      inner += '<div class="chat-feedback" data-run-id="' + (id || '') + '">'
+      inner +=       '<div class="chat-feedback" data-run-id="' + (id || '') + '" data-message-id="' + (id || '') + '">'
         + '<button class="chat-feedback-btn" data-rating="up" title="Útil">👍</button>'
         + '<button class="chat-feedback-btn" data-rating="down" title="No útil">👎</button>'
         + '</div>';
@@ -261,7 +262,7 @@
         // Wire feedback buttons to this run
         var feedbackEl = State.streamingMsgEl.querySelector('.chat-feedback');
         if (feedbackEl) {
-          feedbackEl.dataset.runId = State.activeRunId;
+          feedbackEl.dataset.runId = messageId;
           feedbackEl.classList.add('visible');
         }
       }
@@ -313,7 +314,10 @@
       showError('No hay una sesión activa. Creá una nueva conversación.');
       return;
     }
-    if (!content || !content.trim()) return;
+    if (!content || !content.trim() || State.isSending) return;
+
+    var messageToSend = content.trim();
+    State.isSending = true;
 
     disableInput();
     hideError();
@@ -321,7 +325,7 @@
     var model = _els.modelSelect ? _els.modelSelect.value : '';
 
     // Add user message immediately
-    addMessage('user', content.trim(), null, new Date().toISOString());
+    addMessage('user', messageToSend, null, new Date().toISOString());
     _els.input.value = '';
     _els.input.style.height = 'auto';
 
@@ -339,10 +343,11 @@
     fetch('/api/chat/sessions/' + sessionId + '/messages', {
       method: 'POST',
       headers: headers,
-      body: JSON.stringify({ content: content.trim(), model: model }),
+      body: JSON.stringify({ content: messageToSend, model: model }),
     })
       .then(function (r) { return r.json(); })
       .then(function (data) {
+        State.isSending = false;
         if (data.blocked) {
           // Policy blocked — show refusal as assistant message
           addMessage('policy', data.refusalMessage || 'No puedo procesar esa solicitud.', null, new Date().toISOString());
@@ -355,6 +360,7 @@
         }
       })
       .catch(function (err) {
+        State.isSending = false;
         showError('Error de conexión. Verificá tu conexión e intentá de nuevo.');
         enableInput();
       });
@@ -364,17 +370,13 @@
 
   function submitFeedback(runId, rating) {
     if (!runId) return;
+    var feedbackEl = document.querySelector('.chat-feedback[data-run-id="' + runId + '"]');
+    var messageId = feedbackEl ? feedbackEl.dataset.messageId : runId;
     var csrfToken = getCsrfToken();
     var csrfHeader = getCsrfHeader();
-
-    var headers = {
-      'Content-Type': 'application/json',
-    };
-    if (csrfToken) {
-      headers[csrfHeader] = csrfToken;
-    }
-
-    fetch('/api/chat/runs/' + runId + '/feedback', {
+    var headers = { 'Content-Type': 'application/json' };
+    if (csrfToken) headers[csrfHeader] = csrfToken;
+    fetch('/api/chat/messages/' + messageId + '/feedback', {
       method: 'POST',
       headers: headers,
       body: JSON.stringify({ rating: rating, comment: '' }),
@@ -479,7 +481,7 @@
     if (_els.form) {
       _els.form.addEventListener('submit', function (e) {
         e.preventDefault();
-        if (State.isStreaming) return;
+        if (State.isStreaming || State.isSending) return;
         var content = _els.input ? _els.input.value : '';
         sendMessage(content);
       });

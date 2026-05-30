@@ -97,6 +97,7 @@ class ChatApiControllerTest {
     private AnonymousOwnerService anonymousOwnerService;
 
     private UUID sessionId;
+    private UUID messageId;
     private UUID runId;
     private ChatSession sampleSession;
     private ChatMessage sampleMessage;
@@ -106,6 +107,7 @@ class ChatApiControllerTest {
     @BeforeEach
     void setUp() {
         sessionId = UUID.randomUUID();
+        messageId = UUID.randomUUID();
         runId = UUID.randomUUID();
 
         sampleSession = new ChatSession();
@@ -115,7 +117,7 @@ class ChatApiControllerTest {
         sampleSession.setStatus("active");
 
         sampleMessage = new ChatMessage();
-        sampleMessage.setId(UUID.randomUUID());
+        sampleMessage.setId(messageId);
         sampleMessage.setSessionId(sessionId);
         sampleMessage.setRole("user");
         sampleMessage.setContent("Hola");
@@ -252,11 +254,11 @@ class ChatApiControllerTest {
 
     @Test
     void submitFeedbackReturnsOk() throws Exception {
-        when(chatRunService.getById(runId)).thenReturn(sampleRun);
-        when(chatFeedbackService.create(eq(runId), eq(sessionId), any(ChatFeedbackRequest.class)))
+        when(chatMessageService.getById(any(UUID.class))).thenReturn(sampleMessage);
+        when(chatFeedbackService.create(any(), any(), any(ChatFeedbackRequest.class)))
                 .thenReturn(new ChatFeedback());
 
-        mockMvc.perform(post("/api/chat/runs/{runId}/feedback", runId).with(csrf())
+        mockMvc.perform(post("/api/chat/messages/{messageId}/feedback", messageId).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"rating\":\"up\",\"comment\":\"Great advice\"}"))
                 .andExpect(status().isOk())

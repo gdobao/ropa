@@ -45,6 +45,7 @@ public class ChatFeedbackService {
     }
 
     private void recordFeedback(ChatFeedback feedback) {
+        if (feedback.getRunId() == null) return;
         try {
             chatAnalyticsService.recordFeedback(
                     feedback.getOwnerId(), feedback.getRunId(), feedback.getRating());

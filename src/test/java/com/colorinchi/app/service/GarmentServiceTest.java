@@ -132,6 +132,8 @@ class GarmentServiceTest {
         assertThat(stats.usagePercent()).isEqualTo(42); // (3 * 100) / 7
         assertThat(stats.plannedDays()).isEqualTo(3L);
         assertThat(stats.plannedItems()).isEqualTo(6L);
+        assertThat(stats.plannedCoveragePercent()).isEqualTo(60L);
+        assertThat(stats.nonFavoriteCount()).isEqualTo(7L);
         assertThat(stats.categoryBreakdown()).hasSize(2);
         assertThat(stats.categoryBreakdown().get(0).category()).isEqualTo("Top");
         assertThat(stats.categoryBreakdown().get(0).count()).isEqualTo(5L);
@@ -150,6 +152,8 @@ class GarmentServiceTest {
         assertThat(stats.usagePercent()).isEqualTo(0);
         assertThat(stats.plannedDays()).isEqualTo(0L);
         assertThat(stats.plannedItems()).isEqualTo(0L);
+        assertThat(stats.plannedCoveragePercent()).isEqualTo(0L);
+        assertThat(stats.nonFavoriteCount()).isEqualTo(0L);
         assertThat(stats.categoryBreakdown()).isEmpty();
     }
 

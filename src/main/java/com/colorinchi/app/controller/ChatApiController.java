@@ -338,19 +338,19 @@ public class ChatApiController {
 
     // ---- Feedback ----
 
-    @PostMapping("/runs/{runId}/feedback")
+    @PostMapping("/messages/{messageId}/feedback")
     public ResponseEntity<?> submitFeedback(
-            @PathVariable UUID runId,
+            @PathVariable UUID messageId,
             @RequestBody ChatFeedbackRequest request) {
         try {
-            ChatRun run = chatRunService.getById(runId);
-            chatFeedbackService.create(runId, run.getSessionId(), request);
+            ChatMessage msg = chatMessageService.getById(messageId);
+            chatFeedbackService.create(null, msg.getSessionId(), request);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of("not_found", e.getMessage()));
         } catch (Exception e) {
-            log.error("Failed to submit feedback for run {}", runId, e);
+            log.error("Failed to submit feedback for message {}", messageId, e);
             return ResponseEntity.internalServerError()
                     .body(ErrorResponse.of("feedback_failed", e.getMessage()));
         }

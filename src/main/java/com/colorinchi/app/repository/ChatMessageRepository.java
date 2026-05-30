@@ -14,5 +14,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
 
     Optional<ChatMessage> findByIdAndSessionIdAndOwnerId(UUID id, UUID sessionId, UUID ownerId);
 
+    Optional<ChatMessage> findByIdAndOwnerId(UUID id, UUID ownerId);
+
     long countBySessionIdAndOwnerId(UUID sessionId, UUID ownerId);
 }
