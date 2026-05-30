@@ -127,6 +127,92 @@ class LocalImageStorageServiceTest {
         assertThat(savedFile).exists();
     }
 
+    @Test
+    void storeWithNullBytesThrowsIllegalArgument() throws Exception {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(1000L);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getBytes()).thenReturn(new byte[]{0, 0, 0});
+
+        assertThatThrownBy(() -> service.store(file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("imagen válida");
+    }
+
+    @Test
+    void storeWithShortHeaderThrowsIllegalArgument() throws Exception {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn(2L);
+        when(file.getContentType()).thenReturn("image/jpeg");
+        when(file.getBytes()).thenReturn(new byte[]{0, 0});
+
+        assertThatThrownBy(() -> service.store(file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("imagen válida");
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Test
+    void storeWithPngImageReturnsUploadUrl() throws Exception {
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/png"));
+        service = new LocalImageStorageService(uploadProperties);
+
+        byte[] pngBytes = {
+            (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52
+        };
+
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn((long) pngBytes.length);
+        when(file.getContentType()).thenReturn("image/png");
+        when(file.getBytes()).thenReturn(pngBytes);
+
+        Thumbnails.Builder builder = mock(Thumbnails.Builder.class);
+        when(builder.size(anyInt(), anyInt())).thenReturn(builder);
+        when(builder.outputQuality(anyDouble())).thenReturn(builder);
+
+        try (MockedStatic<Thumbnails> mocked = mockStatic(Thumbnails.class)) {
+            mocked.when(() -> Thumbnails.of(any(InputStream.class))).thenReturn(builder);
+
+            String url = service.store(file);
+            assertThat(url).startsWith("/uploads/");
+            assertThat(url).endsWith(".jpg");
+        }
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    @Test
+    void storeWithWebPImageReturnsUploadUrl() throws Exception {
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/webp"));
+        service = new LocalImageStorageService(uploadProperties);
+
+        byte[] webpBytes = {
+            0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
+            0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20
+        };
+
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn((long) webpBytes.length);
+        when(file.getContentType()).thenReturn("image/webp");
+        when(file.getBytes()).thenReturn(webpBytes);
+
+        Thumbnails.Builder builder = mock(Thumbnails.Builder.class);
+        when(builder.size(anyInt(), anyInt())).thenReturn(builder);
+        when(builder.outputQuality(anyDouble())).thenReturn(builder);
+
+        try (MockedStatic<Thumbnails> mocked = mockStatic(Thumbnails.class)) {
+            mocked.when(() -> Thumbnails.of(any(InputStream.class))).thenReturn(builder);
+
+            String url = service.store(file);
+            assertThat(url).startsWith("/uploads/");
+            assertThat(url).endsWith(".jpg");
+        }
+    }
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void storeWithThumbnailatorIOExceptionThrowsIllegalState() throws Exception {
