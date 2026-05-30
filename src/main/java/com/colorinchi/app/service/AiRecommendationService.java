@@ -1,5 +1,6 @@
 package com.colorinchi.app.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -11,6 +12,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.colorinchi.app.config.AiServerProperties;
 import com.colorinchi.app.dto.AiRecommendationResponse;
+import com.colorinchi.app.dto.OutfitPiece;
+import com.colorinchi.app.dto.OutfitSuggestion;
 import com.colorinchi.app.model.Garment;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -71,15 +74,23 @@ public class AiRecommendationService {
                 .map(this::garmentLine)
                 .collect(Collectors.joining("\n"));
 
-        return "Sos un asesor de estilo. Con el guardarropa disponible, propone entre 1 y 3 outfits completos y usables. "
-                + "Responde SOLO JSON con esta estructura exacta: "
-                + "{\"outfits\":[{\"name\":\"\",\"description\":\"\",\"pieces\":[{\"category\":\"\",\"colorName\":\"\",\"colorHex\":\"\"}]}]}. "
-                + "No agregues texto fuera del JSON.\n\n"
-                + "Guardarropa:\n" + wardrobeLines;
+        return "Sos un asesor de estilo experto. Trabajás con el guardarropa de una persona real."
+                + " Proponé entre 3 y 5 outfits completos y usables.\n\n"
+                + "REGLAS DE ESTILO:\n"
+                + "- Cada outfit debe combinar colores que armonicen (neutros + 1 color de acento, monocromático con texturas distintas, o complementarios).\n"
+                + "- NO pongas el MISMO color en todas las piezas del mismo outfit. Variá.\n"
+                + "- Cada outfit debe incluir una mezcla de categorías distintas: parte superior + inferior + calzado + opcional abrigo/accesorio.\n"
+                + "- NO repitas la misma prenda en distintos outfits.\n"
+                + "- Los outfits deben ser variados entre sí (no todos formales ni todos casuales).\n"
+                + "- Puntuá cada outfit del 1 al 10 según su armonía y estilo.\n\n"
+                + "Responde SOLO JSON, sin texto adicional:\n"
+                + "{\"outfits\":[{\"name\":\"\",\"description\":\"\",\"score\":8,\"pieces\":[{\"category\":\"\",\"colorName\":\"\",\"colorHex\":\"\"}]}]}\n\n"
+                + "Guardarropa disponible:\n" + wardrobeLines;
     }
 
     private String garmentLine(Garment garment) {
-        return "- category=" + safe(garment.getCategory())
+        return "- " + safe(garment.getName())
+                + " | category=" + safe(garment.getCategory())
                 + ", colorName=" + safe(garment.getColorName())
                 + ", colorHex=" + safe(garment.getColorHex())
                 + ", material=" + safe(garment.getMaterial());
@@ -94,10 +105,27 @@ public class AiRecommendationService {
             JsonNode root = objectMapper.readTree(response);
             JsonNode message = root.path("choices").path(0).path("message");
             String content = message.path("content").asText("{}");
-            return objectMapper.readValue(content, AiRecommendationResponse.class);
+            AiRecommendationResponse raw = objectMapper.readValue(content, AiRecommendationResponse.class);
+            List<OutfitSuggestion> enriched = raw.outfits().stream()
+                    .map(this::enrichOutfit)
+                    .toList();
+            return new AiRecommendationResponse(enriched);
         } catch (Exception ex) {
             log.warn("AI recommendations parse failed: {}", ex.getMessage(), ex);
             return AiRecommendationResponse.empty();
         }
+    }
+
+    private OutfitSuggestion enrichOutfit(OutfitSuggestion outfit) {
+        List<OutfitPiece> sorted = outfit.pieces().stream()
+                .map(p -> new OutfitPiece(
+                        p.category(),
+                        p.colorName(),
+                        p.colorHex(),
+                        OutfitPiece.zoneFor(p.category()),
+                        OutfitPiece.isLightText(p.colorHex())))
+                .sorted(Comparator.comparingInt(OutfitPiece::bodyZone))
+                .toList();
+        return new OutfitSuggestion(outfit.name(), outfit.description(), outfit.score(), sorted);
     }
 }

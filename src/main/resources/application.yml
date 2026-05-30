@@ -28,7 +28,7 @@ spring:
       dispatcher-types: request, forward, error
 
 server:
-  port: 8080
+  port: 8081
 
 app:
   ai:
@@ -37,9 +37,9 @@ app:
     chat-path: /v1/chat/completions
     model: qwen3.6
     api-key: ${NAN_API_KEY:}
-    max-tokens: 500
+    max-tokens: 2000
     connect-timeout: 5s
-    read-timeout: 20s
+    read-timeout: 60s
   upload:
     directory: uploads
     max-size: 8MB

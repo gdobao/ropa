@@ -2,47 +2,54 @@
 <html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Sugerencias', activeNav='recommendation', backUrl='/dashboard', topTitle='Sugerencias', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
 <body>
 <main>
-  <section class="hero-card rec-hero" th:if="${recommendations == null or #lists.isEmpty(recommendations)}">
-    <span class="big-num">IA</span>
-    <h2>Todavía no hay sugerencias</h2>
-    <p>Agregá más prendas con categoría y color para que podamos armar looks para vos.</p>
-    <a class="btn primary" th:href="@{/wardrobe/new}">Agregar prendas</a>
+
+  <section class="section rec-empty" th:if="${recommendations == null or #lists.isEmpty(recommendations)}">
+    <div class="empty">
+      <span class="big-num">IA</span>
+      <h2>Todavía no hay sugerencias</h2>
+      <p>Agregá más prendas con categoría y color para que podamos armar looks para vos.</p>
+      <a class="btn primary" th:href="@{/wardrobe/new}">Agregar prendas</a>
+    </div>
   </section>
 
-  <th:block th:if="${recommendations != null and !#lists.isEmpty(recommendations)}" th:with="hero=${recommendations[0]}">
-    <section class="hero-card rec-hero">
-      <span class="big-num">IA</span>
-      <h2 th:text="${hero.name}">Look recomendado</h2>
-      <p th:text="${hero.description}">Descripción del look recomendado.</p>
-    </section>
+  <th:block th:if="${recommendations != null and !#lists.isEmpty(recommendations)}">
+    <section class="section rec-section">
+      <h2>Looks sugeridos</h2>
+      <p class="meta">Basados en las prendas de tu guardarropa</p>
 
-    <section class="section rec-list" th:if="${hero.pieces != null and !#lists.isEmpty(hero.pieces)}">
-      <h2>Piezas del look</h2>
-      <div class="rec-item" th:each="piece : ${hero.pieces}">
-        <span class="rec-piece" th:text="${piece.category}">Top</span>
-        <span>
-          <span class="rec-piece-dot" th:style="'background:' + ${piece.colorHex}"></span>
-          <span th:text="${piece.colorName}">Beige</span>
-        </span>
-      </div>
-    </section>
+      <div class="rec-grid">
+        <article class="rec-card" th:each="rec, stat : ${recommendations}" th:style="'--i:' + ${stat.index}">
+          <div class="rec-score">
+            ★ <span th:text="${rec.score}">8</span><span class="rec-score-max">/10</span>
+          </div>
 
-    <section class="section" th:if="${#lists.size(recommendations) > 1}">
-      <h2>Más sugerencias</h2>
-      <p class="meta">Probá estos looks alternativos para variar tu semana.</p>
-      <div class="grid">
-        <article class="card rec-card" th:each="rec, stat : ${recommendations}" th:if="${stat.index > 0}">
-          <h3 th:text="${rec.name}">Look casual</h3>
-          <p th:text="${rec.description}">Descripción de sugerencia adicional.</p>
+          <div class="rec-palette" th:if="${rec.pieces != null and !#lists.isEmpty(rec.pieces)}">
+            <div class="rec-palette-bar" th:each="piece : ${rec.pieces}"
+                 th:style="'background:' + ${piece.colorHex}"
+                 th:classappend="${piece.lightText} ? 'palette-light' : 'palette-dark'"
+                 th:title="${piece.category} + ': ' + ${piece.colorName}">
+              <span class="palette-cat" th:text="${piece.category}">Camisa</span>
+            </div>
+          </div>
+
+          <div class="rec-card-body">
+            <h3 class="rec-name" th:text="${rec.name}">Elegancia Urbana</h3>
+            <p class="rec-desc" th:text="${rec.description}">Descripción del look</p>
+          </div>
+
+          <ul class="rec-pieces" th:if="${rec.pieces != null and !#lists.isEmpty(rec.pieces)}">
+            <li class="rec-pieces-item" th:each="piece : ${rec.pieces}">
+              <span class="rec-pieces-dot" th:style="'background:' + ${piece.colorHex}"
+                    th:classappend="${piece.lightText} ? 'dot-light' : 'dot-dark'"></span>
+              <span class="rec-pieces-cat" th:text="${piece.category}">Top</span>
+              <span class="rec-pieces-color" th:text="${piece.colorName}">Blanco</span>
+            </li>
+          </ul>
         </article>
       </div>
     </section>
   </th:block>
 
-  <section class="section" th:if="${recommendations == null or #lists.isEmpty(recommendations)}">
-    <h2>¿Por qué todavía no aparecen?</h2>
-    <p class="meta">Las sugerencias se generan cuando tenés suficientes prendas cargadas con tipo y color.</p>
-  </section>
 </main>
 </body>
 </html>

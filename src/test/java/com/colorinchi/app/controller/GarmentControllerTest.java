@@ -422,8 +422,9 @@ class GarmentControllerTest {
     void recommendationShowsOutfits() throws Exception {
         when(aiRecommendationService.generate()).thenReturn(
                 new AiRecommendationResponse(List.of(
-                        new OutfitSuggestion("Look 1", "Desc",
-                                List.of(new OutfitPiece("Top", "Rojo", "#FF0000"))))));
+                        new OutfitSuggestion("Look 1", "Desc", 8,
+                                List.of(new OutfitPiece("Top", "Rojo", "#FF0000",
+                                        OutfitPiece.zoneFor("Top"), OutfitPiece.isLightText("#FF0000")))))));
 
         mockMvc.perform(get("/recommendation").with(csrf()))
                 .andExpect(status().isOk())
