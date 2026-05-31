@@ -3,6 +3,7 @@ package com.colorinchi.app.colorimetry.model;
 public enum ColorIntensity {
 
     BRIGHT("Vívido"),
+    MEDIUM("Medio"),
     SOFT("Suave");
 
     private final String displayName;

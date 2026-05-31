@@ -12,8 +12,10 @@ spring:
     password: ${DB_PASSWORD:ropa}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
     open-in-view: false
+  flyway:
+    enabled: false
   mvc:
     hiddenmethod:
       filter:
@@ -22,8 +24,6 @@ spring:
     multipart:
       max-file-size: 8MB
       max-request-size: 8MB
-  flyway:
-    enabled: true
   cache:
     type: caffeine
     caffeine:

@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static com.colorinchi.app.colorimetry.model.ColorTemperature.NEUTRAL;
+import static com.colorinchi.app.colorimetry.model.ColorTemperature.SEMI_COOL;
+import static com.colorinchi.app.colorimetry.model.ColorTemperature.SEMI_WARM;
+
 import org.springframework.stereotype.Service;
 
 import com.colorinchi.app.colorimetry.config.ColorimetryProperties;
@@ -47,7 +51,8 @@ public class ColorCompatibilityEngine {
             new SeasonPair(ColorSeason.SUMMER, ColorSeason.WINTER));
 
     // ---- Category groups ----
-    private static final Set<String> BASE_CATEGORIES = Set.of("Top", "Pantalón", "Vestido", "Falda");
+    private static final Set<String> TOP_CATEGORIES = Set.of("Top", "Camisa", "Sudadera");
+    private static final Set<String> BOTTOM_CATEGORIES = Set.of("Pantalón", "Falda", "Vestido");
     private static final Set<String> LAYER_CATEGORIES = Set.of("Chaqueta", "Abrigo");
 
     private final ColorSeasonClassifier classifier;
@@ -103,7 +108,9 @@ public class ColorCompatibilityEngine {
         double ruleScore = computeRuleScore(profile1, profile2, garment1, garment2, hex1, hex2);
 
         // ---- 4. Additive final score ----
-        double raw = deltaEScore + seasonScore + ruleScore;
+        double raw = deltaEScore * props.deltaEWeight()
+                   + seasonScore * props.seasonWeight()
+                   + ruleScore * props.ruleWeight();
         int finalScore = clamp((int) Math.round(raw), 0, 100);
 
         // ---- 5. Harmony label ----
@@ -145,7 +152,11 @@ public class ColorCompatibilityEngine {
         }
         // Only one neutral → neutral acts as a bridge, no season impact
         if (p1.temperature() == ColorTemperature.NEUTRAL
-                || p2.temperature() == ColorTemperature.NEUTRAL) {
+                || p1.temperature() == ColorTemperature.SEMI_WARM
+                || p1.temperature() == ColorTemperature.SEMI_COOL
+                || p2.temperature() == ColorTemperature.NEUTRAL
+                || p2.temperature() == ColorTemperature.SEMI_WARM
+                || p2.temperature() == ColorTemperature.SEMI_COOL) {
             return 0;
         }
 
@@ -177,11 +188,11 @@ public class ColorCompatibilityEngine {
         double score = 0;
 
         // -- Blacklist checks --
-        if (isBadRojoRosa(hex1, hex2)) {
-            score -= 30;
+        if (isRojoRosaPair(hex1, hex2)) {
+            score -= 10;
         }
-        if (isBadNegroAzulMarino(hex1, hex2)) {
-            score -= 30;
+        if (isNegroAzulMarinoPair(hex1, hex2)) {
+            score -= 10;
         }
         if (isWarmCoolWithoutNeutral(p1, p2, hex1, hex2)) {
             score -= 20;
@@ -202,12 +213,12 @@ public class ColorCompatibilityEngine {
     // Blacklist helpers
     // ---------------------------------------------------------------
 
-    private boolean isBadRojoRosa(String hex1, String hex2) {
+    private boolean isRojoRosaPair(String hex1, String hex2) {
         return (isApproximately(hex1, ROJO_HEX) && isApproximately(hex2, ROSA_HEX))
                 || (isApproximately(hex1, ROSA_HEX) && isApproximately(hex2, ROJO_HEX));
     }
 
-    private boolean isBadNegroAzulMarino(String hex1, String hex2) {
+    private boolean isNegroAzulMarinoPair(String hex1, String hex2) {
         return (isApproximately(hex1, NEGRO_HEX) && isApproximately(hex2, AZUL_MARINO_HEX))
                 || (isApproximately(hex1, AZUL_MARINO_HEX) && isApproximately(hex2, NEGRO_HEX));
     }
@@ -230,19 +241,32 @@ public class ColorCompatibilityEngine {
     // ---------------------------------------------------------------
 
     private static boolean isSameTemperatureFamily(ColorTemperature t1, ColorTemperature t2) {
-        // Neutrals go with everything — both neutral or one neutral + anything
         if (t1 == ColorTemperature.NEUTRAL || t2 == ColorTemperature.NEUTRAL) {
+            return true;
+        }
+        if (t1 == ColorTemperature.SEMI_WARM || t1 == ColorTemperature.SEMI_COOL
+                || t2 == ColorTemperature.SEMI_WARM || t2 == ColorTemperature.SEMI_COOL) {
             return true;
         }
         return t1 == t2;
     }
 
     private static boolean isBasePlusLayer(String cat1, String cat2) {
-        if (cat1 == null || cat2 == null) {
-            return false;
+        if (cat1 == null || cat2 == null) return false;
+        // Top + Bottom
+        if ((TOP_CATEGORIES.contains(cat1) && BOTTOM_CATEGORIES.contains(cat2)) ||
+            (BOTTOM_CATEGORIES.contains(cat2) && TOP_CATEGORIES.contains(cat1))) {
+            return true;
         }
-        return (BASE_CATEGORIES.contains(cat1) && LAYER_CATEGORIES.contains(cat2))
-                || (BASE_CATEGORIES.contains(cat2) && LAYER_CATEGORIES.contains(cat1));
+        // Top/Bottom + Layer
+        if ((TOP_CATEGORIES.contains(cat1) || BOTTOM_CATEGORIES.contains(cat1))
+            && LAYER_CATEGORIES.contains(cat2)) return true;
+        if ((TOP_CATEGORIES.contains(cat2) || BOTTOM_CATEGORIES.contains(cat2))
+            && LAYER_CATEGORIES.contains(cat1)) return true;
+        // Layer + Bottom
+        if ((LAYER_CATEGORIES.contains(cat1) && BOTTOM_CATEGORIES.contains(cat2)) ||
+            (LAYER_CATEGORIES.contains(cat2) && BOTTOM_CATEGORIES.contains(cat1))) return true;
+        return false;
     }
 
     // ---------------------------------------------------------------
@@ -289,11 +313,11 @@ public class ColorCompatibilityEngine {
                                         Garment g1, Garment g2) {
         List<String> warnings = new ArrayList<>();
 
-        if (isBadRojoRosa(hex1, hex2)) {
+        if (isRojoRosaPair(hex1, hex2)) {
             warnings.add("Rojo y rosa juntos pueden crear un efecto visualmente denso. "
                     + "Considera separarlos con un neutral.");
         }
-        if (isBadNegroAzulMarino(hex1, hex2)) {
+        if (isNegroAzulMarinoPair(hex1, hex2)) {
             warnings.add("Negro y azul marino apenas se distinguen. "
                     + "Prueba con un contraste más claro.");
         }

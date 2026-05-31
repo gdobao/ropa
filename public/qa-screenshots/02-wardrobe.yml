@@ -1,0 +1,702 @@
+- generic [active] [ref=e1]:
+  - link "Saltar al contenido" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - complementary [ref=e3]:
+    - link "A Armario Capsula" [ref=e4] [cursor=pointer]:
+      - /url: /dashboard
+      - generic [ref=e5]: A
+      - generic [ref=e6]:
+        - text: Armario
+        - text: Capsula
+    - navigation [ref=e7]:
+      - link "⌂ Inicio" [ref=e8] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e9]: ⌂
+        - generic [ref=e10]: Inicio
+      - link "👔 Prendas" [ref=e11] [cursor=pointer]:
+        - /url: /wardrobe
+        - generic [ref=e12]: 👔
+        - generic [ref=e13]: Prendas
+      - link "+ Añadir" [ref=e14] [cursor=pointer]:
+        - /url: /wardrobe/new
+        - generic [ref=e15]: +
+        - generic [ref=e16]: Añadir
+      - link "✧ Inspiracion" [ref=e17] [cursor=pointer]:
+        - /url: /inspiration
+        - generic [ref=e18]: ✧
+        - generic [ref=e19]: Inspiracion
+      - link "✦ Sugerencias" [ref=e20] [cursor=pointer]:
+        - /url: /recommendation
+        - generic [ref=e21]: ✦
+        - generic [ref=e22]: Sugerencias
+      - link "💬 Chat" [ref=e23] [cursor=pointer]:
+        - /url: /chat
+        - generic [ref=e24]: 💬
+        - generic [ref=e25]: Chat
+      - link "▦ Plan semanal" [ref=e26] [cursor=pointer]:
+        - /url: /weekly-plan
+        - generic [ref=e27]: ▦
+        - generic [ref=e28]: Plan semanal
+      - link "♙ Perfil" [ref=e29] [cursor=pointer]:
+        - /url: /profile
+        - generic [ref=e30]: ♙
+        - generic [ref=e31]: Perfil
+    - generic [ref=e32]: Single-user
+  - main [ref=e34]:
+    - main [ref=e35]:
+      - generic [ref=e37]:
+        - button "Todas" [pressed] [ref=e38] [cursor=pointer]
+        - button "Top" [ref=e39] [cursor=pointer]
+        - button "Pantalón" [ref=e40] [cursor=pointer]
+        - button "Vestido" [ref=e41] [cursor=pointer]
+        - button "Falda" [ref=e42] [cursor=pointer]
+        - button "Chaqueta" [ref=e43] [cursor=pointer]
+        - button "Abrigo" [ref=e44] [cursor=pointer]
+        - button "Camisa" [ref=e45] [cursor=pointer]
+        - button "Sudadera" [ref=e46] [cursor=pointer]
+        - button "Zapatos" [ref=e47] [cursor=pointer]
+        - button "Accesorio" [ref=e48] [cursor=pointer]
+        - button "Otro" [ref=e49] [cursor=pointer]
+        - button "Favoritos" [ref=e50] [cursor=pointer]
+      - generic [ref=e51]:
+        - paragraph [ref=e52]:
+          - strong [ref=e53]: "70"
+          - text: prendas
+        - generic [ref=e54]:
+          - generic [ref=e55]:
+            - button "Quitar favorito" [ref=e56] [cursor=pointer]:
+              - generic [ref=e57]: ❤
+            - button "Eliminar prenda" [ref=e58] [cursor=pointer]: ✕
+            - link "Pantalón Vestir Gris Pantalón Vestir Gris Gris" [ref=e59] [cursor=pointer]:
+              - /url: /wardrobe/15
+              - img "Pantalón Vestir Gris" [ref=e61]
+              - heading "Pantalón Vestir Gris" [level=2] [ref=e62]
+              - paragraph [ref=e63]: Gris
+          - generic [ref=e64]:
+            - button "Quitar favorito" [ref=e65] [cursor=pointer]:
+              - generic [ref=e66]: ❤
+            - button "Eliminar prenda" [ref=e67] [cursor=pointer]: ✕
+            - link "Remera Blanca Remera Blanca Blanco" [ref=e68] [cursor=pointer]:
+              - /url: /wardrobe/1
+              - img "Remera Blanca" [ref=e70]
+              - heading "Remera Blanca" [level=2] [ref=e71]
+              - paragraph [ref=e72]: Blanco
+          - generic [ref=e73]:
+            - button "Quitar favorito" [ref=e74] [cursor=pointer]:
+              - generic [ref=e75]: ❤
+            - button "Eliminar prenda" [ref=e76] [cursor=pointer]: ✕
+            - link "Camisa Blanca Camisa Blanca Blanco" [ref=e77] [cursor=pointer]:
+              - /url: /wardrobe/29
+              - img "Camisa Blanca" [ref=e79]
+              - heading "Camisa Blanca" [level=2] [ref=e80]
+              - paragraph [ref=e81]: Blanco
+          - generic [ref=e82]:
+            - button "Quitar favorito" [ref=e83] [cursor=pointer]:
+              - generic [ref=e84]: ❤
+            - button "Eliminar prenda" [ref=e85] [cursor=pointer]: ✕
+            - link "Zapatillas Blancas Zapatillas Blancas Blanco" [ref=e86] [cursor=pointer]:
+              - /url: /wardrobe/49
+              - img "Zapatillas Blancas" [ref=e88]
+              - heading "Zapatillas Blancas" [level=2] [ref=e89]
+              - paragraph [ref=e90]: Blanco
+          - generic [ref=e91]:
+            - button "Quitar favorito" [ref=e92] [cursor=pointer]:
+              - generic [ref=e93]: ❤
+            - button "Eliminar prenda" [ref=e94] [cursor=pointer]: ✕
+            - link "Hoodie Gris Hoodie Gris Gris" [ref=e95] [cursor=pointer]:
+              - /url: /wardrobe/42
+              - img "Hoodie Gris" [ref=e97]
+              - heading "Hoodie Gris" [level=2] [ref=e98]
+              - paragraph [ref=e99]: Gris
+          - generic [ref=e100]:
+            - button "Agregar favorito" [ref=e101] [cursor=pointer]:
+              - generic [ref=e102]: ♡
+            - button "Eliminar prenda" [ref=e103] [cursor=pointer]: ✕
+            - link "Jean Jacket Azul Jean Jacket Azul Azul" [ref=e104] [cursor=pointer]:
+              - /url: /wardrobe/23
+              - img "Jean Jacket Azul" [ref=e106]
+              - heading "Jean Jacket Azul" [level=2] [ref=e107]
+              - paragraph [ref=e108]: Azul
+          - generic [ref=e109]:
+            - button "Quitar favorito" [ref=e110] [cursor=pointer]:
+              - generic [ref=e111]: ❤
+            - button "Eliminar prenda" [ref=e112] [cursor=pointer]: ✕
+            - link "Cartera Negra Cartera Negra Negro" [ref=e113] [cursor=pointer]:
+              - /url: /wardrobe/56
+              - img "Cartera Negra" [ref=e115]
+              - heading "Cartera Negra" [level=2] [ref=e116]
+              - paragraph [ref=e117]: Negro
+          - generic [ref=e118]:
+            - button "Agregar favorito" [ref=e119] [cursor=pointer]:
+              - generic [ref=e120]: ♡
+            - button "Eliminar prenda" [ref=e121] [cursor=pointer]: ✕
+            - link "Remera Negra Remera Negra Negro" [ref=e122] [cursor=pointer]:
+              - /url: /wardrobe/2
+              - img "Remera Negra" [ref=e124]
+              - heading "Remera Negra" [level=2] [ref=e125]
+              - paragraph [ref=e126]: Negro
+          - generic [ref=e127]:
+            - button "Quitar favorito" [ref=e128] [cursor=pointer]:
+              - generic [ref=e129]: ❤
+            - button "Eliminar prenda" [ref=e130] [cursor=pointer]: ✕
+            - link "Abrigo Largo Beige Abrigo Largo Beige Beige" [ref=e131] [cursor=pointer]:
+              - /url: /wardrobe/46
+              - img "Abrigo Largo Beige" [ref=e133]
+              - heading "Abrigo Largo Beige" [level=2] [ref=e134]
+              - paragraph [ref=e135]: Beige
+          - generic [ref=e136]:
+            - button "Agregar favorito" [ref=e137] [cursor=pointer]:
+              - generic [ref=e138]: ♡
+            - button "Eliminar prenda" [ref=e139] [cursor=pointer]: ✕
+            - link "Zapatillas Negras Zapatillas Negras Negro" [ref=e140] [cursor=pointer]:
+              - /url: /wardrobe/50
+              - img "Zapatillas Negras" [ref=e142]
+              - heading "Zapatillas Negras" [level=2] [ref=e143]
+              - paragraph [ref=e144]: Negro
+          - generic [ref=e145]:
+            - button "Agregar favorito" [ref=e146] [cursor=pointer]:
+              - generic [ref=e147]: ♡
+            - button "Eliminar prenda" [ref=e148] [cursor=pointer]: ✕
+            - link "Pantalón Vestir Beige Pantalón Vestir Beige Beige" [ref=e149] [cursor=pointer]:
+              - /url: /wardrobe/16
+              - img "Pantalón Vestir Beige" [ref=e151]
+              - heading "Pantalón Vestir Beige" [level=2] [ref=e152]
+              - paragraph [ref=e153]: Beige
+          - generic [ref=e154]:
+            - button "Quitar favorito" [ref=e155] [cursor=pointer]:
+              - generic [ref=e156]: ❤
+            - button "Eliminar prenda" [ref=e157] [cursor=pointer]: ✕
+            - link "Vestido Negro Tubo Vestido Negro Tubo Negro" [ref=e158] [cursor=pointer]:
+              - /url: /wardrobe/34
+              - img "Vestido Negro Tubo" [ref=e160]
+              - heading "Vestido Negro Tubo" [level=2] [ref=e161]
+              - paragraph [ref=e162]: Negro
+          - generic [ref=e163]:
+            - button "Quitar favorito" [ref=e164] [cursor=pointer]:
+              - generic [ref=e165]: ❤
+            - button "Eliminar prenda" [ref=e166] [cursor=pointer]: ✕
+            - link "Remera Gris Remera Gris Gris" [ref=e167] [cursor=pointer]:
+              - /url: /wardrobe/3
+              - img "Remera Gris" [ref=e169]
+              - heading "Remera Gris" [level=2] [ref=e170]
+              - paragraph [ref=e171]: Gris
+          - generic [ref=e172]:
+            - button "Agregar favorito" [ref=e173] [cursor=pointer]:
+              - generic [ref=e174]: ♡
+            - button "Eliminar prenda" [ref=e175] [cursor=pointer]: ✕
+            - link "Camisa Celeste Camisa Celeste Celeste" [ref=e176] [cursor=pointer]:
+              - /url: /wardrobe/30
+              - img "Camisa Celeste" [ref=e178]
+              - heading "Camisa Celeste" [level=2] [ref=e179]
+              - paragraph [ref=e180]: Celeste
+          - generic [ref=e181]:
+            - button "Agregar favorito" [ref=e182] [cursor=pointer]:
+              - generic [ref=e183]: ♡
+            - button "Eliminar prenda" [ref=e184] [cursor=pointer]: ✕
+            - link "Remera Azul Marino Remera Azul Marino Azul Marino" [ref=e185] [cursor=pointer]:
+              - /url: /wardrobe/4
+              - img "Remera Azul Marino" [ref=e187]
+              - heading "Remera Azul Marino" [level=2] [ref=e188]
+              - paragraph [ref=e189]: Azul Marino
+          - generic [ref=e190]:
+            - button "Quitar favorito" [ref=e191] [cursor=pointer]:
+              - generic [ref=e192]: ❤
+            - button "Eliminar prenda" [ref=e193] [cursor=pointer]: ✕
+            - link "Blazer Negro Blazer Negro Negro" [ref=e194] [cursor=pointer]:
+              - /url: /wardrobe/24
+              - img "Blazer Negro" [ref=e196]
+              - heading "Blazer Negro" [level=2] [ref=e197]
+              - paragraph [ref=e198]: Negro
+          - generic [ref=e199]:
+            - button "Agregar favorito" [ref=e200] [cursor=pointer]:
+              - generic [ref=e201]: ♡
+            - button "Eliminar prenda" [ref=e202] [cursor=pointer]: ✕
+            - link "Falda Lápiz Negra Falda Lápiz Negra Negro" [ref=e203] [cursor=pointer]:
+              - /url: /wardrobe/38
+              - img "Falda Lápiz Negra" [ref=e205]
+              - heading "Falda Lápiz Negra" [level=2] [ref=e206]
+              - paragraph [ref=e207]: Negro
+          - generic [ref=e208]:
+            - button "Quitar favorito" [ref=e209] [cursor=pointer]:
+              - generic [ref=e210]: ❤
+            - button "Eliminar prenda" [ref=e211] [cursor=pointer]: ✕
+            - link "Jean Azul Claro Jean Azul Claro Azul" [ref=e212] [cursor=pointer]:
+              - /url: /wardrobe/17
+              - img "Jean Azul Claro" [ref=e214]
+              - heading "Jean Azul Claro" [level=2] [ref=e215]
+              - paragraph [ref=e216]: Azul
+          - generic [ref=e217]:
+            - button "Agregar favorito" [ref=e218] [cursor=pointer]:
+              - generic [ref=e219]: ♡
+            - button "Eliminar prenda" [ref=e220] [cursor=pointer]: ✕
+            - link "Mochila Azul Mochila Azul Azul" [ref=e221] [cursor=pointer]:
+              - /url: /wardrobe/57
+              - img "Mochila Azul" [ref=e223]
+              - heading "Mochila Azul" [level=2] [ref=e224]
+              - paragraph [ref=e225]: Azul
+          - generic [ref=e226]:
+            - button "Agregar favorito" [ref=e227] [cursor=pointer]:
+              - generic [ref=e228]: ♡
+            - button "Eliminar prenda" [ref=e229] [cursor=pointer]: ✕
+            - link "Remera Roja Remera Roja Rojo" [ref=e230] [cursor=pointer]:
+              - /url: /wardrobe/5
+              - img "Remera Roja" [ref=e232]
+              - heading "Remera Roja" [level=2] [ref=e233]
+              - paragraph [ref=e234]: Rojo
+          - generic [ref=e235]:
+            - button "Agregar favorito" [ref=e236] [cursor=pointer]:
+              - generic [ref=e237]: ♡
+            - button "Eliminar prenda" [ref=e238] [cursor=pointer]: ✕
+            - link "Buzo Azul Marino Buzo Azul Marino Azul Marino" [ref=e239] [cursor=pointer]:
+              - /url: /wardrobe/43
+              - img "Buzo Azul Marino" [ref=e241]
+              - heading "Buzo Azul Marino" [level=2] [ref=e242]
+              - paragraph [ref=e243]: Azul Marino
+          - generic [ref=e244]:
+            - button "Agregar favorito" [ref=e245] [cursor=pointer]:
+              - generic [ref=e246]: ♡
+            - button "Eliminar prenda" [ref=e247] [cursor=pointer]: ✕
+            - link "Botines Cuero Negros Botines Cuero Negros Negro" [ref=e248] [cursor=pointer]:
+              - /url: /wardrobe/51
+              - img "Botines Cuero Negros" [ref=e250]
+              - heading "Botines Cuero Negros" [level=2] [ref=e251]
+              - paragraph [ref=e252]: Negro
+          - generic [ref=e253]:
+            - button "Agregar favorito" [ref=e254] [cursor=pointer]:
+              - generic [ref=e255]: ♡
+            - button "Eliminar prenda" [ref=e256] [cursor=pointer]: ✕
+            - link "Remera Verde Militar Remera Verde Militar Verde Militar" [ref=e257] [cursor=pointer]:
+              - /url: /wardrobe/6
+              - img "Remera Verde Militar" [ref=e259]
+              - heading "Remera Verde Militar" [level=2] [ref=e260]
+              - paragraph [ref=e261]: Verde Militar
+          - generic [ref=e262]:
+            - button "Agregar favorito" [ref=e263] [cursor=pointer]:
+              - generic [ref=e264]: ♡
+            - button "Eliminar prenda" [ref=e265] [cursor=pointer]: ✕
+            - link "Blazer Azul Marino Blazer Azul Marino Azul Marino" [ref=e266] [cursor=pointer]:
+              - /url: /wardrobe/25
+              - img "Blazer Azul Marino" [ref=e268]
+              - heading "Blazer Azul Marino" [level=2] [ref=e269]
+              - paragraph [ref=e270]: Azul Marino
+          - generic [ref=e271]:
+            - button "Agregar favorito" [ref=e272] [cursor=pointer]:
+              - generic [ref=e273]: ♡
+            - button "Eliminar prenda" [ref=e274] [cursor=pointer]: ✕
+            - link "Vestido Floral Primavera Vestido Floral Primavera Multicolor" [ref=e275] [cursor=pointer]:
+              - /url: /wardrobe/35
+              - img "Vestido Floral Primavera" [ref=e277]
+              - heading "Vestido Floral Primavera" [level=2] [ref=e278]
+              - paragraph [ref=e279]: Multicolor
+          - generic [ref=e280]:
+            - button "Agregar favorito" [ref=e281] [cursor=pointer]:
+              - generic [ref=e282]: ♡
+            - button "Eliminar prenda" [ref=e283] [cursor=pointer]: ✕
+            - link "Jean Azul Oscuro Jean Azul Oscuro Azul" [ref=e284] [cursor=pointer]:
+              - /url: /wardrobe/18
+              - img "Jean Azul Oscuro" [ref=e286]
+              - heading "Jean Azul Oscuro" [level=2] [ref=e287]
+              - paragraph [ref=e288]: Azul
+          - generic [ref=e289]:
+            - button "Agregar favorito" [ref=e290] [cursor=pointer]:
+              - generic [ref=e291]: ♡
+            - button "Eliminar prenda" [ref=e292] [cursor=pointer]: ✕
+            - link "Camisa Rosa Camisa Rosa Rosa" [ref=e293] [cursor=pointer]:
+              - /url: /wardrobe/31
+              - img "Camisa Rosa" [ref=e295]
+              - heading "Camisa Rosa" [level=2] [ref=e296]
+              - paragraph [ref=e297]: Rosa
+          - generic [ref=e298]:
+            - button "Agregar favorito" [ref=e299] [cursor=pointer]:
+              - generic [ref=e300]: ♡
+            - button "Eliminar prenda" [ref=e301] [cursor=pointer]: ✕
+            - link "Parka Verde Parka Verde Verde" [ref=e302] [cursor=pointer]:
+              - /url: /wardrobe/47
+              - img "Parka Verde" [ref=e304]
+              - heading "Parka Verde" [level=2] [ref=e305]
+              - paragraph [ref=e306]: Verde
+          - generic [ref=e307]:
+            - button "Agregar favorito" [ref=e308] [cursor=pointer]:
+              - generic [ref=e309]: ♡
+            - button "Eliminar prenda" [ref=e310] [cursor=pointer]: ✕
+            - link "Cinturón Marrón Cinturón Marrón Marrón" [ref=e311] [cursor=pointer]:
+              - /url: /wardrobe/58
+              - img "Cinturón Marrón" [ref=e313]
+              - heading "Cinturón Marrón" [level=2] [ref=e314]
+              - paragraph [ref=e315]: Marrón
+          - generic [ref=e316]:
+            - button "Agregar favorito" [ref=e317] [cursor=pointer]:
+              - generic [ref=e318]: ♡
+            - button "Eliminar prenda" [ref=e319] [cursor=pointer]: ✕
+            - link "Remera Mostaza Remera Mostaza Mostaza" [ref=e320] [cursor=pointer]:
+              - /url: /wardrobe/7
+              - img "Remera Mostaza" [ref=e322]
+              - heading "Remera Mostaza" [level=2] [ref=e323]
+              - paragraph [ref=e324]: Mostaza
+          - generic [ref=e325]:
+            - button "Agregar favorito" [ref=e326] [cursor=pointer]:
+              - generic [ref=e327]: ♡
+            - button "Eliminar prenda" [ref=e328] [cursor=pointer]: ✕
+            - link "Campera Cuero Marrón Campera Cuero Marrón Marrón" [ref=e329] [cursor=pointer]:
+              - /url: /wardrobe/26
+              - img "Campera Cuero Marrón" [ref=e331]
+              - heading "Campera Cuero Marrón" [level=2] [ref=e332]
+              - paragraph [ref=e333]: Marrón
+          - generic [ref=e334]:
+            - button "Agregar favorito" [ref=e335] [cursor=pointer]:
+              - generic [ref=e336]: ♡
+            - button "Eliminar prenda" [ref=e337] [cursor=pointer]: ✕
+            - link "Falda Plisada Azul Falda Plisada Azul Azul" [ref=e338] [cursor=pointer]:
+              - /url: /wardrobe/39
+              - img "Falda Plisada Azul" [ref=e340]
+              - heading "Falda Plisada Azul" [level=2] [ref=e341]
+              - paragraph [ref=e342]: Azul
+          - generic [ref=e343]:
+            - button "Agregar favorito" [ref=e344] [cursor=pointer]:
+              - generic [ref=e345]: ♡
+            - button "Eliminar prenda" [ref=e346] [cursor=pointer]: ✕
+            - link "Jogging Gris Jogging Gris Gris" [ref=e347] [cursor=pointer]:
+              - /url: /wardrobe/19
+              - img "Jogging Gris" [ref=e349]
+              - heading "Jogging Gris" [level=2] [ref=e350]
+              - paragraph [ref=e351]: Gris
+          - generic [ref=e352]:
+            - button "Agregar favorito" [ref=e353] [cursor=pointer]:
+              - generic [ref=e354]: ♡
+            - button "Eliminar prenda" [ref=e355] [cursor=pointer]: ✕
+            - link "Top Lino Beige Top Lino Beige Beige" [ref=e356] [cursor=pointer]:
+              - /url: /wardrobe/8
+              - img "Top Lino Beige" [ref=e358]
+              - heading "Top Lino Beige" [level=2] [ref=e359]
+              - paragraph [ref=e360]: Beige
+          - generic [ref=e361]:
+            - button "Agregar favorito" [ref=e362] [cursor=pointer]:
+              - generic [ref=e363]: ♡
+            - button "Eliminar prenda" [ref=e364] [cursor=pointer]: ✕
+            - link "Botas de Lluvia Botas de Lluvia Verde" [ref=e365] [cursor=pointer]:
+              - /url: /wardrobe/52
+              - img "Botas de Lluvia" [ref=e367]
+              - heading "Botas de Lluvia" [level=2] [ref=e368]
+              - paragraph [ref=e369]: Verde
+          - generic [ref=e370]:
+            - button "Agregar favorito" [ref=e371] [cursor=pointer]:
+              - generic [ref=e372]: ♡
+            - button "Eliminar prenda" [ref=e373] [cursor=pointer]: ✕
+            - link "Cinturón Negro Cinturón Negro Negro" [ref=e374] [cursor=pointer]:
+              - /url: /wardrobe/59
+              - img "Cinturón Negro" [ref=e376]
+              - heading "Cinturón Negro" [level=2] [ref=e377]
+              - paragraph [ref=e378]: Negro
+          - generic [ref=e379]:
+            - button "Agregar favorito" [ref=e380] [cursor=pointer]:
+              - generic [ref=e381]: ♡
+            - button "Eliminar prenda" [ref=e382] [cursor=pointer]: ✕
+            - link "Camisa Cuadros Rojo/Negro Camisa Cuadros Rojo/Negro Rojo" [ref=e383] [cursor=pointer]:
+              - /url: /wardrobe/32
+              - img "Camisa Cuadros Rojo/Negro" [ref=e385]
+              - heading "Camisa Cuadros Rojo/Negro" [level=2] [ref=e386]
+              - paragraph [ref=e387]: Rojo
+          - generic [ref=e388]:
+            - button "Agregar favorito" [ref=e389] [cursor=pointer]:
+              - generic [ref=e390]: ♡
+            - button "Eliminar prenda" [ref=e391] [cursor=pointer]: ✕
+            - link "Crewneck Verde Crewneck Verde Verde" [ref=e392] [cursor=pointer]:
+              - /url: /wardrobe/44
+              - img "Crewneck Verde" [ref=e394]
+              - heading "Crewneck Verde" [level=2] [ref=e395]
+              - paragraph [ref=e396]: Verde
+          - generic [ref=e397]:
+            - button "Agregar favorito" [ref=e398] [cursor=pointer]:
+              - generic [ref=e399]: ♡
+            - button "Eliminar prenda" [ref=e400] [cursor=pointer]: ✕
+            - link "Bomber Verde Oliva Bomber Verde Oliva Verde Oliva" [ref=e401] [cursor=pointer]:
+              - /url: /wardrobe/27
+              - img "Bomber Verde Oliva" [ref=e403]
+              - heading "Bomber Verde Oliva" [level=2] [ref=e404]
+              - paragraph [ref=e405]: Verde Oliva
+          - generic [ref=e406]:
+            - button "Agregar favorito" [ref=e407] [cursor=pointer]:
+              - generic [ref=e408]: ♡
+            - button "Eliminar prenda" [ref=e409] [cursor=pointer]: ✕
+            - link "Musculosa Negra Musculosa Negra Negro" [ref=e410] [cursor=pointer]:
+              - /url: /wardrobe/9
+              - img "Musculosa Negra" [ref=e412]
+              - heading "Musculosa Negra" [level=2] [ref=e413]
+              - paragraph [ref=e414]: Negro
+          - generic [ref=e415]:
+            - button "Agregar favorito" [ref=e416] [cursor=pointer]:
+              - generic [ref=e417]: ♡
+            - button "Eliminar prenda" [ref=e418] [cursor=pointer]: ✕
+            - link "Vestido Rojo Noche Vestido Rojo Noche Rojo" [ref=e419] [cursor=pointer]:
+              - /url: /wardrobe/36
+              - img "Vestido Rojo Noche" [ref=e421]
+              - heading "Vestido Rojo Noche" [level=2] [ref=e422]
+              - paragraph [ref=e423]: Rojo
+          - generic [ref=e424]:
+            - button "Quitar favorito" [ref=e425] [cursor=pointer]:
+              - generic [ref=e426]: ❤
+            - button "Eliminar prenda" [ref=e427] [cursor=pointer]: ✕
+            - link "Zapatos Cuero Marrón Zapatos Cuero Marrón Marrón" [ref=e428] [cursor=pointer]:
+              - /url: /wardrobe/53
+              - img "Zapatos Cuero Marrón" [ref=e430]
+              - heading "Zapatos Cuero Marrón" [level=2] [ref=e431]
+              - paragraph [ref=e432]: Marrón
+          - generic [ref=e433]:
+            - button "Agregar favorito" [ref=e434] [cursor=pointer]:
+              - generic [ref=e435]: ♡
+            - button "Eliminar prenda" [ref=e436] [cursor=pointer]: ✕
+            - link "Gafas de Sol Gafas de Sol Negro" [ref=e437] [cursor=pointer]:
+              - /url: /wardrobe/60
+              - img "Gafas de Sol" [ref=e439]
+              - heading "Gafas de Sol" [level=2] [ref=e440]
+              - paragraph [ref=e441]: Negro
+          - generic [ref=e442]:
+            - button "Agregar favorito" [ref=e443] [cursor=pointer]:
+              - generic [ref=e444]: ♡
+            - button "Eliminar prenda" [ref=e445] [cursor=pointer]: ✕
+            - link "Short Blanco Short Blanco Blanco" [ref=e446] [cursor=pointer]:
+              - /url: /wardrobe/20
+              - img "Short Blanco" [ref=e448]
+              - heading "Short Blanco" [level=2] [ref=e449]
+              - paragraph [ref=e450]: Blanco
+          - generic [ref=e451]:
+            - button "Agregar favorito" [ref=e452] [cursor=pointer]:
+              - generic [ref=e453]: ♡
+            - button "Eliminar prenda" [ref=e454] [cursor=pointer]: ✕
+            - link "Mini Falda Vaquera Mini Falda Vaquera Azul" [ref=e455] [cursor=pointer]:
+              - /url: /wardrobe/40
+              - img "Mini Falda Vaquera" [ref=e457]
+              - heading "Mini Falda Vaquera" [level=2] [ref=e458]
+              - paragraph [ref=e459]: Azul
+          - generic [ref=e460]:
+            - button "Quitar favorito" [ref=e461] [cursor=pointer]:
+              - generic [ref=e462]: ❤
+            - button "Eliminar prenda" [ref=e463] [cursor=pointer]: ✕
+            - link "Top Rayado Blanco/Negro Top Rayado Blanco/Negro Rayado" [ref=e464] [cursor=pointer]:
+              - /url: /wardrobe/10
+              - img "Top Rayado Blanco/Negro" [ref=e466]
+              - heading "Top Rayado Blanco/Negro" [level=2] [ref=e467]
+              - paragraph [ref=e468]: Rayado
+          - generic [ref=e469]:
+            - button "Quitar favorito" [ref=e470] [cursor=pointer]:
+              - generic [ref=e471]: ❤
+            - button "Eliminar prenda" [ref=e472] [cursor=pointer]: ✕
+            - link "Jean Negro Jean Negro Negro" [ref=e473] [cursor=pointer]:
+              - /url: /wardrobe/21
+              - img "Jean Negro" [ref=e475]
+              - heading "Jean Negro" [level=2] [ref=e476]
+              - paragraph [ref=e477]: Negro
+          - generic [ref=e478]:
+            - button "Agregar favorito" [ref=e479] [cursor=pointer]:
+              - generic [ref=e480]: ♡
+            - button "Eliminar prenda" [ref=e481] [cursor=pointer]: ✕
+            - link "Camisa Lino Beige Camisa Lino Beige Beige" [ref=e482] [cursor=pointer]:
+              - /url: /wardrobe/33
+              - img "Camisa Lino Beige" [ref=e484]
+              - heading "Camisa Lino Beige" [level=2] [ref=e485]
+              - paragraph [ref=e486]: Beige
+          - generic [ref=e487]:
+            - button "Agregar favorito" [ref=e488] [cursor=pointer]:
+              - generic [ref=e489]: ♡
+            - button "Eliminar prenda" [ref=e490] [cursor=pointer]: ✕
+            - link "Top Coral Top Coral Coral" [ref=e491] [cursor=pointer]:
+              - /url: /wardrobe/11
+              - img "Top Coral" [ref=e493]
+              - heading "Top Coral" [level=2] [ref=e494]
+              - paragraph [ref=e495]: Coral
+          - generic [ref=e496]:
+            - button "Agregar favorito" [ref=e497] [cursor=pointer]:
+              - generic [ref=e498]: ♡
+            - button "Eliminar prenda" [ref=e499] [cursor=pointer]: ✕
+            - link "Cazadora Beige Cazadora Beige Beige" [ref=e500] [cursor=pointer]:
+              - /url: /wardrobe/28
+              - img "Cazadora Beige" [ref=e502]
+              - heading "Cazadora Beige" [level=2] [ref=e503]
+              - paragraph [ref=e504]: Beige
+          - generic [ref=e505]:
+            - button "Agregar favorito" [ref=e506] [cursor=pointer]:
+              - generic [ref=e507]: ♡
+            - button "Eliminar prenda" [ref=e508] [cursor=pointer]: ✕
+            - link "Tapado Negro Lana Tapado Negro Lana Negro" [ref=e509] [cursor=pointer]:
+              - /url: /wardrobe/48
+              - img "Tapado Negro Lana" [ref=e511]
+              - heading "Tapado Negro Lana" [level=2] [ref=e512]
+              - paragraph [ref=e513]: Negro
+          - generic [ref=e514]:
+            - button "Agregar favorito" [ref=e515] [cursor=pointer]:
+              - generic [ref=e516]: ♡
+            - button "Eliminar prenda" [ref=e517] [cursor=pointer]: ✕
+            - link "Buzo Oversize Negro Buzo Oversize Negro Negro" [ref=e518] [cursor=pointer]:
+              - /url: /wardrobe/45
+              - img "Buzo Oversize Negro" [ref=e520]
+              - heading "Buzo Oversize Negro" [level=2] [ref=e521]
+              - paragraph [ref=e522]: Negro
+          - generic [ref=e523]:
+            - button "Agregar favorito" [ref=e524] [cursor=pointer]:
+              - generic [ref=e525]: ♡
+            - button "Eliminar prenda" [ref=e526] [cursor=pointer]: ✕
+            - link "Zapatos Cuero Negro Zapatos Cuero Negro Negro" [ref=e527] [cursor=pointer]:
+              - /url: /wardrobe/54
+              - img "Zapatos Cuero Negro" [ref=e529]
+              - heading "Zapatos Cuero Negro" [level=2] [ref=e530]
+              - paragraph [ref=e531]: Negro
+          - generic [ref=e532]:
+            - button "Agregar favorito" [ref=e533] [cursor=pointer]:
+              - generic [ref=e534]: ♡
+            - button "Eliminar prenda" [ref=e535] [cursor=pointer]: ✕
+            - link "Top Lila Top Lila Lila" [ref=e536] [cursor=pointer]:
+              - /url: /wardrobe/12
+              - img "Top Lila" [ref=e538]
+              - heading "Top Lila" [level=2] [ref=e539]
+              - paragraph [ref=e540]: Lila
+          - generic [ref=e541]:
+            - button "Agregar favorito" [ref=e542] [cursor=pointer]:
+              - generic [ref=e543]: ♡
+            - button "Eliminar prenda" [ref=e544] [cursor=pointer]: ✕
+            - link "Jogging Negro Jogging Negro Negro" [ref=e545] [cursor=pointer]:
+              - /url: /wardrobe/22
+              - img "Jogging Negro" [ref=e547]
+              - heading "Jogging Negro" [level=2] [ref=e548]
+              - paragraph [ref=e549]: Negro
+          - generic [ref=e550]:
+            - button "Agregar favorito" [ref=e551] [cursor=pointer]:
+              - generic [ref=e552]: ♡
+            - button "Eliminar prenda" [ref=e553] [cursor=pointer]: ✕
+            - link "Reloj Plateado Reloj Plateado Plateado" [ref=e554] [cursor=pointer]:
+              - /url: /wardrobe/61
+              - img "Reloj Plateado" [ref=e556]
+              - heading "Reloj Plateado" [level=2] [ref=e557]
+              - paragraph [ref=e558]: Plateado
+          - generic [ref=e559]:
+            - button "Agregar favorito" [ref=e560] [cursor=pointer]:
+              - generic [ref=e561]: ♡
+            - button "Eliminar prenda" [ref=e562] [cursor=pointer]: ✕
+            - link "Falda Larga Estampada Falda Larga Estampada Multicolor" [ref=e563] [cursor=pointer]:
+              - /url: /wardrobe/41
+              - img "Falda Larga Estampada" [ref=e565]
+              - heading "Falda Larga Estampada" [level=2] [ref=e566]
+              - paragraph [ref=e567]: Multicolor
+          - generic [ref=e568]:
+            - button "Agregar favorito" [ref=e569] [cursor=pointer]:
+              - generic [ref=e570]: ♡
+            - button "Eliminar prenda" [ref=e571] [cursor=pointer]: ✕
+            - link "Remera Manga Larga Gris Remera Manga Larga Gris Gris" [ref=e572] [cursor=pointer]:
+              - /url: /wardrobe/13
+              - img "Remera Manga Larga Gris" [ref=e574]
+              - heading "Remera Manga Larga Gris" [level=2] [ref=e575]
+              - paragraph [ref=e576]: Gris
+          - generic [ref=e577]:
+            - button "Agregar favorito" [ref=e578] [cursor=pointer]:
+              - generic [ref=e579]: ♡
+            - button "Eliminar prenda" [ref=e580] [cursor=pointer]: ✕
+            - link "Vestido Verde Esmeralda Vestido Verde Esmeralda Verde" [ref=e581] [cursor=pointer]:
+              - /url: /wardrobe/37
+              - img "Vestido Verde Esmeralda" [ref=e583]
+              - heading "Vestido Verde Esmeralda" [level=2] [ref=e584]
+              - paragraph [ref=e585]: Verde
+          - generic [ref=e586]:
+            - button "Agregar favorito" [ref=e587] [cursor=pointer]:
+              - generic [ref=e588]: ♡
+            - button "Eliminar prenda" [ref=e589] [cursor=pointer]: ✕
+            - link "Reloj Dorado Reloj Dorado Dorado" [ref=e590] [cursor=pointer]:
+              - /url: /wardrobe/62
+              - img "Reloj Dorado" [ref=e592]
+              - heading "Reloj Dorado" [level=2] [ref=e593]
+              - paragraph [ref=e594]: Dorado
+          - generic [ref=e595]:
+            - button "Agregar favorito" [ref=e596] [cursor=pointer]:
+              - generic [ref=e597]: ♡
+            - button "Eliminar prenda" [ref=e598] [cursor=pointer]: ✕
+            - link "Sandalias Marrones Sandalias Marrones Marrón" [ref=e599] [cursor=pointer]:
+              - /url: /wardrobe/55
+              - img "Sandalias Marrones" [ref=e601]
+              - heading "Sandalias Marrones" [level=2] [ref=e602]
+              - paragraph [ref=e603]: Marrón
+          - generic [ref=e604]:
+            - button "Agregar favorito" [ref=e605] [cursor=pointer]:
+              - generic [ref=e606]: ♡
+            - button "Eliminar prenda" [ref=e607] [cursor=pointer]: ✕
+            - link "Top Blanco Escote V Top Blanco Escote V Blanco" [ref=e608] [cursor=pointer]:
+              - /url: /wardrobe/14
+              - img "Top Blanco Escote V" [ref=e610]
+              - heading "Top Blanco Escote V" [level=2] [ref=e611]
+              - paragraph [ref=e612]: Blanco
+          - generic [ref=e613]:
+            - button "Agregar favorito" [ref=e614] [cursor=pointer]:
+              - generic [ref=e615]: ♡
+            - button "Eliminar prenda" [ref=e616] [cursor=pointer]: ✕
+            - link "Bufanda Gris Bufanda Gris Gris" [ref=e617] [cursor=pointer]:
+              - /url: /wardrobe/63
+              - img "Bufanda Gris" [ref=e619]
+              - heading "Bufanda Gris" [level=2] [ref=e620]
+              - paragraph [ref=e621]: Gris
+          - generic [ref=e622]:
+            - button "Agregar favorito" [ref=e623] [cursor=pointer]:
+              - generic [ref=e624]: ♡
+            - button "Eliminar prenda" [ref=e625] [cursor=pointer]: ✕
+            - link "Sombrero de Paja Sombrero de Paja Beige" [ref=e626] [cursor=pointer]:
+              - /url: /wardrobe/66
+              - img "Sombrero de Paja" [ref=e628]
+              - heading "Sombrero de Paja" [level=2] [ref=e629]
+              - paragraph [ref=e630]: Beige
+          - generic [ref=e631]:
+            - button "Agregar favorito" [ref=e632] [cursor=pointer]:
+              - generic [ref=e633]: ♡
+            - button "Eliminar prenda" [ref=e634] [cursor=pointer]: ✕
+            - link "Paraguas Negro Paraguas Negro Negro" [ref=e635] [cursor=pointer]:
+              - /url: /wardrobe/67
+              - img "Paraguas Negro" [ref=e637]
+              - heading "Paraguas Negro" [level=2] [ref=e638]
+              - paragraph [ref=e639]: Negro
+          - generic [ref=e640]:
+            - button "Agregar favorito" [ref=e641] [cursor=pointer]:
+              - generic [ref=e642]: ♡
+            - button "Eliminar prenda" [ref=e643] [cursor=pointer]: ✕
+            - link "Gorra Negra Gorra Negra Negro" [ref=e644] [cursor=pointer]:
+              - /url: /wardrobe/64
+              - img "Gorra Negra" [ref=e646]
+              - heading "Gorra Negra" [level=2] [ref=e647]
+              - paragraph [ref=e648]: Negro
+          - generic [ref=e649]:
+            - button "Agregar favorito" [ref=e650] [cursor=pointer]:
+              - generic [ref=e651]: ♡
+            - button "Eliminar prenda" [ref=e652] [cursor=pointer]: ✕
+            - link "Pañuelo Seda Rojo Pañuelo Seda Rojo Rojo" [ref=e653] [cursor=pointer]:
+              - /url: /wardrobe/65
+              - img "Pañuelo Seda Rojo" [ref=e655]
+              - heading "Pañuelo Seda Rojo" [level=2] [ref=e656]
+              - paragraph [ref=e657]: Rojo
+          - generic [ref=e658]:
+            - button "Agregar favorito" [ref=e659] [cursor=pointer]:
+              - generic [ref=e660]: ♡
+            - button "Eliminar prenda" [ref=e661] [cursor=pointer]: ✕
+            - link "Guantes Cuero Negros Guantes Cuero Negros Negro" [ref=e662] [cursor=pointer]:
+              - /url: /wardrobe/68
+              - img "Guantes Cuero Negros" [ref=e664]
+              - heading "Guantes Cuero Negros" [level=2] [ref=e665]
+              - paragraph [ref=e666]: Negro
+          - generic [ref=e667]:
+            - button "Agregar favorito" [ref=e668] [cursor=pointer]:
+              - generic [ref=e669]: ♡
+            - button "Eliminar prenda" [ref=e670] [cursor=pointer]: ✕
+            - link "Medias Largas Negras Medias Largas Negras Negro" [ref=e671] [cursor=pointer]:
+              - /url: /wardrobe/69
+              - img "Medias Largas Negras" [ref=e673]
+              - heading "Medias Largas Negras" [level=2] [ref=e674]
+              - paragraph [ref=e675]: Negro
+          - generic [ref=e676]:
+            - button "Agregar favorito" [ref=e677] [cursor=pointer]:
+              - generic [ref=e678]: ♡
+            - button "Eliminar prenda" [ref=e679] [cursor=pointer]: ✕
+            - link "Cinturón Elástico Beige Cinturón Elástico Beige Beige" [ref=e680] [cursor=pointer]:
+              - /url: /wardrobe/70
+              - img "Cinturón Elástico Beige" [ref=e682]
+              - heading "Cinturón Elástico Beige" [level=2] [ref=e683]
+              - paragraph [ref=e684]: Beige
+      - status [ref=e685]
+  - generic [ref=e686]:
+    - generic:
+      - paragraph: "El armario ya tiene buena base de datos: el companion puede enfocarse en optimizar rotación, contraste y planificación fina."
+    - button "Abrir ayudante de estilo" [ref=e687]:
+      - img [ref=e689]
+      - generic [ref=e697]: Abrir ayudante de estilo

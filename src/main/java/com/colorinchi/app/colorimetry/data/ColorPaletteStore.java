@@ -1,5 +1,6 @@
 package com.colorinchi.app.colorimetry.data;
 
+import com.colorinchi.app.colorimetry.config.ColorimetryProperties;
 import com.colorinchi.app.colorimetry.model.ColorSeason;
 import com.colorinchi.app.colorimetry.model.NamedColor;
 import com.colorinchi.app.colorimetry.util.ColorSpaceConverter;
@@ -12,6 +13,12 @@ import java.util.Map;
 @Component
 public class ColorPaletteStore {
 
+    private final ColorimetryProperties props;
+
+    public ColorPaletteStore(ColorimetryProperties props) {
+        this.props = props;
+    }
+
     // ---------------------------------------------------------------
     // SPRING — warm, clear, light
     // ---------------------------------------------------------------
@@ -19,7 +26,7 @@ public class ColorPaletteStore {
         new NamedColor("Coral",              "#FF7F50", ColorSeason.SPRING, false),
         new NamedColor("Melocotón",          "#FFDAB9", ColorSeason.SPRING, false),
         new NamedColor("Amarillo pollito",   "#FFE135", ColorSeason.SPRING, false),
-        new NamedColor("Crema",              "#FFFDD0", ColorSeason.SPRING, false),
+        
         new NamedColor("Verde manzana",      "#8DB600", ColorSeason.SPRING, false),
         new NamedColor("Azul cielo",         "#87CEEB", ColorSeason.SPRING, false),
         new NamedColor("Turquesa claro",     "#40E0D0", ColorSeason.SPRING, false),
@@ -32,15 +39,14 @@ public class ColorPaletteStore {
         new NamedColor("Verde menta",        "#98FF98", ColorSeason.SPRING, false),
         new NamedColor("Oro claro",          "#FADA5E", ColorSeason.SPRING, false),
         new NamedColor("Topo claro",         "#A89F91", ColorSeason.SPRING, false),
-        new NamedColor("Arena",              "#C3B091", ColorSeason.SPRING, false),
+        
         new NamedColor("Melón",              "#FDBCB4", ColorSeason.SPRING, false),
         new NamedColor("Albaricoque",        "#FBCEB1", ColorSeason.SPRING, false),
         new NamedColor("Perla",              "#F0E6D3", ColorSeason.SPRING, false),
         new NamedColor("Aguamarina",         "#7FFFD4", ColorSeason.SPRING, false),
-        new NamedColor("Lila claro",         "#C8A2C8", ColorSeason.SPRING, false),
+        
         new NamedColor("Mantequilla",        "#FFF3B3", ColorSeason.SPRING, false),
-        new NamedColor("Cobre claro",        "#DA8A67", ColorSeason.SPRING, false),
-        new NamedColor("Terracota suave",    "#E2725B", ColorSeason.SPRING, false)
+        new NamedColor("Cobre claro",        "#DA8A67", ColorSeason.SPRING, false)
     );
 
     // ---------------------------------------------------------------
@@ -51,7 +57,7 @@ public class ColorPaletteStore {
         new NamedColor("Lavanda",             "#D8BFD8", ColorSeason.SUMMER, false),
         new NamedColor("Azul cielo grisáceo", "#B0C4DE", ColorSeason.SUMMER, false),
         new NamedColor("Verde salvia",        "#8A9A5B", ColorSeason.SUMMER, false),
-        new NamedColor("Gris perla",          "#C0C0C0", ColorSeason.SUMMER, false),
+        
         new NamedColor("Lila",                "#C8A2C8", ColorSeason.SUMMER, false),
         new NamedColor("Azul pizarra claro",  "#7B8D8E", ColorSeason.SUMMER, false),
         new NamedColor("Rosa viejo",          "#C08081", ColorSeason.SUMMER, false),
@@ -93,7 +99,7 @@ public class ColorPaletteStore {
         new NamedColor("Marrón canela",     "#D2691E", ColorSeason.AUTUMN, false),
         new NamedColor("Mostaza oscura",    "#D4AF37", ColorSeason.AUTUMN, false),
         new NamedColor("Crema marfil",      "#FFFDD0", ColorSeason.AUTUMN, false),
-        new NamedColor("Dorado",            "#FFD700", ColorSeason.AUTUMN, false),
+        
         new NamedColor("Teja",              "#CC5533", ColorSeason.AUTUMN, false),
         new NamedColor("Berenjena",         "#483D8B", ColorSeason.AUTUMN, false),
         new NamedColor("Verde cardo",       "#D8BFD8", ColorSeason.AUTUMN, false),
@@ -181,13 +187,13 @@ public class ColorPaletteStore {
 
     /**
      * Returns {@code true} when the given hex colour is perceptually close
-     * (ΔE76 < 15) to any colour in the neutral palette.
+     * (ΔE2000 < threshold) to any colour in the neutral palette.
      */
     public boolean isNeutral(String hex) {
         double[] lab = ColorSpaceConverter.hexToLab(hex);
         for (NamedColor neutral : NEUTRALS) {
             double[] refLab = ColorSpaceConverter.hexToLab(neutral.hex());
-            if (ColorSpaceConverter.deltaE76(lab, refLab) < 15.0) {
+            if (ColorSpaceConverter.deltaE2000(lab, refLab) < props.neutralDeltaThreshold()) {
                 return true;
             }
         }
@@ -196,7 +202,7 @@ public class ColorPaletteStore {
 
     /**
      * Finds the closest named colour across <strong>all</strong> seasonal
-     * palettes and the neutral list using CIEDE76, and returns the
+     * palettes and the neutral list using CIEDE2000, and returns the
      * {@link ColorSeason} of that colour.
      *
      * @return the season of the nearest named colour, or {@code null} if the
@@ -211,7 +217,7 @@ public class ColorPaletteStore {
         for (Map.Entry<ColorSeason, List<NamedColor>> entry : palettes.entrySet()) {
             for (NamedColor named : entry.getValue()) {
                 double[] refLab = ColorSpaceConverter.hexToLab(named.hex());
-                double delta = ColorSpaceConverter.deltaE76(lab, refLab);
+                double delta = ColorSpaceConverter.deltaE2000(lab, refLab);
                 if (delta < minDelta) {
                     minDelta = delta;
                     closest = entry.getKey();
@@ -222,7 +228,7 @@ public class ColorPaletteStore {
         // Search neutrals (season = null)
         for (NamedColor neutral : NEUTRALS) {
             double[] refLab = ColorSpaceConverter.hexToLab(neutral.hex());
-            double delta = ColorSpaceConverter.deltaE76(lab, refLab);
+            double delta = ColorSpaceConverter.deltaE2000(lab, refLab);
             if (delta < minDelta) {
                 minDelta = delta;
                 closest = null;  // neutral → no season

@@ -30,8 +30,12 @@ public record ColorProfile(
         ColorTemperature temperature;
         if (b > warmCoolThreshold) {
             temperature = ColorTemperature.WARM;
+        } else if (b > warmCoolThreshold * 0.6) {
+            temperature = ColorTemperature.SEMI_WARM;
         } else if (b < -warmCoolThreshold) {
             temperature = ColorTemperature.COOL;
+        } else if (b < -warmCoolThreshold * 0.6) {
+            temperature = ColorTemperature.SEMI_COOL;
         } else {
             temperature = ColorTemperature.NEUTRAL;
         }
@@ -39,24 +43,29 @@ public record ColorProfile(
         // 2. Intensity — chroma C = sqrt(a² + b²), normalised cap at 100
         double chroma = Math.sqrt(a * a + b * b);
         double normalisedChroma = Math.min(chroma, 100.0) / 100.0;
-        ColorIntensity intensity = normalisedChroma > intensityThreshold
-            ? ColorIntensity.BRIGHT
-            : ColorIntensity.SOFT;
+        ColorIntensity intensity;
+        if (normalisedChroma > intensityThreshold) {
+            intensity = ColorIntensity.BRIGHT;
+        } else if (normalisedChroma > intensityThreshold * 0.4) {
+            intensity = ColorIntensity.MEDIUM;
+        } else {
+            intensity = ColorIntensity.SOFT;
+        }
 
         // 3. Depth
         ColorDepth depth;
         if (L < 25) {
             depth = ColorDepth.DARK;
-        } else if (L > 70) {
-            depth = ColorDepth.LIGHT;
-        } else if (L > 50) {
-            depth = ColorDepth.LIGHT;
+        } else if (L <= 50) {
+            depth = ColorDepth.MEDIUM;
         } else {
-            depth = ColorDepth.DARK;
+            depth = ColorDepth.LIGHT;
         }
 
         // 4. Season — four-season matrix
-        boolean ambiguousTemp = temperature == ColorTemperature.NEUTRAL;
+        boolean ambiguousTemp = temperature == ColorTemperature.NEUTRAL
+                || temperature == ColorTemperature.SEMI_WARM
+                || temperature == ColorTemperature.SEMI_COOL;
         boolean ambiguousDepth = depth == ColorDepth.MEDIUM;
 
         ColorSeason season;

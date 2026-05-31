@@ -2,6 +2,8 @@ package com.colorinchi.app.colorimetry.service;
 
 import org.springframework.stereotype.Service;
 
+import org.springframework.cache.annotation.Cacheable;
+
 import com.colorinchi.app.colorimetry.config.ColorimetryProperties;
 import com.colorinchi.app.colorimetry.data.ColorPaletteStore;
 import com.colorinchi.app.colorimetry.model.ColorProfile;
@@ -45,7 +47,11 @@ public class ColorSeasonClassifier {
      * @param hex colour string, e.g. {@code #FF5733} (with or without {@code #})
      * @return a derived {@link ColorProfile}
      */
+    @Cacheable(cacheNames = "color-classifications", key = "#hex", unless = "#result == null")
     public ColorProfile classify(String hex) {
+        if (hex == null || hex.isBlank()) {
+            throw new IllegalArgumentException("Hex cannot be null or blank");
+        }
         double[] lab = ColorSpaceConverter.hexToLab(hex);
         ColorProfile profile = ColorProfile.fromLab(lab[0], lab[1], lab[2], hex,
                 colorimetryProperties.warmCoolThreshold(),

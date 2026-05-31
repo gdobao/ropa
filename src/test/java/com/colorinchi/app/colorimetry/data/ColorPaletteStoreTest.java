@@ -2,6 +2,7 @@ package com.colorinchi.app.colorimetry.data;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.colorinchi.app.colorimetry.config.ColorimetryProperties;
 import com.colorinchi.app.colorimetry.model.ColorSeason;
 import com.colorinchi.app.colorimetry.model.NamedColor;
 
@@ -19,7 +20,7 @@ class ColorPaletteStoreTest {
 
     @BeforeEach
     void setUp() {
-        store = new ColorPaletteStore();
+        store = new ColorPaletteStore(ColorimetryProperties.defaults());
     }
 
     // ---------------------------------------------------------------
@@ -31,31 +32,31 @@ class ColorPaletteStoreTest {
     class PaletteStructureTests {
 
         @Test
-        @DisplayName("SPRING has ~25 colors and is not empty")
+        @DisplayName("SPRING has 21 colors and is not empty")
         void springNotEmpty() {
             assertNotNull(store.getPalette(ColorSeason.SPRING));
             assertFalse(store.getPalette(ColorSeason.SPRING).isEmpty());
-            assertEquals(25, store.getPalette(ColorSeason.SPRING).size());
+            assertEquals(21, store.getPalette(ColorSeason.SPRING).size());
         }
 
         @Test
-        @DisplayName("SUMMER has ~25 colors and is not empty")
+        @DisplayName("SUMMER has 24 colors and is not empty")
         void summerNotEmpty() {
             assertNotNull(store.getPalette(ColorSeason.SUMMER));
             assertFalse(store.getPalette(ColorSeason.SUMMER).isEmpty());
-            assertEquals(25, store.getPalette(ColorSeason.SUMMER).size());
+            assertEquals(24, store.getPalette(ColorSeason.SUMMER).size());
         }
 
         @Test
-        @DisplayName("AUTUMN has ~25 colors and is not empty")
+        @DisplayName("AUTUMN has 24 colors and is not empty")
         void autumnNotEmpty() {
             assertNotNull(store.getPalette(ColorSeason.AUTUMN));
             assertFalse(store.getPalette(ColorSeason.AUTUMN).isEmpty());
-            assertEquals(25, store.getPalette(ColorSeason.AUTUMN).size());
+            assertEquals(24, store.getPalette(ColorSeason.AUTUMN).size());
         }
 
         @Test
-        @DisplayName("WINTER has ~25 colors and is not empty")
+        @DisplayName("WINTER has 25 colors and is not empty")
         void winterNotEmpty() {
             assertNotNull(store.getPalette(ColorSeason.WINTER));
             assertFalse(store.getPalette(ColorSeason.WINTER).isEmpty());
@@ -84,7 +85,7 @@ class ColorPaletteStoreTest {
         }
 
         @Test
-        @DisplayName("total palette count is roughly 100")
+        @DisplayName("total palette count is 94")
         void totalCountIsRoughly100() {
             Map<ColorSeason, List<NamedColor>> palettes = store.getAllPalettes();
 
@@ -92,8 +93,7 @@ class ColorPaletteStoreTest {
                     .mapToInt(List::size)
                     .sum();
 
-            assertTrue(total > 90, "total should be at least 90, got " + total);
-            assertTrue(total < 110, "total should be at most 110, got " + total);
+            assertEquals(94, total, "total should be exactly 94 (21+24+24+25)");
         }
     }
 

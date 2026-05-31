@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import com.colorinchi.app.colorimetry.config.ColorimetryProperties;
 import com.colorinchi.app.colorimetry.data.ColorPaletteStore;
+import com.colorinchi.app.colorimetry.model.ColorDepth;
 import com.colorinchi.app.colorimetry.model.ColorProfile;
 import com.colorinchi.app.colorimetry.model.ColorSeason;
 
@@ -16,8 +17,8 @@ class ColorSeasonClassifierTest {
 
     @BeforeEach
     void setUp() {
-        ColorPaletteStore paletteStore = new ColorPaletteStore();
         ColorimetryProperties props = ColorimetryProperties.defaults();
+        ColorPaletteStore paletteStore = new ColorPaletteStore(props);
         classifier = new ColorSeasonClassifier(paletteStore, props);
     }
 
@@ -69,11 +70,44 @@ class ColorSeasonClassifierTest {
 
     @Test
     void nullHexThrowsException() {
-        assertThrows(RuntimeException.class, () -> classifier.classify(null));
+        assertThrows(IllegalArgumentException.class, () -> classifier.classify(null));
     }
 
     @Test
     void emptyHexThrowsException() {
-        assertThrows(RuntimeException.class, () -> classifier.classify(""));
+        assertThrows(IllegalArgumentException.class, () -> classifier.classify(""));
+    }
+
+    @Test
+    void darkColorHasDarkDepth() {
+        ColorProfile profile = classifier.classify("#0A0A0A");
+        assertEquals(ColorDepth.DARK, profile.depth());
+    }
+
+    @Test
+    void mediumColorHasMediumDepth() {
+        ColorProfile profile = classifier.classify("#505050");
+        assertEquals(ColorDepth.MEDIUM, profile.depth());
+    }
+
+    @Test
+    void lightColorHasLightDepth() {
+        ColorProfile profile = classifier.classify("#CCCCCC");
+        assertEquals(ColorDepth.LIGHT, profile.depth());
+    }
+
+    @Test
+    void depthBoundariesAreCorrect() {
+        ColorProfile dark = classifier.classify("#3B3B3B");
+        assertEquals(ColorDepth.DARK, dark.depth());
+
+        ColorProfile mediumLow = classifier.classify("#3C3C3C");
+        assertEquals(ColorDepth.MEDIUM, mediumLow.depth());
+
+        ColorProfile mediumHigh = classifier.classify("#757575");
+        assertEquals(ColorDepth.MEDIUM, mediumHigh.depth());
+
+        ColorProfile light = classifier.classify("#787878");
+        assertEquals(ColorDepth.LIGHT, light.depth());
     }
 }

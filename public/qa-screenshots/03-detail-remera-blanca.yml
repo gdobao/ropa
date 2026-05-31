@@ -1,0 +1,111 @@
+- generic [active] [ref=e1]:
+  - link "Saltar al contenido" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - complementary [ref=e3]:
+    - link "A Armario Capsula" [ref=e4] [cursor=pointer]:
+      - /url: /dashboard
+      - generic [ref=e5]: A
+      - generic [ref=e6]:
+        - text: Armario
+        - text: Capsula
+    - navigation [ref=e7]:
+      - link "⌂ Inicio" [ref=e8] [cursor=pointer]:
+        - /url: /dashboard
+        - generic [ref=e9]: ⌂
+        - generic [ref=e10]: Inicio
+      - link "👔 Prendas" [ref=e11] [cursor=pointer]:
+        - /url: /wardrobe
+        - generic [ref=e12]: 👔
+        - generic [ref=e13]: Prendas
+      - link "+ Añadir" [ref=e14] [cursor=pointer]:
+        - /url: /wardrobe/new
+        - generic [ref=e15]: +
+        - generic [ref=e16]: Añadir
+      - link "✧ Inspiracion" [ref=e17] [cursor=pointer]:
+        - /url: /inspiration
+        - generic [ref=e18]: ✧
+        - generic [ref=e19]: Inspiracion
+      - link "✦ Sugerencias" [ref=e20] [cursor=pointer]:
+        - /url: /recommendation
+        - generic [ref=e21]: ✦
+        - generic [ref=e22]: Sugerencias
+      - link "💬 Chat" [ref=e23] [cursor=pointer]:
+        - /url: /chat
+        - generic [ref=e24]: 💬
+        - generic [ref=e25]: Chat
+      - link "▦ Plan semanal" [ref=e26] [cursor=pointer]:
+        - /url: /weekly-plan
+        - generic [ref=e27]: ▦
+        - generic [ref=e28]: Plan semanal
+      - link "♙ Perfil" [ref=e29] [cursor=pointer]:
+        - /url: /profile
+        - generic [ref=e30]: ♙
+        - generic [ref=e31]: Perfil
+    - generic [ref=e32]: Single-user
+  - main [ref=e34]:
+    - main [ref=e35]:
+      - img "Remera Blanca" [ref=e37]
+      - heading "Remera Blanca" [level=1] [ref=e38]
+      - paragraph [ref=e39]: Top · Blanco · Todo el año
+      - generic [ref=e40]:
+        - generic [ref=e41] [cursor=pointer]: Algodón
+        - generic [ref=e42] [cursor=pointer]: Confirmada
+        - generic [ref=e43] [cursor=pointer]: qwen3.6
+      - generic [ref=e44]:
+        - heading "Deteccion IA" [level=2] [ref=e45]
+        - paragraph [ref=e46]:
+          - text: "Tipo sugerido:"
+          - strong [ref=e47]: Top
+        - paragraph [ref=e48]:
+          - text: "Color sugerido:"
+          - strong [ref=e49]: Blanco
+        - paragraph [ref=e50]:
+          - text: "Confianza:"
+          - strong [ref=e51]: "0.95"
+      - generic [ref=e52]:
+        - link "Ver armario" [ref=e53] [cursor=pointer]:
+          - /url: /wardrobe
+        - link "Añadir otra" [ref=e54] [cursor=pointer]:
+          - /url: /wardrobe/new
+        - link "Editar" [ref=e55] [cursor=pointer]:
+          - /url: /wardrobe/1/edit
+      - generic [ref=e56]:
+        - button "Eliminar" [ref=e57] [cursor=pointer]
+        - button "❤ Favorito" [ref=e58] [cursor=pointer]:
+          - generic [ref=e59]: ❤ Favorito
+      - generic [ref=e60]:
+        - heading "Combina con" [level=2] [ref=e61]
+        - generic [ref=e62]:
+          - link "Zapatillas Blancas Zapatillas Blancas" [ref=e63] [cursor=pointer]:
+            - /url: /wardrobe/49
+            - img "Zapatillas Blancas" [ref=e64]
+            - generic [ref=e65]: Zapatillas Blancas
+          - link "Cartera Negra Cartera Negra" [ref=e66] [cursor=pointer]:
+            - /url: /wardrobe/56
+            - img "Cartera Negra" [ref=e67]
+            - generic [ref=e68]: Cartera Negra
+          - link "Zapatillas Negras Zapatillas Negras" [ref=e69] [cursor=pointer]:
+            - /url: /wardrobe/50
+            - img "Zapatillas Negras" [ref=e70]
+            - generic [ref=e71]: Zapatillas Negras
+          - link "Jean Azul Claro Jean Azul Claro" [ref=e72] [cursor=pointer]:
+            - /url: /wardrobe/17
+            - img "Jean Azul Claro" [ref=e73]
+            - generic [ref=e74]: Jean Azul Claro
+          - link "Mochila Azul Mochila Azul" [ref=e75] [cursor=pointer]:
+            - /url: /wardrobe/57
+            - img "Mochila Azul" [ref=e76]
+            - generic [ref=e77]: Mochila Azul
+          - link "Jean Azul Oscuro Jean Azul Oscuro" [ref=e78] [cursor=pointer]:
+            - /url: /wardrobe/18
+            - img "Jean Azul Oscuro" [ref=e79]
+            - generic [ref=e80]: Jean Azul Oscuro
+      - generic [ref=e81]:
+        - heading "Usada en looks" [level=2] [ref=e82]
+        - paragraph [ref=e83]: Todavía no la usaste en ningún look.
+  - generic [ref=e84]:
+    - generic:
+      - paragraph: "El armario ya tiene buena base de datos: el companion puede enfocarse en optimizar rotación, contraste y planificación fina."
+    - button "Abrir ayudante de estilo" [ref=e85]:
+      - img [ref=e87]
+      - generic [ref=e95]: Abrir ayudante de estilo
