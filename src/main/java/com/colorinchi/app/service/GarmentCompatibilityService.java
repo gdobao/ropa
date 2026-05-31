@@ -17,7 +17,7 @@ public class GarmentCompatibilityService {
 
     private static final int RESULT_LIMIT = 6;
 
-    private static final Map<String, Set<String>> CATEGORY_COMPATIBILITY = Map.ofEntries(
+    public static final Map<String, Set<String>> CATEGORY_COMPATIBILITY = Map.ofEntries(
             Map.entry("Top", Set.of("Pantalón", "Chaqueta", "Zapatos", "Accesorio")),
             Map.entry("Pantalón", Set.of("Top", "Chaqueta", "Zapatos")),
             Map.entry("Vestido", Set.of("Chaqueta", "Zapatos", "Accesorio")),

@@ -108,11 +108,11 @@ class ChatDataRetentionIntegrationTest {
         // Insert a session with updatedAt = 200 days ago (via native SQL)
         UUID oldSessionId = UUID.randomUUID();
         OffsetDateTime oldDate = OffsetDateTime.now().minusDays(200);
-        insertSessionNative(oldSessionId, ownerId, "Old Session", "gpt-4o", oldDate);
+        insertSessionNative(oldSessionId, ownerId, "Old Session", "gpt-4o", oldDate, "MAIN_CHAT");
 
         // Insert a recently active session (updatedAt = now, should NOT be archived)
         UUID recentSessionId = UUID.randomUUID();
-        insertSessionNative(recentSessionId, ownerId, "Recent Session", "gpt-4o", OffsetDateTime.now());
+        insertSessionNative(recentSessionId, ownerId, "Recent Session", "gpt-4o", OffsetDateTime.now(), "MAIN_CHAT");
 
         entityManager.flush();
         entityManager.clear();
@@ -140,6 +140,42 @@ class ChatDataRetentionIntegrationTest {
     }
 
     @Test
+    void retentionCleanupArchivesInactiveCompanionSessions() {
+        // Insert a companion session with updatedAt = 200 days ago (via native SQL)
+        UUID oldCompanionId = UUID.randomUUID();
+        OffsetDateTime oldDate = OffsetDateTime.now().minusDays(200);
+        insertSessionNative(oldCompanionId, ownerId, "Old Companion", "qwen3.6", oldDate, "COMPANION");
+
+        // Insert a recently active companion session (updatedAt = now, should NOT be archived)
+        UUID recentCompanionId = UUID.randomUUID();
+        insertSessionNative(recentCompanionId, ownerId, "Recent Companion", "qwen3.6", OffsetDateTime.now(), "COMPANION");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // Verify neither is archived yet
+        ChatSession beforeOld = chatSessionRepository.findById(oldCompanionId).orElseThrow();
+        assertThat(beforeOld.isArchived()).isFalse();
+
+        ChatSession beforeRecent = chatSessionRepository.findById(recentCompanionId).orElseThrow();
+        assertThat(beforeRecent.isArchived()).isFalse();
+
+        // Run retention cleanup
+        retentionService.runRetention();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // Old companion session should now be archived (200 days > 180 day inactivity threshold)
+        ChatSession afterOld = chatSessionRepository.findById(oldCompanionId).orElseThrow();
+        assertThat(afterOld.isArchived()).isTrue();
+
+        // Recent companion session should still NOT be archived
+        ChatSession afterRecent = chatSessionRepository.findById(recentCompanionId).orElseThrow();
+        assertThat(afterRecent.isArchived()).isFalse();
+    }
+
+    @Test
     void retentionCleanupHandlesEmptyDatabase() {
         retentionService.runRetention();
     }
@@ -160,17 +196,18 @@ class ChatDataRetentionIntegrationTest {
     }
 
     private void insertSessionNative(UUID id, UUID ownerId, String title, String model,
-                                     OffsetDateTime updatedAt) {
+                                      OffsetDateTime updatedAt, String surface) {
         OffsetDateTime now = OffsetDateTime.now();
         entityManager.createNativeQuery(
-                "INSERT INTO chat_sessions (id, owner_id, title, model, status, created_at, updated_at, archived) " +
-                "VALUES (?, ?, ?, ?, 'active', ?, ?, false)")
+                "INSERT INTO chat_sessions (id, owner_id, title, model, status, created_at, updated_at, archived, surface) " +
+                "VALUES (?, ?, ?, ?, 'active', ?, ?, false, ?)")
                 .setParameter(1, id)
                 .setParameter(2, ownerId)
                 .setParameter(3, title)
                 .setParameter(4, model)
                 .setParameter(5, now)
                 .setParameter(6, updatedAt)
+                .setParameter(7, surface)
                 .executeUpdate();
     }
 }

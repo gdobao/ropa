@@ -18,6 +18,7 @@ import com.colorinchi.app.config.WardrobeProperties;
 import com.colorinchi.app.dto.chat.CategoryInfo;
 import com.colorinchi.app.dto.chat.ColorInfo;
 import com.colorinchi.app.dto.chat.DailyPlanInfo;
+import com.colorinchi.app.dto.chat.GarmentSummary;
 import com.colorinchi.app.dto.chat.MaterialInfo;
 import com.colorinchi.app.dto.chat.WardrobeContext;
 import com.colorinchi.app.model.Garment;
@@ -105,6 +106,13 @@ public class WardrobeContextAssembler {
                 .filter(p -> p.garmentCount() > 0)
                 .toList();
 
+        List<GarmentSummary> garmentSummaries = allGarments.stream()
+                .map(g -> new GarmentSummary(
+                        g.getId(), g.getName(), g.getCategory(),
+                        g.getColorName(), g.getColorHex(),
+                        g.getMaterial(), g.getSeason(), g.isFavorite()))
+                .toList();
+
         return new WardrobeContext(
                 totalGarments,
                 categories,
@@ -115,7 +123,8 @@ public class WardrobeContextAssembler {
                 plannedDays,
                 plannedItems,
                 todayPlan,
-                upcomingPlans);
+                upcomingPlans,
+                garmentSummaries);
     }
 
     private List<CategoryInfo> buildCategories(List<Garment> garments) {

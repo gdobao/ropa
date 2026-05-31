@@ -26,6 +26,7 @@ import com.colorinchi.app.dto.chat.ColorInfo;
 import com.colorinchi.app.dto.chat.MaterialInfo;
 import com.colorinchi.app.dto.chat.WardrobeContext;
 import com.colorinchi.app.model.ChatMessage;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.model.ChatSession;
 import com.colorinchi.app.service.AnonymousOwnerService;
 import com.colorinchi.app.service.ChatMessageService;
@@ -82,6 +83,7 @@ class FashionChatControllerTest {
         sampleSession.setTitle("Test Chat");
         sampleSession.setModel("deepseek-v4-flash");
         sampleSession.setStatus("active");
+        sampleSession.setSurface(ChatSurface.MAIN_CHAT);
 
         sampleMessage = new ChatMessage();
         sampleMessage.setId(UUID.randomUUID());
@@ -95,7 +97,7 @@ class FashionChatControllerTest {
             List.of(new ColorInfo("Rojo", "#FF0000", 3L)),
             List.of(new MaterialInfo("Algodon", 4L)),
             Map.of("Verano", 6L),
-            2L, 3L, 5L, null, List.of());
+            2L, 3L, 5L, null, List.of(), List.of());
 
         defaultModel = new AiModelConfig();
         defaultModel.setId("deepseek-v4-flash");
@@ -164,7 +166,7 @@ class FashionChatControllerTest {
     static class TestConfig {
         @Bean
         WardrobeContext dummyWardrobeContext() {
-            return new WardrobeContext(0L, List.of(), List.of(), List.of(), Map.of(), 0L, 0L, 0L, null, List.of());
+            return new WardrobeContext(0L, List.of(), List.of(), List.of(), Map.of(), 0L, 0L, 0L, null, List.of(), List.of());
         }
         @Bean
         UploadProperties uploadProperties() {

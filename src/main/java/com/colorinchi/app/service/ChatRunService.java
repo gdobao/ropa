@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.colorinchi.app.model.ChatRun;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.repository.ChatRunRepository;
 import com.colorinchi.app.service.analytics.ChatAnalyticsService;
 import com.colorinchi.app.service.analytics.ChatEventType;
@@ -62,26 +63,49 @@ public class ChatRunService {
     }
 
     @Transactional
+    public boolean markStreaming(UUID id, UUID ownerId) {
+        return chatRunRepository.markStreaming(id, ownerId) > 0;
+    }
+
+    @Transactional
     public ChatRun complete(UUID id, String modelResolved, int totalTokens) {
+        return complete(id, modelResolved, totalTokens, ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional
+    public ChatRun complete(UUID id, String modelResolved, int totalTokens, ChatSurface surface) {
         ChatRun run = getById(id);
+        String s = run.getStatus();
+        if (!"running".equals(s) && !"streaming".equals(s)) {
+            throw new IllegalStateException("Run " + id + " is not in running/streaming state");
+        }
         run.setStatus("completed");
         run.setModelResolved(modelResolved);
         run.setTotalTokens(totalTokens);
         run.setCompletedAt(OffsetDateTime.now());
         ChatRun saved = chatRunRepository.save(run);
-        chatSessionService.touch(run.getSessionId());
+        chatSessionService.touch(surface, run.getSessionId());
         recordRunCompleted(saved);
         return saved;
     }
 
     @Transactional
     public ChatRun fail(UUID id, String errorMessage) {
+        return fail(id, errorMessage, ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional
+    public ChatRun fail(UUID id, String errorMessage, ChatSurface surface) {
         ChatRun run = getById(id);
+        String s = run.getStatus();
+        if (!"running".equals(s) && !"streaming".equals(s)) {
+            throw new IllegalStateException("Run " + id + " is not in running/streaming state");
+        }
         run.setStatus("failed");
         run.setErrorMessage(errorMessage);
         run.setCompletedAt(OffsetDateTime.now());
         ChatRun saved = chatRunRepository.save(run);
-        chatSessionService.touch(run.getSessionId());
+        chatSessionService.touch(surface, run.getSessionId());
         recordRunFailed(saved);
         return saved;
     }
@@ -93,14 +117,23 @@ public class ChatRunService {
      */
     @Transactional
     public ChatRun complete(UUID id, UUID ownerId, String modelResolved, int totalTokens) {
+        return complete(id, ownerId, modelResolved, totalTokens, ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional
+    public ChatRun complete(UUID id, UUID ownerId, String modelResolved, int totalTokens, ChatSurface surface) {
         ChatRun run = chatRunRepository.findByIdAndOwnerId(id, ownerId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat run not found"));
+        String s = run.getStatus();
+        if (!"running".equals(s) && !"streaming".equals(s)) {
+            throw new IllegalStateException("Run " + id + " is not in running state");
+        }
         run.setStatus("completed");
         run.setModelResolved(modelResolved);
         run.setTotalTokens(totalTokens);
         run.setCompletedAt(OffsetDateTime.now());
         ChatRun saved = chatRunRepository.save(run);
-        chatSessionService.touch(run.getSessionId());
+        chatSessionService.touch(surface, run.getSessionId(), ownerId);
         recordRunCompleted(saved);
         return saved;
     }
@@ -112,13 +145,22 @@ public class ChatRunService {
      */
     @Transactional
     public ChatRun fail(UUID id, UUID ownerId, String errorMessage) {
+        return fail(id, ownerId, errorMessage, ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional
+    public ChatRun fail(UUID id, UUID ownerId, String errorMessage, ChatSurface surface) {
         ChatRun run = chatRunRepository.findByIdAndOwnerId(id, ownerId)
                 .orElseThrow(() -> new IllegalArgumentException("Chat run not found"));
+        String s = run.getStatus();
+        if (!"running".equals(s) && !"streaming".equals(s)) {
+            throw new IllegalStateException("Run " + id + " is not in running state");
+        }
         run.setStatus("failed");
         run.setErrorMessage(errorMessage);
         run.setCompletedAt(OffsetDateTime.now());
         ChatRun saved = chatRunRepository.save(run);
-        chatSessionService.touch(run.getSessionId());
+        chatSessionService.touch(surface, run.getSessionId(), ownerId);
         recordRunFailed(saved);
         return saved;
     }

@@ -9,5 +9,6 @@
     <main id="main-content" class="app" th:insert="${content}"></main>
   </div>
   <th:block th:replace="~{fragments/bottom-nav :: nav(activeNav=${activeNav})}"></th:block>
+  <th:block th:replace="~{fragments/companion-assistant :: companion}"></th:block>
 </body>
 </html>

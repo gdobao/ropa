@@ -17,7 +17,10 @@ public class ChatFeedback {
     @Column(nullable = false, updatable = false)
     private UUID id;
 
-    @Column(name = "run_id", nullable = false)
+    @Column(name = "message_id")
+    private UUID messageId;
+
+    @Column(name = "run_id")
     private UUID runId;
 
     @Column(name = "session_id", nullable = false)
@@ -45,6 +48,9 @@ public class ChatFeedback {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
+    public UUID getMessageId() { return messageId; }
+    public void setMessageId(UUID messageId) { this.messageId = messageId; }
 
     public UUID getRunId() { return runId; }
     public void setRunId(UUID runId) { this.runId = runId; }

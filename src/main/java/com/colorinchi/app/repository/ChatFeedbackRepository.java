@@ -9,7 +9,9 @@ import com.colorinchi.app.model.ChatFeedback;
 
 public interface ChatFeedbackRepository extends JpaRepository<ChatFeedback, UUID> {
 
-    List<ChatFeedback> findAllByRunId(UUID runId);
+    List<ChatFeedback> findAllByMessageIdAndOwnerId(UUID messageId, UUID ownerId);
 
-    List<ChatFeedback> findAllBySessionId(UUID sessionId);
+    List<ChatFeedback> findAllByRunIdAndOwnerId(UUID runId, UUID ownerId);
+
+    List<ChatFeedback> findAllBySessionIdAndOwnerId(UUID sessionId, UUID ownerId);
 }

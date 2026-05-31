@@ -225,6 +225,12 @@ public class GarmentController {
         return "redirect:/wardrobe/" + garment.getId();
     }
 
+    @PostMapping("/wardrobe/seed")
+    String seedWardrobe() {
+        garmentService.seed();
+        return "redirect:/wardrobe";
+    }
+
     @GetMapping("/inspiration")
     String inspiration(Model model) {
         List<InspirationLook> inspirations = inspirationService.getAll();

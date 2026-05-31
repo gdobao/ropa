@@ -44,8 +44,13 @@
     <div class="empty" th:if="${garments.isEmpty() and #strings.isEmpty(activeCategory)}">
       <div>
         <h2>Tu armario esta esperando</h2>
-        <p class="meta">Carga tu primera prenda con una foto y confirma tipo/color.</p>
-        <a class="btn primary" th:href="@{/wardrobe/new}">Añadir prenda</a>
+        <p class="meta">Carga tu primera prenda con una foto o genera un armario de prueba.</p>
+        <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;justify-content:center">
+          <a class="btn primary" th:href="@{/wardrobe/new}">Añadir prenda</a>
+          <form method="post" th:action="@{/wardrobe/seed}" style="display:inline">
+            <button type="submit" class="btn secondary" onclick="this.textContent='Generando…';this.disabled=true">🎲 Generar armario de prueba</button>
+          </form>
+        </div>
       </div>
     </div>
   </section>

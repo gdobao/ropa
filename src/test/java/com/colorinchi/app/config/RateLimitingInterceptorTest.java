@@ -216,7 +216,7 @@ class RateLimitingInterceptorTest {
 
     @Test
     void allowsChatSessionsPostWithinLimit() {
-        when(request.getRequestURI()).thenReturn("/api/chat/sessions/");
+        when(request.getRequestURI()).thenReturn("/api/chat/sessions");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRemoteAddr()).thenReturn("10.0.0.40");
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
@@ -227,7 +227,7 @@ class RateLimitingInterceptorTest {
 
     @Test
     void chatSessionsPostRespectsPerOwnerLimit() {
-        when(request.getRequestURI()).thenReturn("/api/chat/sessions/");
+        when(request.getRequestURI()).thenReturn("/api/chat/sessions");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRemoteAddr()).thenReturn("10.0.0.50");
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
@@ -238,5 +238,52 @@ class RateLimitingInterceptorTest {
 
         assertThatThrownBy(() -> interceptor.preHandle(request, response, null))
                 .isInstanceOf(RateLimitExceededException.class);
+    }
+
+    @Test
+    void allowsMessageFeedbackPostWithinLimit() {
+        when(request.getRequestURI()).thenReturn("/api/chat/messages/00000000-0000-0000-0000-000000000001/feedback");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.60");
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
+
+        boolean result = interceptor.preHandle(request, response, null);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void companionSessionCreationUsesPerOwnerRateLimitBucket() {
+        when(request.getRequestURI()).thenReturn("/api/companion/sessions");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.62");
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
+
+        boolean result = interceptor.preHandle(request, response, null);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void companionStreamUsesGlobalChatBucket() {
+        when(request.getRequestURI()).thenReturn("/api/companion/stream/00000000-0000-0000-0000-000000000001");
+        when(request.getMethod()).thenReturn("GET");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.63");
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
+
+        boolean result = interceptor.preHandle(request, response, null);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void futureUnknownChatPostPathIsNotRateLimitedYet() {
+        when(request.getRequestURI()).thenReturn("/api/chat/sessions/00000000-0000-0000-0000-000000000001/companion/messages");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.61");
+
+        for (int i = 0; i < 7; i++) {
+            assertThat(interceptor.preHandle(request, response, null)).isTrue();
+        }
     }
 }

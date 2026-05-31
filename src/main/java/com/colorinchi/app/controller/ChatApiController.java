@@ -1,6 +1,5 @@
 package com.colorinchi.app.controller;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,64 +20,43 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import com.colorinchi.app.config.AiModelConfig;
 import com.colorinchi.app.dto.chat.ChatFeedbackRequest;
 import com.colorinchi.app.dto.chat.ChatMessageResponse;
-import com.colorinchi.app.dto.chat.ChatRunResponse;
-import com.colorinchi.app.dto.chat.ChatSendResponse;
 import com.colorinchi.app.dto.chat.ChatSessionResponse;
 import com.colorinchi.app.dto.chat.CreateSessionRequest;
 import com.colorinchi.app.dto.chat.ErrorResponse;
-import com.colorinchi.app.dto.chat.PolicyDecision;
-import com.colorinchi.app.dto.chat.StreamChunk;
 import com.colorinchi.app.model.ChatMessage;
-import com.colorinchi.app.model.ChatRun;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.model.ChatSession;
+import com.colorinchi.app.service.ChatConversationOrchestrator;
 import com.colorinchi.app.service.ChatFeedbackService;
 import com.colorinchi.app.service.ChatMessageService;
-import com.colorinchi.app.service.ChatPolicyService;
-import com.colorinchi.app.service.ChatPromptFactory;
-import com.colorinchi.app.service.ChatRunService;
 import com.colorinchi.app.service.ChatSessionService;
 import com.colorinchi.app.service.ModelRouter;
-import com.colorinchi.app.service.StreamingChatClient;
-
-import reactor.core.Disposable;
-import reactor.core.scheduler.Schedulers;
 
 @RestController
 @RequestMapping("/api/chat")
 public class ChatApiController {
 
     private static final Logger log = LoggerFactory.getLogger(ChatApiController.class);
-    private static final long SSE_TIMEOUT = 300_000L; // 5 minutes
 
     private final ChatSessionService chatSessionService;
     private final ChatMessageService chatMessageService;
-    private final ChatRunService chatRunService;
     private final ChatFeedbackService chatFeedbackService;
-    private final ChatPolicyService chatPolicyService;
-    private final ChatPromptFactory chatPromptFactory;
+    private final ChatConversationOrchestrator chatConversationOrchestrator;
     private final ModelRouter modelRouter;
-    private final StreamingChatClient streamingChatClient;
 
     public ChatApiController(
             ChatSessionService chatSessionService,
             ChatMessageService chatMessageService,
-            ChatRunService chatRunService,
             ChatFeedbackService chatFeedbackService,
-            ChatPolicyService chatPolicyService,
-            ChatPromptFactory chatPromptFactory,
-            ModelRouter modelRouter,
-            StreamingChatClient streamingChatClient) {
+            ChatConversationOrchestrator chatConversationOrchestrator,
+            ModelRouter modelRouter) {
         this.chatSessionService = chatSessionService;
         this.chatMessageService = chatMessageService;
-        this.chatRunService = chatRunService;
         this.chatFeedbackService = chatFeedbackService;
-        this.chatPolicyService = chatPolicyService;
-        this.chatPromptFactory = chatPromptFactory;
+        this.chatConversationOrchestrator = chatConversationOrchestrator;
         this.modelRouter = modelRouter;
-        this.streamingChatClient = streamingChatClient;
     }
 
     // ---- Sessions ----
@@ -95,7 +72,7 @@ public class ChatApiController {
         } catch (Exception e) {
             log.error("Failed to create session", e);
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("create_failed", e.getMessage()));
+                    .body(ErrorResponse.of("create_failed", "No se pudo crear la sesión"));
         }
     }
 
@@ -114,7 +91,7 @@ public class ChatApiController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("not_found", e.getMessage()));
+                    .body(ErrorResponse.of("not_found", "Sesión no encontrada"));
         } catch (Exception e) {
             log.error("Failed to update title for session {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -134,7 +111,7 @@ public class ChatApiController {
         } catch (Exception e) {
             log.error("Failed to list sessions", e);
             return ResponseEntity.internalServerError()
-                    .body(ErrorResponse.of("list_failed", e.getMessage()));
+                    .body(ErrorResponse.of("list_failed", "Error al listar las sesiones"));
         }
     }
 
@@ -142,16 +119,21 @@ public class ChatApiController {
     public ResponseEntity<?> listMessages(@PathVariable UUID sessionId) {
         MDC.put("sessionId", sessionId.toString());
         try {
+            // Enforce main-chat surface ownership before exposing any thread history.
+            chatSessionService.getById(ChatSurface.MAIN_CHAT, sessionId);
             List<ChatMessageResponse> result = chatMessageService.listBySession(sessionId).stream()
                     .map(m -> new ChatMessageResponse(
                             m.getId(), m.getSessionId(), m.getRole(),
                             m.getContent(), m.getCreatedAt()))
                     .toList();
             return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.of("not_found", "Sesión no encontrada"));
         } catch (Exception e) {
             log.error("Failed to list messages for session {}", sessionId, e);
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("list_failed", e.getMessage()));
+                    .body(ErrorResponse.of("list_failed", "Error al listar los mensajes"));
         } finally {
             MDC.remove("sessionId");
         }
@@ -166,51 +148,20 @@ public class ChatApiController {
 
         MDC.put("sessionId", sessionId.toString());
         try {
-            ChatSession session = chatSessionService.getById(sessionId);
-            String content = body.getOrDefault("content", "").trim();
-            if (content.isBlank()) {
-                return ResponseEntity.badRequest()
-                        .body(ErrorResponse.of("validation_error", "El mensaje no puede estar vacío"));
-            }
-
-            String requestedModel = body.getOrDefault("model", session.getModel());
-            AiModelConfig modelConfig;
-            try {
-                modelConfig = modelRouter.resolve(requestedModel);
-            } catch (IllegalArgumentException e) {
-                return ResponseEntity.badRequest()
-                        .body(ErrorResponse.of("invalid_model", e.getMessage()));
-            }
-
-            // Policy evaluation
-            PolicyDecision decision = chatPolicyService.evaluate(content);
-            if (!decision.isAllowed()) {
-                if (decision.decision() == PolicyDecision.Decision.BLOCK) {
-                    log.info("Policy BLOCK for session {}: {}", sessionId, decision.reason());
-                    return ResponseEntity.ok(ChatSendResponse.blocked(sessionId, decision.refusalMessage()));
-                }
-                // FLAG — allow but log
-                log.info("Policy FLAG for session {}: {}", sessionId, decision.reason());
-            }
-
-            // Persist user message
-            ChatMessage userMessage = chatMessageService.create(sessionId, "user", content, 0);
-
-            // Create and start run
-            ChatRun run = chatRunService.create(sessionId, modelConfig.getId());
-            chatRunService.started(run.getId());
-
-            log.debug("Created run {} for session {} with model {}", run.getId(), sessionId, modelConfig.getId());
-
-            return ResponseEntity.ok(ChatSendResponse.streaming(run.getId(), sessionId));
-
-        } catch (IllegalArgumentException e) {
+            return ResponseEntity.ok(chatConversationOrchestrator.sendMessage(ChatSurface.MAIN_CHAT, sessionId, body));
+        } catch (ChatConversationOrchestrator.EmptyChatMessageException e) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("not_found", e.getMessage()));
+                    .body(ErrorResponse.of("validation_error", "El mensaje no puede estar vacío"));
+        } catch (IllegalArgumentException e) {
+            String error = e.getMessage() != null && e.getMessage().startsWith("Modelo no soportado")
+                    ? "invalid_model"
+                    : "not_found";
+            String message = "invalid_model".equals(error) ? "Modelo no soportado" : "Sesión no encontrada";
+            return ResponseEntity.badRequest().body(ErrorResponse.of(error, message));
         } catch (Exception e) {
             log.error("Failed to send message in session {}", sessionId, e);
             return ResponseEntity.internalServerError()
-                    .body(ErrorResponse.of("send_failed", e.getMessage()));
+                    .body(ErrorResponse.of("send_failed", "Error al enviar el mensaje"));
         } finally {
             MDC.remove("sessionId");
         }
@@ -220,120 +171,7 @@ public class ChatApiController {
 
     @GetMapping("/stream/{runId}")
     public SseEmitter streamRun(@PathVariable UUID runId) {
-        SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
-        StringBuilder accumulated = new StringBuilder();
-
-        ChatRun run;
-        ChatSession session;
-        List<ChatMessage> previousMessages;
-
-        try {
-            run = chatRunService.getById(runId);
-            session = chatSessionService.getById(run.getSessionId());
-            previousMessages = chatMessageService.listBySession(run.getSessionId());
-        } catch (Exception e) {
-            log.error("Failed to initialize stream for run {}", runId, e);
-            SseEmitter errorEmitter = new SseEmitter(0L);
-            try {
-                errorEmitter.send(SseEmitter.event()
-                        .name("error")
-                        .data(StreamChunk.error("No se pudo iniciar el stream: " + e.getMessage())));
-            } catch (Exception ex) {
-                // ignore
-            }
-            errorEmitter.complete();
-            return errorEmitter;
-        }
-
-        // Build messages list for the AI
-        List<Map<String, String>> aiMessages = new ArrayList<>();
-
-        // 1. System prompt with wardrobe context
-        Map<String, String> systemMsg = new HashMap<>();
-        systemMsg.put("role", "system");
-        systemMsg.put("content", chatPromptFactory.buildSystemPrompt());
-        aiMessages.add(systemMsg);
-
-        // 2. All previous messages (excluding system, which we just added)
-        for (ChatMessage msg : previousMessages) {
-            Map<String, String> m = new HashMap<>();
-            m.put("role", msg.getRole().equals("user") ? "user" : "assistant");
-            m.put("content", msg.getContent());
-            aiMessages.add(m);
-        }
-
-        log.debug("Starting AI stream for run {} with model {}", runId, run.getModelRequested());
-
-        // Capture owner context BEFORE subscribing — Reactor threads have no
-        // HTTP request attributes, so CurrentOwnerAccessor would fail inside
-        // the reactive callbacks.
-        UUID capturedOwnerId = run.getOwnerId();
-        UUID sessionId = run.getSessionId();
-
-        // Subscribe to the reactive Flux and feed into the SseEmitter
-        Disposable subscription = streamingChatClient
-                .stream(run.getModelRequested(), aiMessages)
-                .publishOn(Schedulers.boundedElastic())
-                .subscribe(
-                    chunk -> {
-                        try {
-                            accumulated.append(chunk);
-                            emitter.send(SseEmitter.event()
-                                    .name("chunk")
-                                    .data(StreamChunk.chunk(chunk)));
-                        } catch (Exception e) {
-                            log.warn("Error sending SSE chunk for run {}: {}", runId, e.getMessage());
-                        }
-                    },
-                    error -> {
-                        log.error("Stream error for run {}: {}", runId, error.getMessage());
-                        try {
-                            chatRunService.fail(runId, capturedOwnerId, error.getMessage());
-                            emitter.send(SseEmitter.event()
-                                    .name("error")
-                                    .data(StreamChunk.error(error.getMessage())));
-                        } catch (Exception e) {
-                            log.warn("Error sending SSE error for run {}", runId);
-                        }
-                        emitter.complete();
-                    },
-                    () -> {
-                        try {
-                            // Persist the full assistant message
-                            String fullContent = accumulated.toString();
-                            int tokens = fullContent.length() / 4; // rough estimate
-                            ChatMessage assistantMsg = chatMessageService.create(
-                                    sessionId, capturedOwnerId, "assistant", fullContent, tokens);
-                            chatRunService.complete(runId, capturedOwnerId,
-                                    run.getModelRequested(), tokens);
-
-                            emitter.send(SseEmitter.event()
-                                    .name("done")
-                                    .data(StreamChunk.done(assistantMsg.getId())));
-                        } catch (Exception e) {
-                            log.warn("Error completing stream for run {}: {}", runId, e.getMessage());
-                        }
-                        emitter.complete();
-                    });
-
-        // Clean up subscription on emitter completion/timeout
-        emitter.onCompletion(() -> {
-            if (!subscription.isDisposed()) {
-                subscription.dispose();
-            }
-        });
-        emitter.onTimeout(() -> {
-            if (!subscription.isDisposed()) {
-                subscription.dispose();
-            }
-            try {
-                chatRunService.fail(runId, capturedOwnerId, "Stream timeout");
-            } catch (Exception e) {
-                log.warn("Error marking run {} as failed on timeout", runId);
-            }
-        });
-
-        return emitter;
+        return chatConversationOrchestrator.streamRun(ChatSurface.MAIN_CHAT, runId);
     }
 
     // ---- Feedback ----
@@ -344,15 +182,17 @@ public class ChatApiController {
             @RequestBody ChatFeedbackRequest request) {
         try {
             ChatMessage msg = chatMessageService.getById(messageId);
-            chatFeedbackService.create(null, msg.getSessionId(), request);
+            // SURFACE CHECK: verify the message's session is MAIN_CHAT
+            chatSessionService.getById(ChatSurface.MAIN_CHAT, msg.getSessionId());
+            chatFeedbackService.create(messageId, null, msg.getSessionId(), request);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("not_found", e.getMessage()));
+                    .body(ErrorResponse.of("not_found", "Message not found"));
         } catch (Exception e) {
             log.error("Failed to submit feedback for message {}", messageId, e);
             return ResponseEntity.internalServerError()
-                    .body(ErrorResponse.of("feedback_failed", e.getMessage()));
+                    .body(ErrorResponse.of("feedback_failed", "Error al procesar la valoración"));
         }
     }
 
@@ -365,11 +205,11 @@ public class ChatApiController {
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("not_found", e.getMessage()));
+                    .body(ErrorResponse.of("not_found", "Sesión no encontrada"));
         } catch (Exception e) {
             log.error("Failed to delete session {}", sessionId, e);
             return ResponseEntity.internalServerError()
-                    .body(ErrorResponse.of("delete_failed", e.getMessage()));
+                    .body(ErrorResponse.of("delete_failed", "Error al eliminar la sesión"));
         }
     }
 
@@ -391,7 +231,7 @@ public class ChatApiController {
         } catch (Exception e) {
             log.error("Failed to list models", e);
             return ResponseEntity.internalServerError()
-                    .body(ErrorResponse.of("models_failed", e.getMessage()));
+                    .body(ErrorResponse.of("models_failed", "Error al listar los modelos"));
         }
     }
 }

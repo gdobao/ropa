@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.colorinchi.app.service.CurrentOwnerAccessor;
 
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -49,6 +50,9 @@ class ChatRateLimitIntegrationTest {
 
     @Test
     void rateLimitBlocksAfterTenRequests() throws Exception {
+        when(currentOwnerAccessor.getCurrentOwnerId())
+                .thenReturn(UUID.fromString("11111111-1111-1111-1111-111111111111"));
+
         // Send 10 rapid requests — the interceptor allows them through.
         // The controller returns 400 because the session doesn't exist,
         // which is the expected behavior when the interceptor passes.
@@ -91,5 +95,47 @@ class ChatRateLimitIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"owner b first\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void streamEndpointIsRateLimitedOnRealPath() throws Exception {
+        UUID runId = UUID.fromString("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        when(currentOwnerAccessor.getCurrentOwnerId())
+                .thenReturn(UUID.fromString("22222222-2222-2222-2222-222222222222"));
+
+        for (int i = 0; i < 10; i++) {
+            mockMvc.perform(get("/api/chat/stream/{runId}", runId)
+                            .with(request -> {
+                                request.setRemoteAddr("10.0.0.70");
+                                return request;
+                            }))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/api/chat/stream/{runId}", runId)
+                        .with(request -> {
+                            request.setRemoteAddr("10.0.0.70");
+                            return request;
+                        }))
+                .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()));
+    }
+
+    @Test
+    void feedbackEndpointUsesCurrentMessagePathForRateLimiting() throws Exception {
+        UUID messageId = UUID.fromString("ffffffff-ffff-ffff-ffff-ffffffffffff");
+        when(currentOwnerAccessor.getCurrentOwnerId())
+                .thenReturn(UUID.fromString("33333333-3333-3333-3333-333333333333"));
+
+        for (int i = 0; i < 10; i++) {
+            mockMvc.perform(post("/api/chat/messages/{messageId}/feedback", messageId).with(csrf())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"rating\":\"up\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        mockMvc.perform(post("/api/chat/messages/{messageId}/feedback", messageId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rating\":\"up\"}"))
+                .andExpect(status().is(HttpStatus.TOO_MANY_REQUESTS.value()));
     }
 }

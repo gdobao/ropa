@@ -30,12 +30,12 @@ import com.colorinchi.app.dto.chat.WardrobeContext;
 import com.colorinchi.app.model.ChatFeedback;
 import com.colorinchi.app.model.ChatMessage;
 import com.colorinchi.app.model.ChatRun;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.model.ChatSession;
 import com.colorinchi.app.service.AnonymousOwnerService;
+import com.colorinchi.app.service.ChatConversationOrchestrator;
 import com.colorinchi.app.service.ChatFeedbackService;
 import com.colorinchi.app.service.ChatMessageService;
-import com.colorinchi.app.service.ChatPolicyService;
-import com.colorinchi.app.service.ChatPromptFactory;
 import com.colorinchi.app.service.ChatRunService;
 import com.colorinchi.app.service.ChatSessionService;
 import com.colorinchi.app.service.ModelRouter;
@@ -44,10 +44,12 @@ import com.colorinchi.app.service.WardrobeContextAssembler;
 
 import reactor.core.publisher.Flux;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -79,10 +81,7 @@ class ChatApiControllerTest {
     private ChatFeedbackService chatFeedbackService;
 
     @MockitoBean
-    private ChatPolicyService chatPolicyService;
-
-    @MockitoBean
-    private ChatPromptFactory chatPromptFactory;
+    private ChatConversationOrchestrator chatConversationOrchestrator;
 
     @MockitoBean
     private ModelRouter modelRouter;
@@ -115,6 +114,7 @@ class ChatApiControllerTest {
         sampleSession.setTitle("Test Chat");
         sampleSession.setModel("deepseek-v4-flash");
         sampleSession.setStatus("active");
+        sampleSession.setSurface(ChatSurface.MAIN_CHAT);
 
         sampleMessage = new ChatMessage();
         sampleMessage.setId(messageId);
@@ -189,6 +189,16 @@ class ChatApiControllerTest {
                 .andExpect(jsonPath("$[0].model").value("deepseek-v4-flash"));
     }
 
+    @Test
+    void listSessionsDoesNotExposeCompanionSession() throws Exception {
+        when(chatSessionService.listByOwner()).thenReturn(List.of(sampleSession));
+
+        mockMvc.perform(get("/api/chat/sessions").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id").value(sessionId.toString()));
+    }
+
     // ---- List messages ----
 
     @Test
@@ -214,10 +224,8 @@ class ChatApiControllerTest {
 
     @Test
     void sendMessageCreatesRunAndReturnsRunId() throws Exception {
-        when(chatSessionService.getById(sessionId)).thenReturn(sampleSession);
-        when(chatPolicyService.evaluate(anyString())).thenReturn(PolicyDecision.allow("test"));
-        when(chatMessageService.create(eq(sessionId), eq("user"), anyString(), anyInt())).thenReturn(sampleMessage);
-        when(chatRunService.create(eq(sessionId), anyString())).thenReturn(sampleRun);
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.MAIN_CHAT), eq(sessionId), any()))
+                .thenReturn(com.colorinchi.app.dto.chat.ChatSendResponse.streaming(runId, sessionId));
 
         mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -229,9 +237,8 @@ class ChatApiControllerTest {
 
     @Test
     void sendMessageBlockedByPolicy() throws Exception {
-        when(chatSessionService.getById(sessionId)).thenReturn(sampleSession);
-        when(chatPolicyService.evaluate(anyString()))
-                .thenReturn(PolicyDecision.block("outfit_request", "No puedo elegir un outfit por vos"));
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.MAIN_CHAT), eq(sessionId), any()))
+                .thenReturn(com.colorinchi.app.dto.chat.ChatSendResponse.blocked(sessionId, "No puedo elegir un outfit por vos"));
 
         mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -243,6 +250,9 @@ class ChatApiControllerTest {
 
     @Test
     void sendMessageWithEmptyContentReturnsError() throws Exception {
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.MAIN_CHAT), eq(sessionId), any()))
+                .thenThrow(new ChatConversationOrchestrator.EmptyChatMessageException());
+
         mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"\"}"))
@@ -255,7 +265,8 @@ class ChatApiControllerTest {
     @Test
     void submitFeedbackReturnsOk() throws Exception {
         when(chatMessageService.getById(any(UUID.class))).thenReturn(sampleMessage);
-        when(chatFeedbackService.create(any(), any(), any(ChatFeedbackRequest.class)))
+        when(chatSessionService.getById(ChatSurface.MAIN_CHAT, sessionId)).thenReturn(sampleSession);
+        when(chatFeedbackService.create(any(), any(), any(), any(ChatFeedbackRequest.class)))
                 .thenReturn(new ChatFeedback());
 
         mockMvc.perform(post("/api/chat/messages/{messageId}/feedback", messageId).with(csrf())
@@ -263,6 +274,8 @@ class ChatApiControllerTest {
                         .content("{\"rating\":\"up\",\"comment\":\"Great advice\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));
+
+        verify(chatFeedbackService).create(eq(messageId), isNull(), eq(sessionId), any(ChatFeedbackRequest.class));
     }
 
     // ---- Delete session ----
@@ -309,20 +322,31 @@ class ChatApiControllerTest {
 
     @Test
     void listMessagesForNonExistentSessionReturnsError() throws Exception {
-        when(chatMessageService.listBySession(sessionId))
+        when(chatSessionService.getById(ChatSurface.MAIN_CHAT, sessionId))
                 .thenThrow(new IllegalArgumentException("Chat session not found"));
 
         mockMvc.perform(get("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf()))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("list_failed"));
+                .andExpect(jsonPath("$.error").value("not_found"));
+    }
+
+    @Test
+    void sendMessageRejectsCompanionSessionId() throws Exception {
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.MAIN_CHAT), eq(sessionId), any()))
+                .thenThrow(new IllegalArgumentException("Chat session not found"));
+
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"Hola\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("not_found"));
     }
 
     // ---- Send message with invalid model ----
 
     @Test
     void sendMessageWithInvalidModelReturnsError() throws Exception {
-        when(chatSessionService.getById(sessionId)).thenReturn(sampleSession);
-        when(modelRouter.resolve(anyString()))
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.MAIN_CHAT), eq(sessionId), any()))
                 .thenThrow(new IllegalArgumentException("Modelo no soportado: bad-model"));
 
         mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
@@ -336,7 +360,7 @@ class ChatApiControllerTest {
     static class TestConfig {
         @Bean
         WardrobeContext dummyWardrobeContext() {
-            return new WardrobeContext(0L, List.of(), List.of(), List.of(), java.util.Map.of(), 0L, 0L, 0L, null, List.of());
+            return new WardrobeContext(0L, List.of(), List.of(), List.of(), java.util.Map.of(), 0L, 0L, 0L, null, List.of(), List.of());
         }
         @Bean
         UploadProperties uploadProperties() {

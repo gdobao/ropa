@@ -105,103 +105,62 @@ La aplicación sigue una arquitectura MVC clásica con controladores, servicios 
 
 ## Subsistema de chat
 
-### Flujo end-to-end
+### Arquitectura dual
+
+| Chat | Controller | Path | Tipo |
+|---|---|---|---|
+| Legacy FashionChat | `FashionChatController` + `ChatApiController` | `/chat` / `/api/chat` | Thymeleaf + REST/SSE |
+| **Colorín Companion** | `CompanionChatApiController` | `/api/companion/*` | API REST + modal JS embebido |
+
+**Colorín** es el nuevo asistente conversacional, embebido como modal en todas las páginas via `companion-assistant.js`. Reemplaza el flujo legacy con una arquitectura más simple: el modal JS habla directamente con la API REST, y el streaming SSE se maneja dentro de la misma petición POST.
+
+### Colorín Companion — API
+
+| Método | Path | Propósito |
+|---|---|---|
+| GET | `/api/companion/sessions` | Listar sesiones |
+| POST | `/api/companion/sessions` | Crear sesión nueva |
+| PATCH | `/api/companion/sessions/{id}` | Renombrar título |
+| DELETE | `/api/companion/sessions/{id}` | Eliminar sesión (+ mensajes en cascada) |
+| GET | `/api/companion/sessions/{id}/messages` | Obtener mensajes |
+| POST | `/api/companion/sessions/{id}/messages` | Enviar mensaje (respuesta streaming SSE) |
+| POST | `/api/companion/sessions/{id}/messages/{msgId}/feedback` | Feedback de mensaje |
+| GET | `/api/companion/tips` | Tip contextual de estilo |
+
+### Flujo de mensaje
 
 ```
-Navegador                     Servidor                      AI Provider
-   │                             │                              │
-   │  GET /chat                  │                              │
-   │────────────────────────────>│                              │
-   │   Chat page (Thymeleaf)     │                              │
-   │<────────────────────────────│                              │
-   │                             │                              │
-   │  POST /api/chat/sessions/{id}/messages                    │
-   │────────────────────────────>│                              │
-   │  { content: "qué me pongo?" }                              │
-   │                             │                              │
-   │                  ┌──────────┴──────────┐                  │
-   │                  │ Policy Evaluation   │                  │
-   │                  │ ─ Clasificar intento│                  │
-   │                  │ ─ Rate limit check  │                  │
-   │                  │ ─ BLOCK/FLAG/ALLOW  │                  │
-   │                  └──────────┬──────────┘                  │
-   │                             │                              │
-   │                  Persist user message                      │
-   │                  Create ChatRun (pending→running)           │
-   │                  Return { runId, sessionId }               │
-   │<────────────────────────────│                              │
-   │                             │                              │
-   │  GET /api/chat/stream/{runId} (SSE)                       │
-   │────────────────────────────>│                              │
-   │                             │  POST /v1/chat/completions   │
-   │                             │  (stream: true)              │
-   │                             │─────────────────────────────>│
-   │                             │                              │
-   │  event: chunk               │  data: {"choices":[{"delta": │
-   │  "recomiendo..."   ◄────────│  {"content":"recomiendo..."}}]│
-   │                             │                              │
-   │  event: chunk               │        ...                   │
-   │  "un look..."      ◄────────│                              │
-   │                             │                              │
-   │  event: done                │                              │
-   │  { messageId }     ◄────────│                              │
-   │                             │                              │
-   │                  Persist assistant message + complete run  │
-   │  POST /api/chat/runs/{id}/feedback                        │
-   │────────────────────────────>│                              │
-   │  { rating: "helpful" }      │                              │
-   │<────────────────────────────│                              │
+Modal JS (navegador) → POST /api/companion/sessions/{id}/messages
+                           ↓
+                    ChatConversationOrchestrator
+                           ↓
+                    ChatPromptFactory (+ WardrobeContextAssembler)
+                           ↓
+                    AI Provider (streaming SSE)
+                           ↓
+                    ChatStreamPersistenceService
+                           ↓
+                    Modal JS recibe SSE, renderiza en vivo
 ```
 
-### Arquitectura de 4 controladores
+### Decisiones técnicas
 
-| Controlador | Path base | Tipo | Propósito |
-|-------------|-----------|------|-----------|
-| `FashionChatController` | `/chat` | Thymeleaf MVC | Renderiza la página de chat con sesiones, modelos y contexto del armario |
-| `ChatApiController` | `/api/chat` | REST + SSE | API JSON para sesiones, mensajes, streaming SSE y feedback |
-| `StreamingChatClient` | (servicio) | Reactivo | Cliente WebClient que consume SSE del AI provider y emite `Flux<String>` |
-| `ChatMetricsController` | `/api/admin/metrics` | REST | Expone métricas operativas (solo acceso localhost) |
+- **Panel `position: absolute`** (no `fixed`) — sigue al trigger al arrastrar; viewport clipping via JS en `positionPanelForViewport()`
+- **Reset conversación** forza `DELETE + POST` nuevo en vez de reusar `ensureSession()` (que busca sesiones existentes)
+- **Guard `isResetting`** anti race condition en reset
+- **Rate limiting** via `HandlerInterceptor` + Caffeine para los endpoints de companion
+- **Surface isolation** (`ChatSurface` enum) separa sesiones de Colorín del chat legacy
 
 ### Wardrobe Context Assembly
 
-Cada vez que se renderiza la página de chat, `WardrobeContextAssembler` construye un snapshot en tiempo real del guardarropa del owner:
+`WardrobeContextAssembler` construye un snapshot en tiempo real del guardarropa para inyectar en el prompt del modelo:
 
-- **Total de prendas**, desglose por categoría
-- **Top N colores** por cantidad de prendas
-- **Materiales** más frecuentes
-- **Temporadas** representadas
-- **Plan semanal**: día actual + próximos días (incluye nombres de prendas)
-- **Favoritos** count
+- Total de prendas, desglose por categoría
+- Top N colores
+- Plan semanal con nombres de prendas
+- Favoritos count
 
-Este contexto se inyecta en el system prompt del modelo para que el asistente conozca el armario del usuario sin necesidad de RAG externo.
-
-### Policy Engine
-
-`ChatPolicyService` evalúa cada mensaje antes de enviarlo al AI provider:
-
-1. **Clasificación de intención** (`ChatIntentClassifier`): usa regex para detectar si el mensaje es una consulta sobre el armario, un pedido de styling, advice de color, un pedido de outfit definitivo, o charla general.
-2. **Bloqueo de outfit requests**: si el usuario pide elegir un outfit por él, se bloquea con un mensaje amigable que redirige la conversación.
-3. **Rate limiting**: límite de 30 mensajes por minuto por owner en la policy layer (adicional al rate limiting HTTP del interceptor).
-4. **Flagging**: pedidos de styling/color se marcan como FLAG para analytics pero se permiten.
-
-### Analytics Pipeline
-
-El sistema de analytics usa un buffer asíncrono thread-safe:
-
-```
-Request path → ChatAnalyticsService.recordEvent() → buffer (ConcurrentLinkedQueue)
-                                                          │
-                                            ┌─────────────┴─────────────┐
-                                            │ Size trigger (10 events)  │
-                                            │ Time trigger (30 seg)     │
-                                            └─────────────┬─────────────┘
-                                                          │
-                                            @Async("analyticsTaskExecutor")
-                                                          │
-                                                     saveAll(batch)
-```
-
-**Eventos registrados**: `SESSION_CREATED`, `STREAM_STARTED`, `STREAM_COMPLETED`, `STREAM_DISCONNECTED`, `RUN_STARTED`, `RUN_COMPLETED`, `RUN_FAILED`, `POLICY_BLOCK`, `POLICY_FLAG`, `RATE_LIMIT_HIT`, `FEEDBACK_SUBMITTED`.
+Esto evita RAG externo — el modelo ya conoce el armario en cada request.
 
 **Métricas operativas** (`ChatMetricsService`): contadores atómicos en memoria para `sessions.created`, `streams.completed`, `policy.blocks`, `tokens.total`, `latency.avg_ms`, etc. Expuestas vía `GET /api/admin/metrics`.
 

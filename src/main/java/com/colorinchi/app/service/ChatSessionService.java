@@ -1,5 +1,6 @@
 package com.colorinchi.app.service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.colorinchi.app.dto.chat.CreateSessionRequest;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.model.ChatSession;
 import com.colorinchi.app.repository.ChatSessionRepository;
 import com.colorinchi.app.service.analytics.ChatAnalyticsService;
@@ -39,11 +41,17 @@ public class ChatSessionService {
 
     @Transactional
     public ChatSession create(CreateSessionRequest request) {
+        return create(request, ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional
+    public ChatSession create(CreateSessionRequest request, ChatSurface surface) {
         ChatSession session = new ChatSession();
         session.setOwnerId(currentOwnerId());
         session.setTitle(request.title() != null ? request.title() : "Nueva conversación");
         session.setModel(request.model() != null ? request.model() : "qwen3.6");
         session.setStatus("active");
+        session.setSurface(surface);
         ChatSession saved = chatSessionRepository.save(session);
         recordSessionCreated(saved);
         return saved;
@@ -64,25 +72,46 @@ public class ChatSessionService {
 
     @Transactional(readOnly = true)
     public List<ChatSession> listByOwner() {
-        return chatSessionRepository.findAllByOwnerIdAndArchivedFalseOrderByUpdatedAtDesc(currentOwnerId());
+        return listByOwner(ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatSession> listByOwner(ChatSurface surface) {
+        return chatSessionRepository.findAllByOwnerIdAndSurfaceAndArchivedFalseOrderByUpdatedAtDesc(
+                currentOwnerId(), surface);
     }
 
     @Transactional(readOnly = true)
     public ChatSession getById(UUID id) {
-        return chatSessionRepository.findByIdAndOwnerId(id, currentOwnerId())
+        return getById(ChatSurface.MAIN_CHAT, id);
+    }
+
+    @Transactional(readOnly = true)
+    public ChatSession getById(ChatSurface surface, UUID id) {
+        return chatSessionRepository.findByIdAndOwnerIdAndSurface(id, currentOwnerId(), surface)
                 .orElseThrow(() -> new IllegalArgumentException("Chat session not found"));
     }
 
     @Transactional
     public ChatSession updateTitle(UUID id, String title) {
-        ChatSession session = getById(id);
+        return updateTitle(ChatSurface.MAIN_CHAT, id, title);
+    }
+
+    @Transactional
+    public ChatSession updateTitle(ChatSurface surface, UUID id, String title) {
+        ChatSession session = getById(surface, id);
         session.setTitle(title);
         return chatSessionRepository.save(session);
     }
 
     @Transactional
     public void delete(UUID id) {
-        if (chatSessionRepository.deleteByIdAndOwnerId(id, currentOwnerId()) == 0) {
+        delete(ChatSurface.MAIN_CHAT, id);
+    }
+
+    @Transactional
+    public void delete(ChatSurface surface, UUID id) {
+        if (chatSessionRepository.deleteByIdAndOwnerIdAndSurface(id, currentOwnerId(), surface) == 0) {
             throw new IllegalArgumentException("Chat session not found");
         }
     }
@@ -93,10 +122,17 @@ public class ChatSessionService {
      */
     @Transactional
     public void touch(UUID sessionId) {
-        chatSessionRepository.findById(sessionId).ifPresent(session -> {
-            // @PreUpdate on the entity will set updatedAt to now on save
-            chatSessionRepository.save(session);
-        });
+        touch(ChatSurface.MAIN_CHAT, sessionId);
+    }
+
+    @Transactional
+    public void touch(ChatSurface surface, UUID sessionId) {
+        chatSessionRepository.touchSession(sessionId, currentOwnerId(), surface, OffsetDateTime.now());
+    }
+
+    @Transactional
+    public void touch(ChatSurface surface, UUID sessionId, UUID ownerId) {
+        chatSessionRepository.touchSession(sessionId, ownerId, surface, OffsetDateTime.now());
     }
 
     private UUID currentOwnerId() {

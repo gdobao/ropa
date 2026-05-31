@@ -28,8 +28,12 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addPathPatterns(
                         "/wardrobe/analyze",
                         "/recommendation",
-                        "/api/chat/stream",
+                        "/api/chat/stream/**",
+                        "/api/chat/sessions",
                         "/api/chat/sessions/**",
-                        "/api/chat/runs/**");
+                        "/api/chat/messages/**",
+                        "/api/companion/stream/**",
+                        "/api/companion/sessions",
+                        "/api/companion/sessions/**");
     }
 }

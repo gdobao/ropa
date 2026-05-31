@@ -1,5 +1,6 @@
 package com.colorinchi.app.service;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.colorinchi.app.dto.chat.CreateSessionRequest;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.model.ChatSession;
 import com.colorinchi.app.repository.ChatSessionRepository;
 import com.colorinchi.app.service.analytics.ChatAnalyticsService;
@@ -20,6 +22,7 @@ import com.colorinchi.app.service.analytics.ChatMetricsService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -72,6 +75,7 @@ class ChatSessionServiceTest {
         assertThat(result.getTitle()).isEqualTo("My Chat");
         assertThat(result.getModel()).isEqualTo("gpt-4o");
         assertThat(result.getStatus()).isEqualTo("active");
+        assertThat(result.getSurface()).isEqualTo(ChatSurface.MAIN_CHAT);
     }
 
     @Test
@@ -90,8 +94,19 @@ class ChatSessionServiceTest {
     }
 
     @Test
+    void createCompanionSessionPersistsCompanionSurface() {
+        CreateSessionRequest request = new CreateSessionRequest("Companion", null);
+        when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatSession result = service.create(request, ChatSurface.COMPANION);
+
+        assertThat(result.getSurface()).isEqualTo(ChatSurface.COMPANION);
+    }
+
+    @Test
     void listByOwnerReturnsAllSessions() {
-        when(repository.findAllByOwnerIdAndArchivedFalseOrderByUpdatedAtDesc(ownerId)).thenReturn(List.of(sampleSession));
+        when(repository.findAllByOwnerIdAndSurfaceAndArchivedFalseOrderByUpdatedAtDesc(ownerId, ChatSurface.MAIN_CHAT))
+                .thenReturn(List.of(sampleSession));
 
         List<ChatSession> result = service.listByOwner();
 
@@ -101,7 +116,8 @@ class ChatSessionServiceTest {
 
     @Test
     void getByIdWhenExistsReturnsSession() {
-        when(repository.findByIdAndOwnerId(sessionId, ownerId)).thenReturn(Optional.of(sampleSession));
+        when(repository.findByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.MAIN_CHAT))
+                .thenReturn(Optional.of(sampleSession));
 
         ChatSession result = service.getById(sessionId);
 
@@ -110,7 +126,8 @@ class ChatSessionServiceTest {
 
     @Test
     void getByIdWhenNotFoundThrowsIllegalArgument() {
-        when(repository.findByIdAndOwnerId(sessionId, ownerId)).thenReturn(Optional.empty());
+        when(repository.findByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.MAIN_CHAT))
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getById(sessionId))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -118,8 +135,19 @@ class ChatSessionServiceTest {
     }
 
     @Test
+    void getByIdUsesRequestedSurface() {
+        when(repository.findByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.COMPANION))
+                .thenReturn(Optional.of(sampleSession));
+
+        ChatSession result = service.getById(ChatSurface.COMPANION, sessionId);
+
+        assertThat(result).isEqualTo(sampleSession);
+    }
+
+    @Test
     void updateTitleModifiesAndSaves() {
-        when(repository.findByIdAndOwnerId(sessionId, ownerId)).thenReturn(Optional.of(sampleSession));
+        when(repository.findByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.MAIN_CHAT))
+                .thenReturn(Optional.of(sampleSession));
         when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ChatSession result = service.updateTitle(sessionId, "Updated Title");
@@ -130,19 +158,40 @@ class ChatSessionServiceTest {
 
     @Test
     void deleteCallsRepositoryDeleteByIdAndOwnerId() {
-        when(repository.deleteByIdAndOwnerId(sessionId, ownerId)).thenReturn(1L);
+        when(repository.deleteByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.MAIN_CHAT)).thenReturn(1L);
 
         service.delete(sessionId);
 
-        verify(repository).deleteByIdAndOwnerId(sessionId, ownerId);
+        verify(repository).deleteByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.MAIN_CHAT);
     }
 
     @Test
     void deleteThrowsWhenSessionBelongsToAnotherOwner() {
-        when(repository.deleteByIdAndOwnerId(sessionId, ownerId)).thenReturn(0L);
+        when(repository.deleteByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.MAIN_CHAT)).thenReturn(0L);
 
         assertThatThrownBy(() -> service.delete(sessionId))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Chat session not found");
+    }
+
+    @Test
+    void touchOnlyTouchesOwnedMainChatSession() {
+        service.touch(sessionId);
+
+        verify(repository).touchSession(eq(sessionId), eq(ownerId), eq(ChatSurface.MAIN_CHAT), any(OffsetDateTime.class));
+    }
+
+    @Test
+    void touchCompanionSessionPassesCompanionSurface() {
+        service.touch(ChatSurface.COMPANION, sessionId);
+
+        verify(repository).touchSession(eq(sessionId), eq(ownerId), eq(ChatSurface.COMPANION), any(OffsetDateTime.class));
+    }
+
+    @Test
+    void touchDoesNotBypassSurfaceOrOwnerChecks() {
+        service.touch(sessionId);
+
+        verify(repository).touchSession(eq(sessionId), eq(ownerId), eq(ChatSurface.MAIN_CHAT), any(OffsetDateTime.class));
     }
 }

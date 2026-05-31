@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.colorinchi.app.model.ChatMessage;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.repository.ChatMessageRepository;
 import com.colorinchi.app.service.analytics.ChatAnalyticsService;
 import com.colorinchi.app.service.analytics.ChatEventType;
@@ -42,6 +43,11 @@ public class ChatMessageService {
 
     @Transactional
     public ChatMessage create(UUID sessionId, String role, String content, int tokens) {
+        return create(sessionId, role, content, tokens, ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional
+    public ChatMessage create(UUID sessionId, String role, String content, int tokens, ChatSurface surface) {
         ChatMessage message = new ChatMessage();
         message.setSessionId(sessionId);
         message.setOwnerId(currentOwnerId());
@@ -49,7 +55,7 @@ public class ChatMessageService {
         message.setContent(content);
         message.setTokens(tokens);
         ChatMessage saved = chatMessageRepository.save(message);
-        chatSessionService.touch(sessionId);
+        chatSessionService.touch(surface, sessionId);
         recordMessageSent(saved);
         return saved;
     }
@@ -61,6 +67,11 @@ public class ChatMessageService {
      */
     @Transactional
     public ChatMessage create(UUID sessionId, UUID ownerId, String role, String content, int tokens) {
+        return create(sessionId, ownerId, role, content, tokens, ChatSurface.MAIN_CHAT);
+    }
+
+    @Transactional
+    public ChatMessage create(UUID sessionId, UUID ownerId, String role, String content, int tokens, ChatSurface surface) {
         ChatMessage message = new ChatMessage();
         message.setSessionId(sessionId);
         message.setOwnerId(ownerId);
@@ -68,7 +79,7 @@ public class ChatMessageService {
         message.setContent(content);
         message.setTokens(tokens);
         ChatMessage saved = chatMessageRepository.save(message);
-        chatSessionService.touch(sessionId);
+        chatSessionService.touch(surface, sessionId, ownerId);
         recordMessageSent(saved);
         return saved;
     }

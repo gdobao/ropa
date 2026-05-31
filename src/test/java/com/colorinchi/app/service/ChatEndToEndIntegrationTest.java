@@ -23,6 +23,7 @@ import com.colorinchi.app.model.ChatFeedback;
 import com.colorinchi.app.model.ChatMessage;
 import com.colorinchi.app.model.ChatRun;
 import com.colorinchi.app.model.ChatSession;
+import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.repository.ChatFeedbackRepository;
 import com.colorinchi.app.repository.ChatMessageRepository;
 import com.colorinchi.app.repository.ChatRunRepository;
@@ -156,17 +157,18 @@ class ChatEndToEndIntegrationTest {
         assertThat(message.getContent()).isEqualTo("Hola, necesito ayuda con mi guardarropa");
 
         // ---- Step 5: Submit feedback ----
-        mockMvc.perform(post("/api/chat/runs/{runId}/feedback", runUuid).with(csrf())
+        mockMvc.perform(post("/api/chat/messages/{messageId}/feedback", message.getId()).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"rating\":\"up\",\"comment\":\"Muy útil\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"));
 
         // ---- Step 6: Verify feedback persisted ----
-        List<ChatFeedback> feedbacks = chatFeedbackRepository.findAllByRunId(runUuid);
+        List<ChatFeedback> feedbacks = chatFeedbackRepository.findAllByMessageIdAndOwnerId(message.getId(), ownerId);
         assertThat(feedbacks).hasSize(1);
         ChatFeedback feedback = feedbacks.get(0);
-        assertThat(feedback.getRunId()).isEqualTo(runUuid);
+        assertThat(feedback.getMessageId()).isEqualTo(message.getId());
+        assertThat(feedback.getRunId()).isNull();
         assertThat(feedback.getSessionId()).isEqualTo(sessionUuid);
         assertThat(feedback.getOwnerId()).isEqualTo(ownerId);
         assertThat(feedback.getRating()).isEqualTo("up");
@@ -195,6 +197,7 @@ class ChatEndToEndIntegrationTest {
                 .andExpect(jsonPath("$.error").value("not_found"));
 
         // Other owner's session list should be empty
-        assertThat(chatSessionRepository.findAllByOwnerIdOrderByUpdatedAtDesc(otherOwnerId)).isEmpty();
+        assertThat(chatSessionRepository.findAllByOwnerIdAndSurfaceOrderByUpdatedAtDesc(otherOwnerId, ChatSurface.MAIN_CHAT))
+                .isEmpty();
     }
 }

@@ -5,6 +5,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Component;
+import org.springframework.http.server.PathContainer;
+import org.springframework.web.util.pattern.PathPattern;
+import org.springframework.web.util.pattern.PathPatternParser;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import com.colorinchi.app.service.CurrentOwnerAccessor;
@@ -16,6 +19,14 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Component
 public class RateLimitingInterceptor implements HandlerInterceptor {
+
+    private static final PathPattern CHAT_STREAM_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/stream/{runId}");
+    private static final PathPattern COMPANION_STREAM_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/stream/{runId}");
+    private static final PathPattern CHAT_CREATE_SESSION_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/sessions");
+    private static final PathPattern COMPANION_CREATE_SESSION_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/sessions");
+    private static final PathPattern CHAT_SEND_MESSAGE_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/sessions/{sessionId}/messages");
+    private static final PathPattern COMPANION_SEND_MESSAGE_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/sessions/{sessionId}/messages");
+    private static final PathPattern CHAT_MESSAGE_FEEDBACK_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/messages/{messageId}/feedback");
 
     private final RateLimitProperties properties;
     private final CurrentOwnerAccessor currentOwnerAccessor;
@@ -99,14 +110,19 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
         if ("/recommendation".equals(path) && "GET".equalsIgnoreCase(method)) {
             return "recommendation";
         }
-        if (path.startsWith("/api/chat/stream/") && "GET".equalsIgnoreCase(method)) {
+        PathContainer parsedPath = PathContainer.parsePath(path);
+        if ("GET".equalsIgnoreCase(method)
+                && (CHAT_STREAM_PATTERN.matches(parsedPath) || COMPANION_STREAM_PATTERN.matches(parsedPath))) {
             return "chat";
         }
-        // Per-owner rate limited endpoints
-        if (path.startsWith("/api/chat/sessions/") && "POST".equalsIgnoreCase(method)) {
-            return "chat-per-owner";
+        if (!"POST".equalsIgnoreCase(method)) {
+            return null;
         }
-        if (path.startsWith("/api/chat/runs/") && "POST".equalsIgnoreCase(method)) {
+        if (CHAT_CREATE_SESSION_PATTERN.matches(parsedPath)
+                || COMPANION_CREATE_SESSION_PATTERN.matches(parsedPath)
+                || CHAT_SEND_MESSAGE_PATTERN.matches(parsedPath)
+                || COMPANION_SEND_MESSAGE_PATTERN.matches(parsedPath)
+                || CHAT_MESSAGE_FEEDBACK_PATTERN.matches(parsedPath)) {
             return "chat-per-owner";
         }
         return null;

@@ -22,6 +22,7 @@
   --radius-md: 18px;
   --radius-lg: 24px;
   --radius-xl: 32px;
+  --radius-2xl: 40px;
   --radius-pill: 999px;
 
   --space-xs: 6px;
@@ -33,6 +34,13 @@
   --shadow-card: 0 4px 16px color-mix(in oklch, var(--fg) 6%, transparent);
   --shadow-hero: 0 18px 36px color-mix(in oklch, var(--accent) 22%, transparent);
   --shadow-plus: 0 12px 28px color-mix(in oklch, var(--accent) 32%, transparent);
+
+  --z-sidebar: 100;
+  --z-bottom-nav: 200;
+  --z-companion: 800;
+  --z-companion-panel: 900;
+  --z-skip-link: 1000;
+  --z-toast: 9999;
 
   --text-xs: clamp(10px, 1.2vw, 12px);
   --text-sm: clamp(12px, 1.4vw, 14px);

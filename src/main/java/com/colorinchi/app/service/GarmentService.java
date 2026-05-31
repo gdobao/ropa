@@ -125,6 +125,56 @@ public class GarmentService {
         }
     }
 
+    private static final String PLACEHOLDER = "/img/placeholder.svg";
+
+    private record SeedItem(String name, String category, String colorName, String colorHex, String material, String season) {}
+
+    @Transactional
+    public void seed() {
+        UUID ownerId = currentOwnerId();
+        List<SeedItem> items = List.of(
+            new SeedItem("Top Negro", "Top", "Negro", "#1A1A1A", "Algodón", "Todo el año"),
+            new SeedItem("Top Blanco", "Top", "Blanco", "#FFFFFF", "Algodón", "Todo el año"),
+            new SeedItem("Camisa Blanca", "Camisa", "Blanco", "#FFFFFF", "Algodón", "Primavera/Verano"),
+            new SeedItem("Camisa Azul claro", "Camisa", "Azul claro", "#A8D8EA", "Algodón", "Primavera/Verano"),
+            new SeedItem("Pantalón Negro", "Pantalón", "Negro", "#1A1A1A", "Algodón", "Todo el año"),
+            new SeedItem("Pantalón Beige", "Pantalón", "Beige", "#F5E6CC", "Lino", "Primavera/Verano"),
+            new SeedItem("Jeans Azul oscuro", "Pantalón", "Azul oscuro", "#2C3E50", "Mezclilla", "Todo el año"),
+            new SeedItem("Jeans Gris", "Pantalón", "Gris", "#808080", "Mezclilla", "Todo el año"),
+            new SeedItem("Chaqueta Negra", "Chaqueta", "Negro", "#1A1A1A", "Poliéster", "Otoño/Invierno"),
+            new SeedItem("Chaqueta Gris", "Chaqueta", "Gris", "#A9A9A9", "Lana", "Otoño/Invierno"),
+            new SeedItem("Sudadera Gris", "Sudadera", "Gris", "#B0B0B0", "Algodón", "Otoño/Invierno"),
+            new SeedItem("Sudadera Verde oliva", "Sudadera", "Verde oliva", "#556B2F", "Algodón", "Otoño/Invierno"),
+            new SeedItem("Vestido Negro", "Vestido", "Negro", "#1A1A1A", "Viscosa", "Primavera/Verano"),
+            new SeedItem("Falda Negra", "Falda", "Negro", "#1A1A1A", "Algodón", "Primavera/Verano"),
+            new SeedItem("Zapatillas Blancas", "Zapatos", "Blanco", "#FFFFFF", "Cuero", "Todo el año"),
+            new SeedItem("Botines Negros", "Zapatos", "Negro", "#1A1A1A", "Cuero", "Otoño/Invierno"),
+            new SeedItem("Abrigo Negro", "Abrigo", "Negro", "#1A1A1A", "Lana", "Invierno"),
+            new SeedItem("Abrigo Camel", "Abrigo", "Camel", "#C19A6B", "Lana", "Invierno"),
+            new SeedItem("Bufanda Gris", "Accesorio", "Gris", "#808080", "Lana", "Todo el año"),
+            new SeedItem("Cinturón Negro", "Accesorio", "Negro", "#1A1A1A", "Cuero", "Todo el año"),
+            // Chillones — no combinan
+            new SeedItem("Top Fucsia", "Top", "Fucsia", "#FF00FF", "Poliéster", "Verano"),
+            new SeedItem("Pantalón Naranja", "Pantalón", "Naranja", "#FF6600", "Algodón", "Verano"),
+            new SeedItem("Chaqueta Verde lima", "Chaqueta", "Verde lima", "#32CD32", "Nylon", "Primavera"),
+            new SeedItem("Vestido Amarillo neón", "Vestido", "Amarillo neón", "#FFFF00", "Poliéster", "Verano"),
+            new SeedItem("Zapatos Rojos brillantes", "Zapatos", "Rojo brillante", "#FF0000", "Cuero sintético", "Primavera/Verano")
+        );
+        for (SeedItem item : items) {
+            Garment g = new Garment();
+            g.setName(item.name());
+            g.setCategory(item.category());
+            g.setColorName(item.colorName());
+            g.setColorHex(item.colorHex());
+            g.setMaterial(item.material());
+            g.setSeason(item.season());
+            g.setImageUrl(PLACEHOLDER);
+            g.setOwnerId(ownerId);
+            g.setUserConfirmed(true);
+            garmentRepository.save(g);
+        }
+    }
+
     private UUID currentOwnerId() {
         return currentOwnerAccessor.getCurrentOwnerId();
     }

@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -38,6 +40,10 @@ public class ChatSession {
 
     @Column(nullable = false)
     private boolean archived = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private ChatSurface surface = ChatSurface.MAIN_CHAT;
 
     @PrePersist
     void onCreate() {
@@ -74,4 +80,7 @@ public class ChatSession {
 
     public boolean isArchived() { return archived; }
     public void setArchived(boolean archived) { this.archived = archived; }
+
+    public ChatSurface getSurface() { return surface; }
+    public void setSurface(ChatSurface surface) { this.surface = surface; }
 }

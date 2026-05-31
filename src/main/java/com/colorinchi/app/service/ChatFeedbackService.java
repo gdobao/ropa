@@ -32,8 +32,9 @@ public class ChatFeedbackService {
     }
 
     @Transactional
-    public ChatFeedback create(UUID runId, UUID sessionId, ChatFeedbackRequest request) {
+    public ChatFeedback create(UUID messageId, UUID runId, UUID sessionId, ChatFeedbackRequest request) {
         ChatFeedback feedback = new ChatFeedback();
+        feedback.setMessageId(messageId);
         feedback.setRunId(runId);
         feedback.setSessionId(sessionId);
         feedback.setOwnerId(currentOwnerId());
@@ -56,12 +57,12 @@ public class ChatFeedbackService {
 
     @Transactional(readOnly = true)
     public List<ChatFeedback> listByRun(UUID runId) {
-        return chatFeedbackRepository.findAllByRunId(runId);
+        return chatFeedbackRepository.findAllByRunIdAndOwnerId(runId, currentOwnerId());
     }
 
     @Transactional(readOnly = true)
     public List<ChatFeedback> listBySession(UUID sessionId) {
-        return chatFeedbackRepository.findAllBySessionId(sessionId);
+        return chatFeedbackRepository.findAllBySessionIdAndOwnerId(sessionId, currentOwnerId());
     }
 
     private UUID currentOwnerId() {
