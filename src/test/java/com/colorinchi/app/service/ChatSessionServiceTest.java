@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.colorinchi.app.dto.chat.CreateSessionRequest;
+import com.colorinchi.app.config.AiModelConfig;
 import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.model.ChatSession;
 import com.colorinchi.app.repository.ChatSessionRepository;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,6 +42,9 @@ class ChatSessionServiceTest {
 
     @Mock
     private ChatMetricsService chatMetricsService;
+
+    @Mock
+    private ModelRouter modelRouter;
 
     @InjectMocks
     private ChatSessionService service;
@@ -61,6 +66,10 @@ class ChatSessionServiceTest {
 
     @Test
     void createWithAllFieldsSavesSession() {
+        AiModelConfig gptModel = new AiModelConfig();
+        gptModel.setId("gpt-4o");
+        when(modelRouter.resolve("gpt-4o")).thenReturn(gptModel);
+
         CreateSessionRequest request = new CreateSessionRequest("My Chat", "gpt-4o");
         when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> {
             ChatSession saved = invocation.getArgument(0);
@@ -80,6 +89,10 @@ class ChatSessionServiceTest {
 
     @Test
     void createWithNullFieldsUsesDefaults() {
+        AiModelConfig defaultModel = new AiModelConfig();
+        defaultModel.setId("qwen3.6");
+        when(modelRouter.resolve(isNull())).thenReturn(defaultModel);
+
         CreateSessionRequest request = new CreateSessionRequest(null, null);
         when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> {
             ChatSession saved = invocation.getArgument(0);
@@ -94,7 +107,36 @@ class ChatSessionServiceTest {
     }
 
     @Test
+    void createWithBlankModelUsesDefaultModel() {
+        AiModelConfig defaultModel = new AiModelConfig();
+        defaultModel.setId("qwen3.6");
+        when(modelRouter.resolve(isNull())).thenReturn(defaultModel);
+
+        CreateSessionRequest request = new CreateSessionRequest("My Chat", "   ");
+        when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatSession result = service.create(request);
+
+        assertThat(result.getModel()).isEqualTo("qwen3.6");
+        verify(modelRouter).resolve(null);
+    }
+
+    @Test
+    void createWithUnsupportedModelThrows() {
+        CreateSessionRequest request = new CreateSessionRequest("My Chat", "bad-model");
+        when(modelRouter.resolve("bad-model")).thenThrow(new IllegalArgumentException("Modelo no soportado"));
+
+        assertThatThrownBy(() -> service.create(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Modelo no soportado");
+    }
+
+    @Test
     void createCompanionSessionPersistsCompanionSurface() {
+        AiModelConfig defaultModel = new AiModelConfig();
+        defaultModel.setId("qwen3.6");
+        when(modelRouter.resolve(isNull())).thenReturn(defaultModel);
+
         CreateSessionRequest request = new CreateSessionRequest("Companion", null);
         when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

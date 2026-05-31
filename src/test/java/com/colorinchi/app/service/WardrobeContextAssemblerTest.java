@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.colorinchi.app.colorimetry.service.ColorSeasonClassifier;
 import com.colorinchi.app.config.WardrobeProperties;
 import com.colorinchi.app.dto.chat.WardrobeContext;
 import com.colorinchi.app.model.Garment;
@@ -20,6 +21,9 @@ import com.colorinchi.app.repository.GarmentRepository;
 import com.colorinchi.app.repository.WeekPlanRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +37,9 @@ class WardrobeContextAssemblerTest {
 
     @Mock
     private CurrentOwnerAccessor currentOwnerAccessor;
+
+    @Mock
+    private ColorSeasonClassifier classifier;
 
     private WardrobeProperties wardrobeProperties;
     private WardrobeContextAssembler assembler;
@@ -49,7 +56,7 @@ class WardrobeContextAssemblerTest {
                 3     // upcomingDaysToInclude
         );
         assembler = new WardrobeContextAssembler(
-                garmentRepository, weekPlanRepository, currentOwnerAccessor, wardrobeProperties);
+                garmentRepository, weekPlanRepository, currentOwnerAccessor, wardrobeProperties, classifier);
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
     }
 
@@ -223,7 +230,7 @@ class WardrobeContextAssemblerTest {
                 3
         );
         assembler = new WardrobeContextAssembler(
-                garmentRepository, weekPlanRepository, currentOwnerAccessor, wardrobeProperties);
+                garmentRepository, weekPlanRepository, currentOwnerAccessor, wardrobeProperties, classifier);
 
         List<Garment> garments = List.of(
                 createGarment(1L, "Top", "Rojo", "#FF0000", null, null, false),
@@ -239,6 +246,59 @@ class WardrobeContextAssemblerTest {
         WardrobeContext ctx = assembler.assemble();
 
         assertThat(ctx.colors().size()).isLessThanOrEqualTo(2);
+    }
+
+    @Test
+    void assembleClassifiesSameHexOnlyOncePerRequest() {
+        var season = com.colorinchi.app.colorimetry.model.ColorSeason.WINTER;
+        var profile = new com.colorinchi.app.colorimetry.model.ColorProfile(
+                season,
+                com.colorinchi.app.colorimetry.model.ColorTemperature.COOL,
+                com.colorinchi.app.colorimetry.model.ColorIntensity.BRIGHT,
+                com.colorinchi.app.colorimetry.model.ColorDepth.DARK,
+                0.95,
+                new double[]{40.0, 30.0, -20.0},
+                "matrix");
+
+        List<Garment> garments = List.of(
+                createGarment(1L, "Top", "Rojo", "#FF0000", null, null, false),
+                createGarment(2L, "Pantalón", "Rojo", "#FF0000", null, null, false),
+                createGarment(3L, "Zapatos", "Rojo", "#FF0000", null, null, false)
+        );
+
+        when(classifier.classify("#FF0000")).thenReturn(profile);
+        when(garmentRepository.findAllByOwnerIdOrderByCreatedAtDesc(ownerId)).thenReturn(garments);
+        when(weekPlanRepository.findAllByOwnerIdOrderByDayOfWeekAscPositionAsc(ownerId)).thenReturn(List.of());
+
+        assembler.assemble();
+
+        verify(classifier, times(1)).classify("#FF0000");
+    }
+
+    @Test
+    void assembleDoesNotReuseCacheAcrossRequests() {
+        var season = com.colorinchi.app.colorimetry.model.ColorSeason.SUMMER;
+        var profile = new com.colorinchi.app.colorimetry.model.ColorProfile(
+                season,
+                com.colorinchi.app.colorimetry.model.ColorTemperature.COOL,
+                com.colorinchi.app.colorimetry.model.ColorIntensity.SOFT,
+                com.colorinchi.app.colorimetry.model.ColorDepth.LIGHT,
+                0.90,
+                new double[]{70.0, -10.0, -15.0},
+                "matrix");
+
+        List<Garment> garments = List.of(
+                createGarment(1L, "Top", "Azul", "#0000FF", null, null, false)
+        );
+
+        when(classifier.classify(anyString())).thenReturn(profile);
+        when(garmentRepository.findAllByOwnerIdOrderByCreatedAtDesc(ownerId)).thenReturn(garments);
+        when(weekPlanRepository.findAllByOwnerIdOrderByDayOfWeekAscPositionAsc(ownerId)).thenReturn(List.of());
+
+        assembler.assemble();
+        assembler.assemble();
+
+        verify(classifier, times(2)).classify("#0000FF");
     }
 
     private Garment createGarment(Long id, String category, String colorName, String colorHex,

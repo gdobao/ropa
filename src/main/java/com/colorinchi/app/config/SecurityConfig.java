@@ -1,9 +1,14 @@
 package com.colorinchi.app.config;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -12,6 +17,12 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final AdminProperties adminProperties;
+
+    public SecurityConfig(AdminProperties adminProperties) {
+        this.adminProperties = adminProperties;
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -19,16 +30,8 @@ public class SecurityConfig {
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/admin/**")
-                    .access((authentication, context) -> {
-                        var request = context.getRequest();
-                        String remoteAddr = request.getRemoteAddr();
-                        if ("127.0.0.1".equals(remoteAddr) || "::1".equals(remoteAddr)
-                                || "0:0:0:0:0:0:0:1".equals(remoteAddr)) {
-                            return new org.springframework.security.authorization.AuthorizationDecision(true);
-                        }
-                        return new org.springframework.security.authorization.AuthorizationDecision(false);
-                    })
+                .requestMatchers("/api/admin/**", "/admin/**")
+                    .access((authentication, context) -> adminDecision(context))
                 .anyRequest().permitAll()
             )
             .headers(headers -> {
@@ -48,5 +51,20 @@ public class SecurityConfig {
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable());
         return http.build();
+    }
+
+    private AuthorizationDecision adminDecision(RequestAuthorizationContext context) {
+        if (!adminProperties.enabled()) {
+            return new AuthorizationDecision(false);
+        }
+
+        String provided = context.getRequest().getHeader("X-Admin-Token");
+        if (provided == null || provided.isBlank()) {
+            return new AuthorizationDecision(false);
+        }
+
+        byte[] expected = adminProperties.token().getBytes(StandardCharsets.UTF_8);
+        byte[] actual = provided.getBytes(StandardCharsets.UTF_8);
+        return new AuthorizationDecision(MessageDigest.isEqual(expected, actual));
     }
 }

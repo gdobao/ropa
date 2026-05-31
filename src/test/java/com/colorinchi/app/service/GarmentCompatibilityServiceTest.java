@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.colorinchi.app.colorimetry.service.ColorCompatibilityEngine;
 import com.colorinchi.app.model.Garment;
 import com.colorinchi.app.repository.GarmentRepository;
 
@@ -27,6 +28,9 @@ class GarmentCompatibilityServiceTest {
 
     @Mock
     private CurrentOwnerAccessor currentOwnerAccessor;
+
+    @Mock
+    private ColorCompatibilityEngine engine;
 
     @InjectMocks
     private GarmentCompatibilityService service;

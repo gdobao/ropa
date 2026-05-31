@@ -12,8 +12,8 @@ import com.colorinchi.app.service.analytics.ChatMetricsService;
 /**
  * Exposes operational chat metrics at {@code GET /api/admin/metrics}.
  *
- * <p>No authentication is required (the app uses {@code permitAll()}
- * for all requests).
+ * <p>Access is restricted by {@link com.colorinchi.app.config.SecurityConfig}
+ * using the configured admin token.
  */
 @RestController
 public class ChatMetricsController {

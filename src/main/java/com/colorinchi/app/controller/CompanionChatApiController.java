@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,11 +59,39 @@ public class CompanionChatApiController {
 
     @GetMapping("/context")
     public ResponseEntity<?> context() {
+        return companionContext();
+    }
+
+    @GetMapping("/tips")
+    public ResponseEntity<?> tips() {
+        return companionContext();
+    }
+
+    private ResponseEntity<?> companionContext() {
         try {
             return ResponseEntity.ok(companionTipService.assemble());
         } catch (Exception e) {
             log.error("Failed to build companion context", e);
             return ResponseEntity.internalServerError().body(ErrorResponse.of("context_failed", "Error al obtener el contexto"));
+        }
+    }
+
+    @PatchMapping("/sessions/{sessionId}")
+    public ResponseEntity<?> updateTitle(@PathVariable UUID sessionId, @RequestBody Map<String, String> body) {
+        try {
+            String title = body.get("title");
+            if (title == null || title.isBlank()) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of("invalid_request", "Title is required"));
+            }
+            var session = chatSessionService.updateTitle(ChatSurface.COMPANION, sessionId, title);
+            return ResponseEntity.ok(ChatSessionResponse.from(
+                    session.getId(), session.getTitle(), session.getModel(),
+                    session.getStatus(), session.getCreatedAt(), session.getUpdatedAt()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.of("not_found", "Sesión no encontrada"));
+        } catch (Exception e) {
+            log.error("Failed to update companion session title {}", sessionId, e);
+            return ResponseEntity.internalServerError().body(ErrorResponse.of("update_failed", "Error al renombrar la sesión"));
         }
     }
 
@@ -148,11 +177,23 @@ public class CompanionChatApiController {
     public ResponseEntity<?> submitFeedback(
             @PathVariable UUID messageId,
             @RequestBody ChatFeedbackRequest request) {
+        return submitFeedbackForSession(null, messageId, request);
+    }
+
+    @PostMapping("/sessions/{sessionId}/messages/{messageId}/feedback")
+    public ResponseEntity<?> submitFeedbackForSession(
+            @PathVariable UUID sessionId,
+            @PathVariable UUID messageId,
+            @RequestBody ChatFeedbackRequest request) {
         MDC.put("sessionId", "feedback:" + messageId);
         try {
             ChatMessage msg = chatMessageService.getById(messageId);
+            if (sessionId != null && !sessionId.equals(msg.getSessionId())) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("not_found", "Message not found"));
+            }
             chatSessionService.getById(ChatSurface.COMPANION, msg.getSessionId());
-            chatFeedbackService.create(messageId, null, msg.getSessionId(), request);
+            chatFeedbackService.create(messageId, msg.getRunId(), msg.getSessionId(), request);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

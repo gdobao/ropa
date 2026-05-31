@@ -23,10 +23,13 @@ public class ChatMessage {
     @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
 
+    @Column(name = "run_id")
+    private UUID runId;
+
     @Column(nullable = false, length = 50)
     private String role;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Column(nullable = false)
@@ -51,6 +54,9 @@ public class ChatMessage {
 
     public UUID getOwnerId() { return ownerId; }
     public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
+
+    public UUID getRunId() { return runId; }
+    public void setRunId(UUID runId) { this.runId = runId; }
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }

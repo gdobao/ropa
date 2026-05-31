@@ -93,6 +93,9 @@ class GarmentControllerTest {
     @MockitoBean
     private AnonymousOwnerService anonymousOwnerService;
 
+    @MockitoBean
+    private com.colorinchi.app.colorimetry.service.ColorSeasonClassifier colorSeasonClassifier;
+
     private Garment sampleGarment;
     private AiClassificationResponse sampleAiResponse;
     private DashboardStats sampleStats;
@@ -331,6 +334,32 @@ class GarmentControllerTest {
                 .andExpect(view().name("garment-detail :: favDetailButton"));
     }
 
+    @Test
+    void toggleFavoritePreservesFavoritosFilter() throws Exception {
+        when(garmentService.toggleFavorite(1L)).thenReturn(true);
+        when(garmentService.get(1L)).thenReturn(sampleGarment);
+        when(garmentService.favorites()).thenReturn(List.of(sampleGarment));
+
+        mockMvc.perform(post("/wardrobe/1/favorite").with(csrf())
+                        .param("category", "favoritos"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("wardrobe :: grid"))
+                .andExpect(model().attribute("activeCategory", "favoritos"));
+    }
+
+    @Test
+    void toggleFavoritePreservesCategoryFilter() throws Exception {
+        when(garmentService.toggleFavorite(1L)).thenReturn(true);
+        when(garmentService.get(1L)).thenReturn(sampleGarment);
+        when(garmentService.filterByCategory("Top")).thenReturn(List.of(sampleGarment));
+
+        mockMvc.perform(post("/wardrobe/1/favorite").with(csrf())
+                        .param("category", "Top"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("wardrobe :: grid"))
+                .andExpect(model().attribute("activeCategory", "Top"));
+    }
+
     // --- 16. GET /profile ---
 
     @Test
@@ -354,7 +383,7 @@ class GarmentControllerTest {
 
     @Test
     void weeklyPlanShowsPlan() throws Exception {
-        Map<String, List<com.colorinchi.app.model.WeekPlan>> plansByDay = new java.util.LinkedHashMap<>();
+        Map<String, List<com.colorinchi.app.dto.WeeklyPlanItem>> plansByDay = new java.util.LinkedHashMap<>();
         plansByDay.put("Lunes", java.util.Collections.emptyList());
         plansByDay.put("Martes", java.util.Collections.emptyList());
 
@@ -429,7 +458,7 @@ class GarmentControllerTest {
                 new AiRecommendationResponse(List.of(
                         new OutfitSuggestion("Look 1", "Desc", 8,
                                 List.of(new OutfitPiece("Top", "Rojo", "#FF0000",
-                                        OutfitPiece.zoneFor("Top"), OutfitPiece.isLightText("#FF0000")))))));
+                                        OutfitPiece.zoneFor("Top"), OutfitPiece.isLightText("#FF0000"), null))))));
 
         mockMvc.perform(get("/recommendation").with(csrf()))
                 .andExpect(status().isOk())

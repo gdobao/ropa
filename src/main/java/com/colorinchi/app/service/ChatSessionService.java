@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.colorinchi.app.dto.chat.CreateSessionRequest;
+import com.colorinchi.app.config.AiModelConfig;
 import com.colorinchi.app.model.ChatSurface;
 import com.colorinchi.app.model.ChatSession;
 import com.colorinchi.app.repository.ChatSessionRepository;
@@ -28,15 +29,18 @@ public class ChatSessionService {
     private final CurrentOwnerAccessor currentOwnerAccessor;
     private final ChatAnalyticsService chatAnalyticsService;
     private final ChatMetricsService chatMetricsService;
+    private final ModelRouter modelRouter;
 
     public ChatSessionService(ChatSessionRepository chatSessionRepository,
                               CurrentOwnerAccessor currentOwnerAccessor,
                               ChatAnalyticsService chatAnalyticsService,
-                              ChatMetricsService chatMetricsService) {
+                              ChatMetricsService chatMetricsService,
+                              ModelRouter modelRouter) {
         this.chatSessionRepository = chatSessionRepository;
         this.currentOwnerAccessor = currentOwnerAccessor;
         this.chatAnalyticsService = chatAnalyticsService;
         this.chatMetricsService = chatMetricsService;
+        this.modelRouter = modelRouter;
     }
 
     @Transactional
@@ -49,7 +53,12 @@ public class ChatSessionService {
         ChatSession session = new ChatSession();
         session.setOwnerId(currentOwnerId());
         session.setTitle(request.title() != null ? request.title() : "Nueva conversación");
-        session.setModel(request.model() != null ? request.model() : "qwen3.6");
+        String requestedModel = request.model();
+        if (requestedModel != null && requestedModel.isBlank()) {
+            requestedModel = null;
+        }
+        AiModelConfig resolvedModel = modelRouter.resolve(requestedModel);
+        session.setModel(resolvedModel.getId());
         session.setStatus("active");
         session.setSurface(surface);
         ChatSession saved = chatSessionRepository.save(session);
@@ -58,6 +67,9 @@ public class ChatSessionService {
     }
 
     private void recordSessionCreated(ChatSession session) {
+        if (session.getId() == null || session.getOwnerId() == null) {
+            return;
+        }
         try {
             chatAnalyticsService.recordEvent(
                     session.getOwnerId(),

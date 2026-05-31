@@ -22,7 +22,7 @@ public class ChatStreamPersistenceService {
     @Transactional
     public ChatMessage persistAssistantMessageAndCompleteRun(UUID sessionId, UUID ownerId, UUID runId,
             String content, String modelResolved, int tokens, ChatSurface surface) {
-        ChatMessage msg = chatMessageService.create(sessionId, ownerId, "assistant", content, tokens, surface);
+        ChatMessage msg = chatMessageService.create(sessionId, ownerId, "assistant", content, tokens, surface, runId);
         chatRunService.complete(runId, ownerId, modelResolved, tokens, surface);
         return msg;
     }

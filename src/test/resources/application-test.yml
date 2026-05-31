@@ -13,6 +13,8 @@ spring:
     enabled: false
 
 app:
+  admin:
+    token: test-admin-token
   rate-limit:
     analyze:
       capacity: 1000

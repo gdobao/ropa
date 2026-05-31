@@ -360,7 +360,7 @@ class ChatApiControllerTest {
     static class TestConfig {
         @Bean
         WardrobeContext dummyWardrobeContext() {
-            return new WardrobeContext(0L, List.of(), List.of(), List.of(), java.util.Map.of(), 0L, 0L, 0L, null, List.of(), List.of());
+            return new WardrobeContext(0L, List.of(), List.of(), List.of(), java.util.Map.of(), 0L, 0L, 0L, null, List.of(), List.of(), java.util.Map.of());
         }
         @Bean
         UploadProperties uploadProperties() {

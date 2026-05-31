@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -31,8 +30,8 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(WebClientResponseException.class)
     public ProblemDetail handleWebClientResponse(WebClientResponseException ex) {
-        HttpStatusCode status = HttpStatus.valueOf(ex.getStatusCode().value());
-        log.error("AI provider returned error: status={}, body={}", ex.getStatusCode(), ex.getResponseBodyAsString(), ex);
+        log.error("AI provider returned error: status={}, errorType={}",
+                ex.getStatusCode(), ex.getClass().getSimpleName(), ex);
 
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_GATEWAY,

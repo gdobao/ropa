@@ -3,6 +3,7 @@ package com.colorinchi.app.service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.colorinchi.app.colorimetry.model.ColorProfile;
+import com.colorinchi.app.colorimetry.service.ColorSeasonClassifier;
 import com.colorinchi.app.config.WardrobeProperties;
 import com.colorinchi.app.dto.chat.CategoryInfo;
 import com.colorinchi.app.dto.chat.ColorInfo;
@@ -45,20 +48,24 @@ public class WardrobeContextAssembler {
     private final WeekPlanRepository weekPlanRepository;
     private final CurrentOwnerAccessor currentOwnerAccessor;
     private final WardrobeProperties wardrobeProperties;
+    private final ColorSeasonClassifier classifier;
 
     public WardrobeContextAssembler(
             GarmentRepository garmentRepository,
             WeekPlanRepository weekPlanRepository,
             CurrentOwnerAccessor currentOwnerAccessor,
-            WardrobeProperties wardrobeProperties) {
+            WardrobeProperties wardrobeProperties,
+            ColorSeasonClassifier classifier) {
         this.garmentRepository = garmentRepository;
         this.weekPlanRepository = weekPlanRepository;
         this.currentOwnerAccessor = currentOwnerAccessor;
         this.wardrobeProperties = wardrobeProperties;
+        this.classifier = classifier;
     }
 
     @Transactional(readOnly = true)
     public WardrobeContext assemble() {
+        Map<String, ColorProfile> classificationCache = new HashMap<>();
         UUID ownerId = currentOwnerAccessor.getCurrentOwnerId();
 
         // SQL-first: single query for garments, then aggregate in memory
@@ -70,7 +77,7 @@ public class WardrobeContextAssembler {
 
         // -- Colors (top N by count) --
         int colorLimit = wardrobeProperties.colorLimit();
-        List<ColorInfo> colors = buildColors(allGarments, colorLimit);
+        List<ColorInfo> colors = buildColors(allGarments, colorLimit, classificationCache);
 
         // -- Materials --
         List<MaterialInfo> materials = buildMaterials(allGarments);
@@ -107,11 +114,12 @@ public class WardrobeContextAssembler {
                 .toList();
 
         List<GarmentSummary> garmentSummaries = allGarments.stream()
-                .map(g -> new GarmentSummary(
-                        g.getId(), g.getName(), g.getCategory(),
-                        g.getColorName(), g.getColorHex(),
-                        g.getMaterial(), g.getSeason(), g.isFavorite()))
+                .limit(wardrobeProperties.maxGarmentsInSummary())
+                .map(g -> toGarmentSummary(g, classificationCache))
                 .toList();
+
+        // -- Color seasons --
+        Map<String, Long> colorSeasons = buildColorSeasons(allGarments, classificationCache);
 
         return new WardrobeContext(
                 totalGarments,
@@ -124,7 +132,8 @@ public class WardrobeContextAssembler {
                 plannedItems,
                 todayPlan,
                 upcomingPlans,
-                garmentSummaries);
+                garmentSummaries,
+                colorSeasons);
     }
 
     private List<CategoryInfo> buildCategories(List<Garment> garments) {
@@ -135,7 +144,7 @@ public class WardrobeContextAssembler {
                 .toList();
     }
 
-    private List<ColorInfo> buildColors(List<Garment> garments, int limit) {
+    private List<ColorInfo> buildColors(List<Garment> garments, int limit, Map<String, ColorProfile> classificationCache) {
         Map<String, List<Garment>> byColor = garments.stream()
                 .filter(g -> g.getColorHex() != null && !g.getColorHex().isBlank())
                 .collect(Collectors.groupingBy(
@@ -147,7 +156,15 @@ public class WardrobeContextAssembler {
                 .limit(limit)
                 .map(e -> {
                     String[] parts = e.getKey().split("\\|", 2);
-                    return new ColorInfo(parts[0], parts.length > 1 ? parts[1] : null, e.getValue().size());
+                    String hex = parts.length > 1 ? parts[1] : null;
+                    String season = null;
+                    if (hex != null && !hex.isBlank()) {
+                        ColorProfile profile = classifyCached(hex, classificationCache);
+                        if (profile != null && profile.season() != null) {
+                            season = profile.season().displayName();
+                        }
+                    }
+                    return new ColorInfo(parts[0], hex, e.getValue().size(), season);
                 })
                 .toList();
     }
@@ -166,6 +183,45 @@ public class WardrobeContextAssembler {
         return garments.stream()
                 .filter(g -> g.getSeason() != null && !g.getSeason().isBlank())
                 .collect(Collectors.groupingBy(Garment::getSeason, LinkedHashMap::new, Collectors.counting()));
+    }
+
+    private Map<String, Long> buildColorSeasons(List<Garment> garments, Map<String, ColorProfile> classificationCache) {
+        Map<String, Long> seasons = new LinkedHashMap<>();
+        for (Garment g : garments) {
+            if (g.getColorHex() != null && !g.getColorHex().isBlank()) {
+                ColorProfile profile = classifyCached(g.getColorHex(), classificationCache);
+                String label = profile != null && profile.season() != null
+                        ? profile.season().displayName()
+                        : "Sin estación";
+                seasons.merge(label, 1L, Long::sum);
+            }
+        }
+        return seasons;
+    }
+
+    private ColorProfile classifyCached(String hex, Map<String, ColorProfile> classificationCache) {
+        if (hex == null || hex.isBlank()) return null;
+        return classificationCache.computeIfAbsent(hex, h -> {
+            try {
+                return classifier.classify(h);
+            } catch (Exception e) {
+                return null;
+            }
+        });
+    }
+
+    private GarmentSummary toGarmentSummary(Garment garment, Map<String, ColorProfile> classificationCache) {
+        String garmentSeason = null;
+        if (garment.getColorHex() != null && !garment.getColorHex().isBlank()) {
+            ColorProfile profile = classifyCached(garment.getColorHex(), classificationCache);
+            if (profile != null && profile.season() != null) {
+                garmentSeason = profile.season().displayName();
+            }
+        }
+        return new GarmentSummary(
+                garment.getId(), garment.getName(), garment.getCategory(),
+                garment.getColorName(), garment.getColorHex(),
+                garment.getMaterial(), garment.getSeason(), garment.isFavorite(), garmentSeason);
     }
 
     private DailyPlanInfo buildDailyPlan(List<WeekPlan> allPlans, String dayName) {

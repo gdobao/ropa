@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="skin">
+  <div id="companion-assistant" class="companion-assistant" data-companion-root>
+    <th:block th:replace="~{fragments/companion/sprite/default-sprite :: sprite}"></th:block>
+
+    <div class="companion-bubble" id="companion-bubble" aria-hidden="true" data-companion-bubble>
+      <p id="companion-bubble-text" data-companion-bubble-text>¡Eh! Que estoy aquí, ¿no me ves?</p>
+    </div>
+
+    <button type="button"
+            id="companion-trigger"
+            class="companion-trigger"
+            aria-label="Abrir ayudante de estilo"
+            aria-expanded="false"
+            aria-controls="companion-panel"
+            aria-describedby="companion-status"
+            data-companion-trigger>
+      <span class="companion-avatar" aria-hidden="true" data-companion-trigger-icon>
+        <svg class="companion-avatar-svg" viewBox="0 0 96 96" role="img">
+          <title>Colorín</title>
+          <rect x="24" y="20" width="48" height="48" rx="8" class="colorin-body"></rect>
+          <rect x="30" y="26" width="36" height="36" rx="6" class="colorin-body-soft"></rect>
+          <rect x="36" y="34" width="6" height="6" class="colorin-eye"></rect>
+          <rect x="54" y="34" width="6" height="6" class="colorin-eye"></rect>
+          <rect x="40" y="46" width="16" height="4" class="colorin-mouth"></rect>
+          <rect x="18" y="30" width="8" height="8" class="colorin-accent"></rect>
+          <rect x="70" y="52" width="8" height="8" class="colorin-sand"></rect>
+        </svg>
+      </span>
+      <span class="sr-only">Abrir ayudante de estilo</span>
+    </button>
+  </div>
+
+  <section id="companion-panel"
+           class="companion-panel"
+           aria-label="Conversación con Colorín"
+           hidden
+           data-companion-panel>
+    <header class="companion-panel-header" data-companion-header>
+      <div>
+        <p class="companion-kicker">Tu companion de estilo</p>
+        <h2 id="companion-title">Colorín</h2>
+      </div>
+      <div class="companion-panel-actions" data-companion-actions>
+        <button type="button" class="companion-icon-btn" id="companion-new-chat" aria-label="Nueva conversación" data-companion-new-chat>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#colorin-plus"></use></svg>
+        </button>
+        <button type="button" class="companion-icon-btn" id="companion-reset" aria-label="Restablecer posición" data-companion-reset-position>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#colorin-reset"></use></svg>
+        </button>
+        <button type="button" class="companion-icon-btn" id="companion-close" aria-label="Cerrar ayudante" data-companion-close>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#colorin-close"></use></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="companion-context" id="companion-context" role="status" aria-live="polite" data-companion-context>
+      Preparando señales de tu armario...
+    </div>
+
+    <div class="companion-thread" id="companion-thread" aria-live="polite" aria-label="Conversación con el ayudante" data-companion-thread>
+      <div class="companion-message companion-message-assistant" data-companion-message>
+        <div class="companion-message-content" data-companion-message-content>¡Hola! Soy Colorín. Cuéntame qué necesitas y le damos una vuelta a tu armario.</div>
+      </div>
+    </div>
+
+    <form class="companion-form" id="companion-form" hx-boost="false" data-companion-form>
+      <label class="sr-only" for="companion-input">Mensaje para el ayudante</label>
+      <textarea id="companion-input" class="companion-input" rows="2" placeholder="Pregúntame por tu armario..." data-companion-input></textarea>
+      <button type="submit" class="companion-send" id="companion-send" aria-label="Enviar mensaje al ayudante" data-companion-send>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#colorin-send"></use></svg>
+      </button>
+    </form>
+
+    <p id="companion-status" class="sr-only" role="status" aria-live="polite" data-companion-status>
+      Ayudante de estilo cerrado. Usá Shift más flechas para moverlo cuando esté cerrado.
+    </p>
+  </section>
+</th:block>
+</html>

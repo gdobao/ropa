@@ -48,6 +48,8 @@ management:
         enabled: true
 
 app:
+  admin:
+    token: ${ADMIN_TOKEN:}
   ai:
     enabled: true
     base-url: https://api.nan.builders
@@ -99,3 +101,12 @@ app:
       analytics-events-days: 90
       session-inactive-days: 180
       orphan-upload-cleanup: false
+  colorimetry:
+    delta-e-weight: 0.40
+    season-weight: 0.30
+    rule-weight: 0.30
+    delta-e-sigmoid-midpoint: 6.5
+    delta-e-sigmoid-steepness: 0.35
+    neutral-delta-threshold: 15.0
+    intensity-threshold: 0.30
+    warm-cool-threshold: 5.0

@@ -12,12 +12,12 @@
             <p class="meta">Sin prendas</p>
           </div>
           <div class="day-item" th:each="plan : ${plans != null and plans[day] != null ? plans[day] : {}}"
-               th:attr="data-garment-id=${plan.garment.id}"
-               th:data-plan-id="${plan.id}">
-            <img class="day-item-thumb" th:src="${plan.garment.imageUrl}" th:alt="${plan.garment.name}" loading="lazy" decoding="async">
-            <span th:text="${plan.garment.name}">Blusa</span>
+               th:attr="data-garment-id=${plan.garmentId}"
+               th:data-plan-id="${plan.planId}">
+            <img class="day-item-thumb" th:src="${plan.imageUrl}" th:alt="${plan.garmentName}" loading="lazy" decoding="async">
+            <span th:text="${plan.garmentName}">Blusa</span>
             <button class="day-item-remove"
-                    th:attr="hx-delete=@{/weekly-plan/{id}(id=${plan.id})}"
+                    th:attr="hx-delete=@{/weekly-plan/{id}(id=${plan.planId})}"
                     hx-target="closest .day-item"
                     hx-swap="delete swap:0.2s">✕</button>
           </div>

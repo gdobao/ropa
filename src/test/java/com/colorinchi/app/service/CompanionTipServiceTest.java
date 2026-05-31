@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.colorinchi.app.colorimetry.service.ColorSeasonClassifier;
 import com.colorinchi.app.dto.chat.CategoryInfo;
 import com.colorinchi.app.dto.chat.ColorInfo;
 import com.colorinchi.app.dto.chat.DailyPlanInfo;
@@ -16,7 +17,7 @@ import static org.mockito.Mockito.mock;
 
 class CompanionTipServiceTest {
 
-    private final CompanionTipService service = new CompanionTipService(mock(WardrobeContextAssembler.class));
+    private final CompanionTipService service = new CompanionTipService(mock(WardrobeContextAssembler.class), mock(ColorSeasonClassifier.class));
 
     @Test
     void createReturnsBootstrapTipsWhenWardrobeIsEmpty() {
@@ -31,7 +32,8 @@ class CompanionTipServiceTest {
                 0,
                 new DailyPlanInfo("Lunes", 0, List.of()),
                 List.of(),
-                List.of());
+                List.of(),
+                Map.of());
 
         var result = service.create(context);
 
@@ -46,8 +48,8 @@ class CompanionTipServiceTest {
                 6,
                 List.of(new CategoryInfo("Tops", 3)),
                 List.of(
-                        new ColorInfo("Negro", "#000000", 4),
-                        new ColorInfo("Blanco", "#FFFFFF", 2)),
+                        new ColorInfo("Negro", "#000000", 4, null),
+                        new ColorInfo("Blanco", "#FFFFFF", 2, null)),
                 List.of(new MaterialInfo("Algodón", 3)),
                 Map.of("Invierno", 4L),
                 0,
@@ -55,7 +57,8 @@ class CompanionTipServiceTest {
                 3,
                 new DailyPlanInfo("Lunes", 0, List.of()),
                 List.of(new DailyPlanInfo("Martes", 2, List.of("Remera negra", "Jean"))),
-                List.of());
+                List.of(),
+                Map.of());
 
         var result = service.create(context);
 
@@ -71,7 +74,7 @@ class CompanionTipServiceTest {
         WardrobeContext context = new WardrobeContext(
                 3,
                 List.of(new CategoryInfo("Tops", 2), new CategoryInfo("Bottoms", 1)),
-                List.of(new ColorInfo("Negro", "#000000", 2), new ColorInfo("Blanco", "#FFFFFF", 1)),
+                List.of(new ColorInfo("Negro", "#000000", 2, null), new ColorInfo("Blanco", "#FFFFFF", 1, null)),
                 List.of(),
                 Map.of("Invierno", 2L),
                 0,  // favoritesCount == 0 — triggers favorites tip
@@ -79,7 +82,8 @@ class CompanionTipServiceTest {
                 0,
                 new DailyPlanInfo("Lunes", 0, List.of()),
                 List.of(),
-                List.of());
+                List.of(),
+                Map.of());
 
         var result = service.create(context);
 
@@ -104,7 +108,8 @@ class CompanionTipServiceTest {
                 7,
                 new DailyPlanInfo("Lunes", 2, List.of("Remera", "Jean")),
                 List.of(),
-                List.of());
+                List.of(),
+                Map.of());
 
         var result = service.create(context);
 

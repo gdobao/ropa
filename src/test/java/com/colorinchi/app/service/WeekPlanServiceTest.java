@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.colorinchi.app.config.WardrobeProperties;
 import com.colorinchi.app.model.Garment;
 import com.colorinchi.app.model.WeekPlan;
 import com.colorinchi.app.repository.GarmentRepository;
@@ -21,7 +21,6 @@ import com.colorinchi.app.repository.WeekPlanRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -39,11 +38,7 @@ class WeekPlanServiceTest {
     @Mock
     private CurrentOwnerAccessor currentOwnerAccessor;
 
-    @InjectMocks
     private WeekPlanService service;
-
-    @Captor
-    private ArgumentCaptor<WeekPlan> planCaptor;
 
     @Captor
     private ArgumentCaptor<List<WeekPlan>> planListCaptor;
@@ -62,6 +57,10 @@ class WeekPlanServiceTest {
         sampleGarment.setImageUrl("/uploads/test.jpg");
         sampleGarment.setOwnerId(ownerId);
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
+        service = new WeekPlanService(repo, garmentRepo, currentOwnerAccessor, new WardrobeProperties(
+                List.of("Top", "Pantalón", "Vestido", "Falda", "Chaqueta", "Abrigo", "Camisa", "Sudadera", "Zapatos", "Accesorio", "Otro"),
+                List.of("Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado", "Domingo"),
+                5, 30, 3));
     }
 
     // --- getPlansByDay ---
@@ -93,13 +92,15 @@ class WeekPlanServiceTest {
 
     @Test
     void assignGarmentSavesNewPlan() {
+        when(repo.findByOwnerIdAndGarmentId(ownerId, 1L)).thenReturn(List.of());
         when(garmentRepo.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.of(sampleGarment));
+        when(repo.findByOwnerIdAndDayOfWeekOrderByPositionAsc(ownerId, "Lunes")).thenReturn(List.of());
 
         service.assignGarment(1L, "Lunes", 0);
 
         verify(repo).deleteByOwnerIdAndGarmentId(ownerId, 1L);
-        verify(repo).save(planCaptor.capture());
-        WeekPlan saved = planCaptor.getValue();
+        verify(repo).saveAll(planListCaptor.capture());
+        WeekPlan saved = planListCaptor.getValue().get(0);
         assertThat(saved.getGarment().getId()).isEqualTo(1L);
         assertThat(saved.getDayOfWeek()).isEqualTo("Lunes");
         assertThat(saved.getPosition()).isEqualTo(0);
@@ -108,6 +109,7 @@ class WeekPlanServiceTest {
 
     @Test
     void assignGarmentThrowsWhenGarmentNotFound() {
+        when(repo.findByOwnerIdAndGarmentId(ownerId, 999L)).thenReturn(List.of());
         when(garmentRepo.findByIdAndOwnerId(999L, ownerId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.assignGarment(999L, "Lunes", 0))
@@ -115,14 +117,17 @@ class WeekPlanServiceTest {
                 .hasMessage("Prenda no encontrada");
 
         verify(repo).deleteByOwnerIdAndGarmentId(ownerId, 999L);
-        verify(repo, never()).save(any());
+        verify(repo, never()).saveAll(anyList());
     }
 
     // --- remove ---
 
     @Test
     void removeDeletesById() {
+        WeekPlan plan = createPlan(1L, sampleGarment, "Lunes", 0);
+        when(repo.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.of(plan));
         when(repo.deleteByIdAndOwnerId(1L, ownerId)).thenReturn(1L);
+        when(repo.findByOwnerIdAndDayOfWeekOrderByPositionAsc(ownerId, "Lunes")).thenReturn(List.of());
 
         service.remove(1L);
 
@@ -131,7 +136,7 @@ class WeekPlanServiceTest {
 
     @Test
     void removeThrowsWhenPlanBelongsToAnotherOwner() {
-        when(repo.deleteByIdAndOwnerId(1L, ownerId)).thenReturn(0L);
+        when(repo.findByIdAndOwnerId(1L, ownerId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.remove(1L))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -163,27 +168,27 @@ class WeekPlanServiceTest {
     }
 
     @Test
-    void reorderDayIgnoresUnknownIds() {
+    void reorderDayRejectsUnknownIds() {
         WeekPlan plan1 = createPlan(1L, sampleGarment, "Lunes", 0);
         WeekPlan plan2 = createPlan(2L, sampleGarment, "Lunes", 1);
 
         when(repo.findByOwnerIdAndDayOfWeekOrderByPositionAsc(ownerId, "Lunes"))
                 .thenReturn(List.of(plan1, plan2));
 
-        service.reorderDay("Lunes", List.of(1L, 999L));
+        assertThatThrownBy(() -> service.reorderDay("Lunes", List.of(1L, 999L)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("El orden no coincide con las prendas del día");
 
-        verify(repo).saveAll(planListCaptor.capture());
-        List<WeekPlan> reordered = planListCaptor.getValue();
-        assertThat(reordered).hasSize(1);
-        assertThat(reordered.get(0).getId()).isEqualTo(1L);
-        assertThat(reordered.get(0).getPosition()).isEqualTo(0);
+        verify(repo, never()).saveAll(anyList());
     }
 
     @Test
-    void reorderDayWithEmptyOrderStillCallsSaveAll() {
+    void reorderDayWithEmptyOrderAndNoPlansDoesNothing() {
+        when(repo.findByOwnerIdAndDayOfWeekOrderByPositionAsc(ownerId, "Lunes")).thenReturn(List.of());
+
         service.reorderDay("Lunes", List.of());
 
-        verify(repo).saveAll(anyList());
+        verify(repo, never()).saveAll(anyList());
     }
 
     // --- countDistinctDaysPlanned ---

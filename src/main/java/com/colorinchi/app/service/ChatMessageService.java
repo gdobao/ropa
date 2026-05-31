@@ -43,14 +43,20 @@ public class ChatMessageService {
 
     @Transactional
     public ChatMessage create(UUID sessionId, String role, String content, int tokens) {
-        return create(sessionId, role, content, tokens, ChatSurface.MAIN_CHAT);
+        return create(sessionId, role, content, tokens, ChatSurface.MAIN_CHAT, null);
     }
 
     @Transactional
     public ChatMessage create(UUID sessionId, String role, String content, int tokens, ChatSurface surface) {
+        return create(sessionId, role, content, tokens, surface, null);
+    }
+
+    @Transactional
+    public ChatMessage create(UUID sessionId, String role, String content, int tokens, ChatSurface surface, UUID runId) {
         ChatMessage message = new ChatMessage();
         message.setSessionId(sessionId);
         message.setOwnerId(currentOwnerId());
+        message.setRunId(runId);
         message.setRole(role);
         message.setContent(content);
         message.setTokens(tokens);
@@ -67,14 +73,20 @@ public class ChatMessageService {
      */
     @Transactional
     public ChatMessage create(UUID sessionId, UUID ownerId, String role, String content, int tokens) {
-        return create(sessionId, ownerId, role, content, tokens, ChatSurface.MAIN_CHAT);
+        return create(sessionId, ownerId, role, content, tokens, ChatSurface.MAIN_CHAT, null);
     }
 
     @Transactional
     public ChatMessage create(UUID sessionId, UUID ownerId, String role, String content, int tokens, ChatSurface surface) {
+        return create(sessionId, ownerId, role, content, tokens, surface, null);
+    }
+
+    @Transactional
+    public ChatMessage create(UUID sessionId, UUID ownerId, String role, String content, int tokens, ChatSurface surface, UUID runId) {
         ChatMessage message = new ChatMessage();
         message.setSessionId(sessionId);
         message.setOwnerId(ownerId);
+        message.setRunId(runId);
         message.setRole(role);
         message.setContent(content);
         message.setTokens(tokens);

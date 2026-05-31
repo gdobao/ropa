@@ -94,10 +94,10 @@ class FashionChatControllerTest {
         sampleContext = new WardrobeContext(
             10L,
             List.of(new CategoryInfo("Top", 5L)),
-            List.of(new ColorInfo("Rojo", "#FF0000", 3L)),
+            List.of(new ColorInfo("Rojo", "#FF0000", 3L, null)),
             List.of(new MaterialInfo("Algodon", 4L)),
             Map.of("Verano", 6L),
-            2L, 3L, 5L, null, List.of(), List.of());
+            2L, 3L, 5L, null, List.of(), List.of(), Map.of());
 
         defaultModel = new AiModelConfig();
         defaultModel.setId("deepseek-v4-flash");
@@ -166,7 +166,7 @@ class FashionChatControllerTest {
     static class TestConfig {
         @Bean
         WardrobeContext dummyWardrobeContext() {
-            return new WardrobeContext(0L, List.of(), List.of(), List.of(), Map.of(), 0L, 0L, 0L, null, List.of(), List.of());
+            return new WardrobeContext(0L, List.of(), List.of(), List.of(), Map.of(), 0L, 0L, 0L, null, List.of(), List.of(), Map.of());
         }
         @Bean
         UploadProperties uploadProperties() {

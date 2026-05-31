@@ -32,6 +32,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/chat/sessions",
                         "/api/chat/sessions/**",
                         "/api/chat/messages/**",
+                        "/api/companion/messages/**",
                         "/api/companion/stream/**",
                         "/api/companion/sessions",
                         "/api/companion/sessions/**");

@@ -29,6 +29,7 @@
                  th:classappend="${piece.lightText} ? 'palette-light' : 'palette-dark'"
                  th:title="${piece.category} + ': ' + ${piece.colorName}">
               <span class="palette-cat" th:text="${piece.category}">Camisa</span>
+              <span class="palette-season" th:if="${piece.colorSeason != null}" th:text="${piece.colorSeason}">Verano</span>
             </div>
           </div>
 

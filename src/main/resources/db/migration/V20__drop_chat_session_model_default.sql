@@ -1,0 +1,2 @@
+ALTER TABLE chat_sessions
+    ALTER COLUMN model DROP DEFAULT;

@@ -22,6 +22,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.colorinchi.app.config.WardrobeProperties;
+import com.colorinchi.app.colorimetry.model.ColorProfile;
+import com.colorinchi.app.colorimetry.service.ColorSeasonClassifier;
 import com.colorinchi.app.dto.AiClassificationResponse;
 import com.colorinchi.app.dto.AiRecommendationResponse;
 import com.colorinchi.app.dto.DashboardStats;
@@ -47,6 +49,7 @@ public class GarmentController {
     private final GarmentCompatibilityService garmentCompatibilityService;
     private final InspirationService inspirationService;
     private final WardrobeProperties wardrobeProperties;
+    private final ColorSeasonClassifier seasonClassifier;
 
     public GarmentController(
             GarmentService garmentService,
@@ -56,7 +59,8 @@ public class GarmentController {
             WeekPlanService weekPlanService,
             GarmentCompatibilityService garmentCompatibilityService,
             InspirationService inspirationService,
-            WardrobeProperties wardrobeProperties) {
+            WardrobeProperties wardrobeProperties,
+            ColorSeasonClassifier seasonClassifier) {
         this.garmentService = garmentService;
         this.imageStorageService = imageStorageService;
         this.aiClassificationService = aiClassificationService;
@@ -65,6 +69,7 @@ public class GarmentController {
         this.garmentCompatibilityService = garmentCompatibilityService;
         this.inspirationService = inspirationService;
         this.wardrobeProperties = wardrobeProperties;
+        this.seasonClassifier = seasonClassifier;
     }
 
     @ModelAttribute("categories")
@@ -118,6 +123,7 @@ public class GarmentController {
     @PostMapping("/wardrobe/{id}/favorite")
     String toggleFavorite(@PathVariable Long id, 
                           @RequestParam(defaultValue = "card") String variant,
+                          @RequestParam(required = false) String category,
                           Model model) {
         garmentService.toggleFavorite(id);
         Garment garment = garmentService.get(id);
@@ -125,8 +131,14 @@ public class GarmentController {
         if ("detail".equals(variant)) {
             return "garment-detail :: favDetailButton";
         }
-        model.addAttribute("garments", garmentService.all());
-        model.addAttribute("activeCategory", "");
+        if ("favoritos".equals(category)) {
+            model.addAttribute("garments", garmentService.favorites());
+        } else if (category == null || category.isBlank()) {
+            model.addAttribute("garments", garmentService.all());
+        } else {
+            model.addAttribute("garments", garmentService.filterByCategory(category));
+        }
+        model.addAttribute("activeCategory", category != null ? category : "");
         return "wardrobe :: grid";
     }
 
@@ -187,7 +199,24 @@ public class GarmentController {
         model.addAttribute("garment", garment);
         model.addAttribute("compatibleGarments", garmentCompatibilityService.findCompatible(garment));
         model.addAttribute("companionGarments", weekPlanService.findCompanionGarments(id));
+
+        addColorSeason(garment, model);
+
         return "garment-detail";
+    }
+
+    private void addColorSeason(Garment garment, Model model) {
+        String hex = garment.getColorHex();
+        if (hex != null && !hex.isBlank()) {
+            try {
+                ColorProfile profile = seasonClassifier.classify(hex);
+                if (profile.season() != null) {
+                    model.addAttribute("garmentSeason", profile.season().displayName());
+                }
+            } catch (Exception e) {
+                // ignore — no season badge
+            }
+        }
     }
 
     @GetMapping("/wardrobe/{id}/edit")

@@ -57,4 +57,23 @@ class ChatSecurityIntegrationTest {
         mockMvc.perform(get("/api/companion/stream/{runId}", runId))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void adminApiRequiresAdminToken() throws Exception {
+        mockMvc.perform(get("/api/admin/metrics"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void adminApiAllowsConfiguredAdminToken() throws Exception {
+        mockMvc.perform(get("/api/admin/metrics")
+                        .header("X-Admin-Token", "test-admin-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void adminViewRequiresAdminToken() throws Exception {
+        mockMvc.perform(get("/admin/chat-metrics"))
+                .andExpect(status().isForbidden());
+    }
 }

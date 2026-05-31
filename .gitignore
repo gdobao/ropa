@@ -13,6 +13,9 @@ uploads/
 *.png
 chat-snapshot
 companion-*
+!src/main/resources/static/js/companion/companion-*.js
+!src/main/resources/static/css/companion/companion-*.css
+!src/main/resources/static/css/companion/skins/companion-*.css
 dashboard-full
 wardrobe.png
 weekly-plan.png

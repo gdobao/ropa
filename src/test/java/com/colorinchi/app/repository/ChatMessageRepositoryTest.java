@@ -99,6 +99,18 @@ class ChatMessageRepositoryTest {
         assertThat(count).isEqualTo(2);
     }
 
+    @Test
+    void savesAndReadsLongContentOver255Characters() {
+        String longContent = "x".repeat(300);
+        ChatMessage saved = messageRepository.save(createMessage(sessionId, OWNER_ID, "assistant", longContent));
+
+        Optional<ChatMessage> found = messageRepository.findById(saved.getId());
+
+        assertThat(found).isPresent();
+        assertThat(found.get().getContent()).hasSize(300);
+        assertThat(found.get().getContent()).isEqualTo(longContent);
+    }
+
     // --- Helpers ---
 
     private ChatSession createSession(UUID ownerId) {

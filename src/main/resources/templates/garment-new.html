@@ -6,6 +6,7 @@
   <p class="lead">Sacá o subí una foto clara de una sola prenda. Después vas a poder revisar y corregir los datos antes de guardarla.</p>
   <p class="notice error" th:if="${error}" th:text="${error}" role="alert" aria-live="polite">Error</p>
   <form class="upload-card" id="garment-upload-form" th:action="@{/wardrobe/analyze}" method="post" enctype="multipart/form-data" novalidate>
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
     <label class="upload-drop" for="image-upload">
       <span><strong>Seleccionar imagen</strong><br><small>JPG, PNG o WebP · máximo 8 MB</small></span>
       <input id="image-upload" class="visually-hidden-input" type="file" name="image" accept="image/jpeg,image/png,image/webp" capture="environment" required>

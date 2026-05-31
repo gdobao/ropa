@@ -14,5 +14,6 @@ public record WardrobeContext(
     long plannedItems,
     DailyPlanInfo todayPlan,
     List<DailyPlanInfo> upcomingPlans,
-    List<GarmentSummary> garments
+    List<GarmentSummary> garments,
+    Map<String, Long> colorSeasons
 ) {}

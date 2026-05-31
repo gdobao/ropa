@@ -29,6 +29,7 @@ Project-level AGENTS.md for future AI sessions. Supersedes global defaults only 
 | Cache | Caffeine |
 | HTTP client | WebClient (reactive, for AI API calls) |
 | Image processing | Thumbnailator + TwelveMonkeys WebP |
+| Colorimetry | ColorSpaceConverter, ColorSeasonClassifier, ColorCompatibilityEngine, ColorPaletteStore |
 | Test DB | H2 (in-memory) |
 | Test HTTP mock | WireMock 3.9.1 |
 | Test frameworks | Mockito, MockMvc, @DataJpaTest, Playwright (E2E) |
@@ -51,12 +52,12 @@ CompanionChatApiController → ChatConversationOrchestrator → Ai provider (SSE
 | Type | Count | Details |
 |---|---|---|
 | Controllers | 3 | `GarmentController` (20 endpoints), `FashionChatController`, `CompanionChatApiController` |
-| Services | 12 | `GarmentService`, `GarmentCompatibilityService`, `AiClassificationService`, `AiRecommendationService`, `WeekPlanService`, `InspirationService`, `ChatSessionService`, `ChatMessageService`, `ChatRunService`, `ChatFeedbackService`, `ChatConversationOrchestrator`, `ChatStreamPersistenceService`, `ChatPromptFactory`, `WardrobeContextAssembler`, `CompanionTipService`, `ChatPolicyService` |
+| Services | 16+ | `GarmentService`, `GarmentCompatibilityService`, `AiClassificationService`, `AiRecommendationService`, `WeekPlanService`, `InspirationService`, `ChatSessionService`, `ChatMessageService`, `ChatRunService`, `ChatFeedbackService`, `ChatConversationOrchestrator`, `ChatStreamPersistenceService`, `ChatPromptFactory`, `WardrobeContextAssembler`, `CompanionTipService`, `ChatPolicyService`, `AnonymousOwnerService`, `ChatDataRetentionService`, `CurrentOwnerAccessor` |
 | Storage | 1 interface + 1 impl | `ImageStorageService` / `LocalImageStorageService` |
-| Repositories | 5 | `GarmentRepository`, `WeekPlanRepository`, `ChatSessionRepository`, `ChatRunRepository`, `ChatFeedbackRepository` |
-| DTOs | 12+ | `GarmentReviewForm`, `DashboardStats`, `AiClassificationResponse`, `AiRecommendationResponse`, `OutfitSuggestion`, `OutfitPiece`, `InspirationLook`, `CompanionTipContext`, `GarmentSummary`, `ChatSurface`, `ChatSessionResponse`, `ChatMessageResponse`, `CreateSessionRequest`, `ChatFeedbackRequest` |
-| @ConfigurationProperties | 4 | `WardrobeProperties`, `UploadProperties`, `AiServerProperties`, `RateLimitProperties` |
-| Config | 5+ | `SecurityConfig`, `WebMvcConfig`, `WebClientConfig`, `AiServerPropertiesValidator`, `GlobalExceptionHandler` |
+| Repositories | 8 | `GarmentRepository`, `WeekPlanRepository`, `ChatSessionRepository`, `ChatRunRepository`, `ChatFeedbackRepository`, `ChatMessageRepository`, `ChatAnalyticsEventRepository`, `AnonymousOwnerRepository` |
+| DTOs | 12+ | `GarmentReviewForm`, `DashboardStats`, `AiClassificationResponse`, `AiRecommendationResponse`, `OutfitSuggestion`, `OutfitPiece`, `InspirationLook`, `CompanionTipContext`, `GarmentSummary`, `ChatSurface`, `ChatSessionResponse`, `ChatMessageResponse`, `CreateSessionRequest`, `ChatFeedbackRequest`, `WeeklyPlanItem` |
+| @ConfigurationProperties | 6 | `WardrobeProperties`, `UploadProperties`, `AiServerProperties`, `RateLimitProperties`, `AdminProperties`, `ChatRetentionProperties` |
+| Config | 8+ | `SecurityConfig`, `WebMvcConfig`, `WebClientConfig`, `AiServerPropertiesValidator`, `GlobalExceptionHandler`, `ApiExceptionHandler`, `CurrentOwnerFilter`, `AdminProperties`, `ChatRetentionProperties` |
 
 ### Patterns
 - All config via `@ConfigurationProperties` records
@@ -65,6 +66,23 @@ CompanionChatApiController → ChatConversationOrchestrator → Ai provider (SSE
 - HTMX fragments: stable wrapper IDs (e.g., `#wardrobe-grid`, `#garment-grid`, `#favDetailButton`)
 - Colorín Companion via JS modal (`companion-assistant.js`) con `position: fixed` y viewport-aware panel placement
 - CSS design tokens via custom properties (`tokens.css`)
+
+### Colorimetry Engine
+
+New package: `com.colorinchi.app.colorimetry`
+
+| Type | Count | Details |
+|---|---|---|
+| Enums | 5 | ColorSeason, ColorTemperature, ColorIntensity, ColorDepth, ColorHarmony |
+| Records | 3 | ColorProfile, CompatibilityResult, NamedColor |
+| Services | 2 | ColorSeasonClassifier (CIELAB matrix + nearest-neighbor fallback), ColorCompatibilityEngine (ΔE00 + season + rules) |
+| Data | 1 | ColorPaletteStore (4 seasons × ~25 colors + 15 neutrals) |
+| Util | 1 | ColorSpaceConverter (hex→RGB→XYZ→CIELAB, ΔE2000, ΔE76, hex→HSL) |
+| Config | 1 | ColorimetryProperties (@ConfigurationProperties("app.colorimetry")) |
+
+Classification: hex → CIELAB → temperature/intensity/depth → season matrix → nearest-neighbor fallback
+Scoring: ΔE00(40%) + season(30%) + rules(30%) → additive formula
+Blacklist: rojo+rosa, negro+azul marino, warm+cool without neutral bridge
 
 ---
 
@@ -95,6 +113,8 @@ All endpoints in `GarmentController.java`.
 | PUT | `/weekly-plan/reorder?dayOfWeek=&order=` | `""` (empty body) | Reorder garments in a day |
 | GET | `/profile` | `profile-stats.html` | Stats, top colors, usage |
 
+- `GarmentController.detail()` now computes and passes `garmentSeason` (ColorSeason displayName) to the view for the season badge
+
 ### Colorín Companion API
 
 All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
@@ -108,7 +128,9 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 | GET | `/api/companion/sessions/{id}/messages` | Get all messages for session |
 | POST | `/api/companion/sessions/{id}/messages` | Send message (SSE streaming response) |
 | POST | `/api/companion/sessions/{id}/messages/{msgId}/feedback` | Submit feedback for a message |
-| GET | `/api/companion/tips` | Get contextual styling tip |
+| POST | `/api/companion/messages/{msgId}/feedback` | Backward-compatible feedback route |
+| GET | `/api/companion/context` | Get contextual wardrobe summary and styling tips |
+| GET | `/api/companion/tips` | Alias for contextual wardrobe summary and styling tips |
 
 ---
 
@@ -124,7 +146,8 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 
 ### Templates (Thymeleaf + HTMX)
 - UI copy in Spanish (español de España)
-- CSRF via `<meta>` tags in `head.html` + `htmx:configRequest` event handler
+- CSRF via `<meta>` tags in `head.html` + `htmx:configRequest` event handler for HTMX requests
+- Normal browser forms include hidden `<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />` — required in `garment-new.html`, `garment-confirm.html`, `garment-edit.html`, and `wardrobe.html`
 - HTMX fragments use stable wrapper IDs
 - `th:attr` with multiple HTMX attributes needs careful quoting
 - Layout via `th:replace` on `layout.html` with fragment parameters
@@ -134,6 +157,13 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - CSS `var()` inside `@media()` queries is **INVALID** — hardcode breakpoint values (600px, 820px, 1024px, 1366px, 1440px, 1920px)
 - Mobile-first responsive in `responsive.css`
 - Breakpoints: 600 (small tablet), 820 (tablet portrait), 1024 (tablet landscape), 1366 (laptop), 1440 (desktop), 1920 (wide)
+
+### Colorimetry
+- Classification is deterministic O(1) math on existing `colorHex` — no DB migration needed
+- `ColorSeasonClassifier.classify()` returns `ColorProfile` with season, temperature, intensity, depth, confidence
+- `ColorCompatibilityEngine.score()` returns `CompatibilityResult` with score (0-100), harmony, explanation, warnings
+- All configurable via `ColorimetryProperties` — weights, sigmoid parameters, thresholds
+- Nearest-neighbor fallback uses CIEDE76 on CIELAB values
 
 ---
 
@@ -157,7 +187,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - AI service tests mock the HTTP endpoint, NOT WebClient itself
 
 ### Test Statistics
-- **22 test classes**, ~200 `@Test` methods
+- **22 test classes**, ~200 `@Test` methods (currently **476 tests — 0 failures, 0 errors, 0 skipped**)
 - Run with: `mvn test`
 
 ---
@@ -170,9 +200,15 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - `htmx:configRequest` JavaScript event attaches CSRF header to every HTMX request
 - Magic bytes validation on image upload (JPEG: `FF D8 FF`, PNG: `89 50 4E 47`, WebP: `RIFF....WEBP`)
 - Path traversal prevention in `AiClassificationService.resolveImagePath()` — validates prefix `/uploads/` and normalizes path
+- **Anonymous owner isolation via opaque token**: Cookie stores an opaque `owner_token` (not the DB UUID `owner_id`). Server hashes it (SHA-256) and persists `token_hash` in `anonymous_owners`. Prevents owner takeover via known UUID bootstrap sequence.
+  - Cookie flags: `HttpOnly`, `SameSite=Lax`, `Secure` (with `X-Forwarded-Proto=https` support)
+  - Legacy `owner_id` cookie is ignored
+- **Admin protection**: `AdminProperties` (`app.admin.token`) configures an optional token. Endpoints under `/api/admin/**` and `/admin/**` are protected via `SecurityConfig` — require `X-Admin-Token` header matching the configured value. If no token is set, admin endpoints are effectively closed.
 - Rate limiting via `HandlerInterceptor` + Caffeine (NOT Bucket4j):
+  - Keys are **per-endpoint** (`endpointKey:ip`) to avoid bucket collisions
   - `POST /wardrobe/analyze`: 10/hour per IP → throws `RateLimitExceededException` → `GlobalExceptionHandler` → `error.html`
   - `GET /recommendation`: 5/30min per IP
+  - Companion API feedback POST/PATCH/DELETE covered
 - SRI integrity hashes on external scripts (HTMX)
 
 ---
@@ -189,6 +225,10 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
   - `V14__drop_legacy_chat_sessions_owner_index.sql` — drop deprecated index
   - `V15__add_message_id_to_chat_feedback.sql` — link feedback directly to message
   - `V16__add_chat_sessions_active_updated_at_index.sql` — index for active sessions query
+  - `V17__add_anonymous_owner_token_hash.sql` — add `token_hash` column to `anonymous_owners`, create index, backfill bootstrap owner hash
+  - `V18__enforce_week_plan_ordering.sql` — add `UNIQUE (day_of_week, position)` deferred constraint, reindex positions, add composite index
+  - `V19__link_chat_messages_to_runs.sql` — add `run_id` FK to `chat_messages`, backfill from chat_runs, index
+  - `V20__drop_chat_session_model_default.sql` — remove DEFAULT from `chat_sessions.model`, model resolved via ModelRouter now
 - `ddl-auto: validate` in production — Flyway manages schema
 - `open-in-view: false` — explicit transaction boundaries in services
 - Hidden HTTP method filter enabled (`spring.mvc.hiddenmethod.filter.enabled: true`) for PUT/DELETE via forms
@@ -207,6 +247,14 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 | **Rate limit strategy**: IP-based per endpoint via HandlerInterceptor | Throws `RateLimitExceededException` → `GlobalExceptionHandler` → `error.html` view |
 | **`ddl-auto: validate` in production** | Flyway owns the schema; Hibernate must not auto-create or modify it |
 | **`@Cacheable` with `unless = "#result.error() != null"`** | Prevents caching of AI error responses that should retry next time |
+| **Opaque `owner_token` over UUID `owner_id`** | Prevents owner takeover via known UUID bootstrap sequence; SHA-256 hash stored server-side, raw token in cookie only |
+| **Admin token via `X-Admin-Token` header** | Explicit token required for admin endpoints; no token = admin closed, no reliance on `remoteAddr` |
+| **Rate limit keys per endpoint** (`endpointKey:ip`) | Prevents bucket collisions across different rate limit windows; 10/h analyze vs 5/30min recommendation use separate buckets |
+| **ModelRouter for session model resolution** | No more hardcoded `"qwen3.6"` — sessions resolve via `ModelRouter`; UI sends `""`, backend converts to null → default model; V20 drops the `DEFAULT` on `chat_sessions.model` |
+| **WardrobeContextAssembler stateless cache** | Mutable `classificationCache` field removed; cache is now method-local and passed through helpers — thread-safe by design, no shared mutable state |
+| **CSRF hidden inputs in normal forms** | Browser form submissions (`garment-new.html`, `garment-confirm.html`, `garment-edit.html`, `wardrobe.html`) include hidden CSRF fields; HTMX handles CSRF via headers independently |
+| **Prod logging profile separation** | Logback root logger separated by profile: `prod` → JSON appender (logstash-logback-encoder), `!prod` → CONSOLE; avoids structured logging noise in dev |
+| **Prompt injection boundaries via data markers** | Wardrobe data in `AiRecommendationService` is enclosed in `=== INICIO DATOS DE PRENDAS (NO CONFIABLE) ===` markers with clear warnings — prevents prompt injection from garment names/colors |
 
 ---
 
@@ -222,12 +270,20 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 
 ### Java
 - `Map.of()` limited to **10 entries** — use `Map.ofEntries()` or `HashMap` for 11+
-- `preHandle()` returning `false` in HandlerInterceptor **aborts the request without rendering any view** — throw an exception instead for error page rendering (done in `RateLimitingInterceptor`)
 
 ### HTMX
 - Fragments need **stable wrapper IDs** (e.g., `#wardrobe-grid`, `#garment-grid`, `#favDetailButton`) or swapping breaks
 - `th:attr` with multiple HTMX attributes needs careful quoting — test HTMX attributes after changes
 - CSRF token must be injected via `<meta>` tags AND the `htmx:configRequest` JS event — both are required
+- Normal browser forms still need hidden CSRF fields even though HTMX handles CSRF via headers
+
+### Controller / Exception Handling
+- `preHandle()` returning `false` in HandlerInterceptor **aborts the request without rendering any view** — throw an exception instead for error page rendering (done in `RateLimitingInterceptor`)
+- `GlobalExceptionHandler` uses `mav.setStatus(...)` for explicit HTTP status codes on MVC error views — don't rely solely on `@ResponseStatus` for controller advice methods
+- If `ChatConversationOrchestrator.persistAssistantMessageAndCompleteRun()` throws, the run is marked `failed` and a `stream-error` SSE event is sent — the run lifecycle must handle persistence failures gracefully
+
+### JPA
+- `ChatMessage.content` uses `@Column(columnDefinition = "TEXT")` to match Flyway's schema — H2 create-drop now produces TEXT too; always align `columnDefinition` with the Flyway migration when using DDL-auto=create-drop in tests
 
 ### Tests
 - **NEVER run tests against the shared PostgreSQL** — H2 with `create-drop` will destroy your data
@@ -235,27 +291,29 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - Mock `RateLimitingInterceptor` in controller tests or it will block requests
 
 ### Companion JS
-- Panel usa `position: absolute` para seguir al trigger al arrastrar; viewport clipping via JS en `positionPanelForViewport()`
-- Bug conocido: al resize de ventana, el trigger guardado en localStorage puede quedar fuera del viewport y el panel se sale de la pantalla — el clamp en `ensureRootInViewport()` no recalcula correctamente `max-height` del panel
+- Panel usa `position: fixed` como overlay sibling del root para que Playwright y el navegador midan el panel dentro del viewport real; viewport clipping via JS en `positionPanelForViewport()`
+- El trigger se guarda en localStorage; `ensureRootInViewport()` debe mantenerse sincronizado con el panel fijo al redimensionar ventana
 
 ### Database
 - If shared PostgreSQL tables get dropped: `mvn flyway:migrate -Dflyway.url=jdbc:postgresql://localhost:55432/ropa -Dflyway.user=ropa -Dflyway.password=ropa`
 
+### Colorimetry
+- `ColorSeasonClassifier` uses nearest-neighbor as fallback when the CIELAB matrix is ambiguous (NEUTRAL temperature or MEDIUM depth)
+- The matrix can misclassify borderline colors (e.g., mostaza as SPRING instead of AUTUMN) — the nearest-neighbor override corrects this
+- `ColorCompatibilityEngine` uses additive scoring (not weighted), so max score can exceed 100 — always clamp to [0, 100]
+- `@Component` on `ColorPaletteStore` is required for Spring DI — it's NOT a plain utility class
+- `ColorProfile.fromLab()` uses configurable `warmCoolThreshold` and `intensityThreshold` from `ColorimetryProperties`
+
 ---
 
 ## 11. Next Steps / Known Work
-
-### Sprint 3 (current/upcoming)
-- Compatibility scoring bar (visual indicator in detail view)
-- Insights section on dashboard
-- Color palette bar in profile/detail
 
 ### Outstanding
 - Fix resize bug in companion panel (ensureRootInViewport + panel max-height)
 - Improve AI prompt to cover all 11 categories more consistently
 - Document Playwright smoke test procedure
 - Consider dark mode support (`prefers-color-scheme` in CSS)
-- Add integration test for CSRF behavior (currently not covered in controller tests)
+- Keep CSRF integration coverage in `ChatSecurityIntegrationTest` when adding new state-changing chat endpoints
 - AI recommendation parse error handling could be more robust
 
 ---
@@ -308,6 +366,28 @@ dayOfWeek: String(10) NOT NULL       — Lunes, Martes, ...
 position: int NOT NULL               — ordering within a day
 createdAt, updatedAt: OffsetDateTime
 ```
+`UNIQUE (day_of_week, position)` deferred constraint on PostgreSQL (V18).
+
+### AnonymousOwner
+```
+id: UUID (PK, auto)
+tokenHash: String(64) NOT NULL       — SHA-256 hash of opaque owner_token (V17)
+bootstrap: boolean NOT NULL DEFAULT FALSE
+createdAt: OffsetDateTime NOT NULL
+updatedAt: OffsetDateTime NOT NULL
+```
+
+### ChatMessage
+```
+id: UUID (PK, auto)
+runId: UUID FK → chat_runs           — run that produced this message (V19)
+sessionId: UUID FK → chat_sessions
+role: String(50) NOT NULL
+content: TEXT NOT NULL
+...
+```
+
+> **Note**: `colorSeason` is computed on-the-fly via `ColorSeasonClassifier` and stored in DTOs (`GarmentSummary`, `ColorInfo`, `OutfitPiece`) but NOT in the database.
 
 ### Categories (11)
 `Top`, `Pantalón`, `Vestido`, `Falda`, `Chaqueta`, `Abrigo`, `Camisa`, `Sudadera`, `Zapatos`, `Accesorio`, `Otro`
@@ -340,6 +420,14 @@ createdAt, updatedAt: OffsetDateTime
 - `analyze.refill-minutes`: int (default 60)
 - `recommendation.capacity`: int (default 5)
 - `recommendation.refill-minutes`: int (default 30)
+
+### `app.chat.retention` (ChatRetentionProperties)
+- `analytics-events-days`: int (default 90)
+- `session-inactive-days`: int (default 180)
+- `orphan-upload-cleanup`: boolean (default false)
+
+### `app.admin` (AdminProperties)
+- `token`: String (optional, default empty — admin endpoints closed)
 
 ---
 

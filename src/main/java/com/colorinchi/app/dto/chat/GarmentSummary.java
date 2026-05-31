@@ -8,5 +8,6 @@ public record GarmentSummary(
     String colorHex,
     String material,
     String season,
-    boolean favorite
+    boolean favorite,
+    String colorSeason
 ) {}

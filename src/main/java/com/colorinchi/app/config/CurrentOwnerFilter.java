@@ -35,7 +35,7 @@ public class CurrentOwnerFilter extends OncePerRequestFilter {
             MDC.put("ownerId", ownerId.toString());
             filterChain.doFilter(request, response);
         } finally {
-            MDC.clear();
+            MDC.remove("ownerId");
         }
     }
 }

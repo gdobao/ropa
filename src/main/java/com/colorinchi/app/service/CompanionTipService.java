@@ -2,9 +2,11 @@ package com.colorinchi.app.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.colorinchi.app.colorimetry.service.ColorSeasonClassifier;
 import com.colorinchi.app.dto.chat.ColorInfo;
 import com.colorinchi.app.dto.chat.CompanionTipContext;
 import com.colorinchi.app.dto.chat.WardrobeContext;
@@ -13,9 +15,12 @@ import com.colorinchi.app.dto.chat.WardrobeContext;
 public class CompanionTipService {
 
     private final WardrobeContextAssembler wardrobeContextAssembler;
+    private final ColorSeasonClassifier classifier;
 
-    public CompanionTipService(WardrobeContextAssembler wardrobeContextAssembler) {
+    public CompanionTipService(WardrobeContextAssembler wardrobeContextAssembler,
+            ColorSeasonClassifier classifier) {
         this.wardrobeContextAssembler = wardrobeContextAssembler;
+        this.classifier = classifier;
     }
 
     public CompanionTipContext assemble() {
@@ -50,6 +55,42 @@ public class CompanionTipService {
             ColorInfo dominant = context.colors().get(0);
             tips.add("El armario está muy concentrado en " + dominant.colorName()
                     + ": conviene sumar acentos o neutros de apoyo para ampliar combinaciones.");
+        }
+
+        if (!context.colorSeasons().isEmpty()) {
+            Map.Entry<String, Long> unknownEntry = null;
+            Long unknownCount = 0L;
+            for (Map.Entry<String, Long> e : context.colorSeasons().entrySet()) {
+                if ("Sin estación".equals(e.getKey())) {
+                    unknownEntry = e;
+                    unknownCount = e.getValue();
+                }
+            }
+
+            if (unknownCount > 0) {
+                tips.add(unknownCount + " prenda(s) no tienen una estación colorimétrica definida: "
+                        + "revisá sus colores para obtener mejores sugerencias.");
+            }
+
+            List<Map.Entry<String, Long>> realSeasons = context.colorSeasons().entrySet().stream()
+                    .filter(e -> !"Sin estación".equals(e.getKey()))
+                    .toList();
+
+            if (realSeasons.size() == 1) {
+                Map.Entry<String, Long> only = realSeasons.get(0);
+                tips.add("Todas tus prendas con estación definida son de " + only.getKey()
+                        + ": sumar alguna de otra estación puede ampliar mucho tus combinaciones.");
+            } else if (realSeasons.size() >= 2) {
+                Map.Entry<String, Long> max = realSeasons.stream()
+                        .max(Map.Entry.comparingByValue()).orElse(null);
+                Map.Entry<String, Long> min = realSeasons.stream()
+                        .min(Map.Entry.comparingByValue()).orElse(null);
+                if (max != null && min != null && max.getValue() > min.getValue() * 3) {
+                    tips.add("Hay muchas más prendas de " + max.getKey()
+                            + " que de " + min.getKey()
+                            + ": equilibrar las estaciones te dará más variedad de combinaciones.");
+                }
+            }
         }
 
         if (context.favoritesCount() == 0) {
@@ -95,6 +136,14 @@ public class CompanionTipService {
 
         if (context.favoritesCount() > 0) {
             summary.append(" Hay ").append(context.favoritesCount()).append(" favorita(s) marcadas.");
+        }
+
+        if (!context.colorSeasons().isEmpty()) {
+            summary.append(" Distribución colorimétrica: ");
+            context.colorSeasons().forEach((season, count) ->
+                summary.append(season).append("=").append(count).append(", "));
+            summary.setLength(summary.length() - 2); // remove trailing ", "
+            summary.append(".");
         }
 
         return summary.toString();

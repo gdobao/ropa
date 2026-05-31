@@ -55,7 +55,19 @@ public class ChatPromptFactory {
         sb.append(ZONE_START).append("\n\n");
         sb.append("Eres Colorín, un asesor de moda experto y conversacional. Tus áreas de expertise:\n");
         sb.append("- Moda y tendencias\n");
-        sb.append("- Colorimetría y teoría del color\n");
+        sb.append("\nCONOCIMIENTO DE COLORIMETRÍA:\n");
+        sb.append("- Las 4 estaciones colorimétricas: Primavera (cálido+claro+vívido), Verano (frío+claro+suave), Otoño (cálido+oscuro+suave), Invierno (frío+oscuro+vívido)\n");
+        sb.append("- Los neutros universales (negro, blanco, gris, beige, camel, marfil, arena, nude, caqui, azul marino) combinan con cualquier estación\n");
+        sb.append("- Regla 60-30-10: 60% color dominante (neutro), 30% color secundario, 10% acento\n");
+        sb.append("- Los colores análogos (vecinos en el círculo cromático) crean armonía suave\n");
+        sb.append("- Los colores complementarios (opuestos) crean contraste dinámico\n");
+        sb.append("- Monocromático: variaciones de un mismo color en distintas intensidades\n");
+        sb.append("- Combinaciones a evitar: rojo+rosa juntos, negro+azul marino juntos\n");
+        sb.append("- Los cálidos (rojo, naranja, amarillo) y fríos (azul, verde, violeta) necesitan un neutro de puente\n");
+        sb.append("- Primavera: coral, melocotón, amarillo pollito, verde manzana, azul cielo\n");
+        sb.append("- Verano: rosa empolvado, lavanda, azul cielo grisáceo, verde salvia, gris perla\n");
+        sb.append("- Otoño: mostaza, terracota, verde oliva, marrón chocolate, naranja quemado\n");
+        sb.append("- Invierno: azul klein, negro, blanco puro, rojo, verde esmeralda\n");
         sb.append("- Combinaciones de prendas y estilismo\n");
         sb.append("- Conocimiento de materiales y tejidos\n");
         sb.append("- Equilibrio y composición del armario\n\n");
@@ -103,6 +115,20 @@ public class ChatPromptFactory {
         sb.append("\n");
         sb.append("REGLAS DE COMPATIBILIDAD ENTRE CATEGORÍAS:\n");
         sb.append(contextFormatter.formatCompatibilityRules());
+
+        sb.append("\nCONOCIMIENTO DE COLORIMETRÍA:\n");
+        sb.append("- Las 4 estaciones colorimétricas: Primavera (cálido+claro+vívido), Verano (frío+claro+suave), Otoño (cálido+oscuro+suave), Invierno (frío+oscuro+vívido)\n");
+        sb.append("- Los neutros universales (negro, blanco, gris, beige, camel, marfil, arena, nude, caqui, azul marino) combinan con cualquier estación\n");
+        sb.append("- Regla 60-30-10: 60% color dominante (neutro), 30% color secundario, 10% acento\n");
+        sb.append("- Los colores análogos (vecinos en el círculo cromático) crean armonía suave\n");
+        sb.append("- Los colores complementarios (opuestos) crean contraste dinámico\n");
+        sb.append("- Monocromático: variaciones de un mismo color en distintas intensidades\n");
+        sb.append("- Combinaciones a evitar: rojo+rosa juntos, negro+azul marino juntos\n");
+        sb.append("- Los cálidos (rojo, naranja, amarillo) y fríos (azul, verde, violeta) necesitan un neutro de puente\n");
+        sb.append("- Primavera: coral, melocotón, amarillo pollito, verde manzana, azul cielo\n");
+        sb.append("- Verano: rosa empolvado, lavanda, azul cielo grisáceo, verde salvia, gris perla\n");
+        sb.append("- Otoño: mostaza, terracota, verde oliva, marrón chocolate, naranja quemado\n");
+        sb.append("- Invierno: azul klein, negro, blanco puro, rojo, verde esmeralda\n");
         sb.append("\n");
         sb.append(ZONE_END).append("\n\n");
 
@@ -150,6 +176,7 @@ public class ChatPromptFactory {
                     if (g.colorName() != null) sb.append(" | ").append(g.colorName());
                     if (g.material() != null) sb.append(" | ").append(g.material());
                     if (g.season() != null) sb.append(" | ").append(g.season());
+                    if (g.colorSeason() != null) sb.append(" | ").append(g.colorSeason());
                     if (g.favorite()) sb.append(" | ★ FAVORITA");
                     sb.append("\n");
                 }
@@ -179,6 +206,12 @@ public class ChatPromptFactory {
                 sb.append("\nTEMPORADAS:\n");
                 ctx.seasons().forEach((season, count) ->
                     sb.append("  - ").append(season).append(": ").append(count).append("\n"));
+            }
+
+            if (!ctx.colorSeasons().isEmpty()) {
+                sb.append("\nESTACIONES COLORIMÉTRICAS:\n");
+                ctx.colorSeasons().forEach((season, count) ->
+                    sb.append("  - ").append(season).append(": ").append(count).append(" prendas\n"));
             }
 
             if (ctx.plannedItems() > 0) {

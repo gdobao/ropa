@@ -47,11 +47,12 @@ class OutfitPieceTest {
 
     @Test
     void constructorAndAccessors() {
-        var piece = new OutfitPiece("Camisa", "Blanco", "#FFFFFF", 2, true);
+        var piece = new OutfitPiece("Camisa", "Blanco", "#FFFFFF", 2, true, null);
         assertThat(piece.category()).isEqualTo("Camisa");
         assertThat(piece.colorName()).isEqualTo("Blanco");
         assertThat(piece.colorHex()).isEqualTo("#FFFFFF");
         assertThat(piece.bodyZone()).isEqualTo(2);
         assertThat(piece.lightText()).isTrue();
+        assertThat(piece.colorSeason()).isNull();
     }
 }

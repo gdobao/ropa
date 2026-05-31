@@ -4,7 +4,9 @@
 <main>
   <div class="photo"><img th:src="${garment.imageUrl}" th:alt="${garment.name}" loading="lazy" decoding="async"></div>
   <h1 th:text="${garment.name}">Blazer lino</h1>
-  <p class="meta"><span th:text="${garment.category}">Chaqueta</span> · <span th:text="${garment.colorName}">Arena</span> · <span th:text="${garment.season ?: 'Sin temporada'}">Primavera/verano</span></p>
+  <p class="meta"><span th:text="${garment.category}">Chaqueta</span> · <span th:text="${garment.colorName}">Arena</span> · <span th:text="${garment.season ?: 'Sin temporada'}">Primavera/verano</span>
+    <span class="chip season-badge" th:if="${garmentSeason != null}" th:text="${garmentSeason}">Primavera</span>
+  </p>
   <div class="chips">
     <span class="chip" th:if="${garment.material}" th:text="${garment.material}">Lino</span>
     <span class="chip active">Confirmada</span>

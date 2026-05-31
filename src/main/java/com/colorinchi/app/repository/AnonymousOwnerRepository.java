@@ -10,4 +10,6 @@ import com.colorinchi.app.model.AnonymousOwner;
 public interface AnonymousOwnerRepository extends JpaRepository<AnonymousOwner, UUID> {
 
     Optional<AnonymousOwner> findFirstByBootstrapTrueOrderByCreatedAtAsc();
+
+    Optional<AnonymousOwner> findByTokenHash(String tokenHash);
 }

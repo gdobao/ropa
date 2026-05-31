@@ -10,11 +10,11 @@ import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.colorinchi.app.config.ChatRetentionProperties;
 import com.colorinchi.app.model.Garment;
 import com.colorinchi.app.repository.ChatAnalyticsEventRepository;
 import com.colorinchi.app.repository.ChatSessionRepository;
@@ -48,17 +48,14 @@ public class ChatDataRetentionService {
             ChatAnalyticsEventRepository analyticsEventRepository,
             ChatSessionRepository chatSessionRepository,
             GarmentRepository garmentRepository,
-            @Value("${app.chat.retention.upload-directory:uploads}") Path uploadDirectory,
-            @Value("${app.chat.retention.analytics-events-days:90}") int analyticsEventsDays,
-            @Value("${app.chat.retention.session-inactive-days:180}") int sessionInactiveDays,
-            @Value("${app.chat.retention.orphan-upload-cleanup:false}") boolean orphanUploadCleanup) {
+            ChatRetentionProperties retentionProperties) {
         this.analyticsEventRepository = analyticsEventRepository;
         this.chatSessionRepository = chatSessionRepository;
         this.garmentRepository = garmentRepository;
-        this.uploadDirectory = uploadDirectory;
-        this.analyticsEventsDays = analyticsEventsDays;
-        this.sessionInactiveDays = sessionInactiveDays;
-        this.orphanUploadCleanup = orphanUploadCleanup;
+        this.uploadDirectory = retentionProperties.uploadDirectory();
+        this.analyticsEventsDays = retentionProperties.analyticsEventsDays();
+        this.sessionInactiveDays = retentionProperties.sessionInactiveDays();
+        this.orphanUploadCleanup = retentionProperties.orphanUploadCleanup();
     }
 
     /**

@@ -8,6 +8,7 @@
     </div>
     <p class="notice">Revisá los datos sugeridos. La foto puede cambiar el color por la luz o las sombras.</p>
     <form th:action="@{/wardrobe/{id}(id=${garment.id})}" th:object="${garmentReviewForm}" method="post">
+      <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
       <input type="hidden" name="_method" value="put">
       <input type="hidden" th:field="*{imageUrl}">
       <input type="hidden" th:field="*{aiType}">

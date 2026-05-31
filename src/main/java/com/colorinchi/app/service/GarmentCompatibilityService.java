@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.colorinchi.app.colorimetry.service.ColorCompatibilityEngine;
 import com.colorinchi.app.model.Garment;
 import com.colorinchi.app.repository.GarmentRepository;
 
@@ -32,10 +33,14 @@ public class GarmentCompatibilityService {
 
     private final GarmentRepository garmentRepository;
     private final CurrentOwnerAccessor currentOwnerAccessor;
+    private final ColorCompatibilityEngine engine;
 
-    public GarmentCompatibilityService(GarmentRepository garmentRepository, CurrentOwnerAccessor currentOwnerAccessor) {
+    public GarmentCompatibilityService(GarmentRepository garmentRepository,
+                                       CurrentOwnerAccessor currentOwnerAccessor,
+                                       ColorCompatibilityEngine engine) {
         this.garmentRepository = garmentRepository;
         this.currentOwnerAccessor = currentOwnerAccessor;
+        this.engine = engine;
     }
 
     @Transactional(readOnly = true)
@@ -55,9 +60,24 @@ public class GarmentCompatibilityService {
 
         return garmentRepository.findByOwnerIdAndCategoryIn(ownerId, candidateCategories).stream()
                 .filter(candidate -> base.getId() == null || !base.getId().equals(candidate.getId()))
-                .sorted(Comparator.comparing((Garment candidate) -> !sameSeason(baseSeason, candidate.getSeason())))
+                .sorted(compatibilityComparator(base, baseSeason))
                 .limit(RESULT_LIMIT)
                 .toList();
+    }
+
+    private Comparator<Garment> compatibilityComparator(Garment base, String baseSeason) {
+        return (a, b) -> {
+            try {
+                int scoreA = engine.score(base, a).score();
+                int scoreB = engine.score(base, b).score();
+                return Integer.compare(scoreB, scoreA); // descending — higher score first
+            } catch (Exception e) {
+                // Fall back to season match when engine fails
+                boolean aSame = sameSeason(baseSeason, a.getSeason());
+                boolean bSame = sameSeason(baseSeason, b.getSeason());
+                return Boolean.compare(bSame, aSame);
+            }
+        };
     }
 
     private boolean sameSeason(String baseSeason, String candidateSeason) {

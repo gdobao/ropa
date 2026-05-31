@@ -1,6 +1,6 @@
 package com.colorinchi.app.dto;
 
-public record OutfitPiece(String category, String colorName, String colorHex, int bodyZone, boolean lightText) {
+public record OutfitPiece(String category, String colorName, String colorHex, int bodyZone, boolean lightText, String colorSeason) {
 
     public static int zoneFor(String category) {
         if (category == null) return 99;

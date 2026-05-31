@@ -42,6 +42,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -126,6 +127,17 @@ class CompanionChatApiControllerTest {
     }
 
     @Test
+    void tipsAliasReturnsCompanionTips() throws Exception {
+        when(companionTipService.assemble())
+                .thenReturn(new CompanionTipContext("Armario con 4 prendas.", List.of("Sumá contraste suave.")));
+
+        mockMvc.perform(get("/api/companion/tips").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.summary").value("Armario con 4 prendas."))
+                .andExpect(jsonPath("$.tips[0]").value("Sumá contraste suave."));
+    }
+
+    @Test
     void listSessionsReturnsCompanionThreads() throws Exception {
         when(chatSessionService.listByOwner(ChatSurface.COMPANION)).thenReturn(List.of(companionSession));
 
@@ -133,6 +145,19 @@ class CompanionChatApiControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(sessionId.toString()))
                 .andExpect(jsonPath("$[0].title").value("Companion thread"));
+    }
+
+    @Test
+    void updateTitleUsesCompanionSurface() throws Exception {
+        companionSession.setTitle("Nuevo título");
+        when(chatSessionService.updateTitle(ChatSurface.COMPANION, sessionId, "Nuevo título"))
+                .thenReturn(companionSession);
+
+        mockMvc.perform(patch("/api/companion/sessions/{sessionId}", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"Nuevo título\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Nuevo título"));
     }
 
     @Test
@@ -234,6 +259,20 @@ class CompanionChatApiControllerTest {
                 .thenReturn(new ChatFeedback());
 
         mockMvc.perform(post("/api/companion/messages/{messageId}/feedback", message.getId()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rating\":\"up\",\"comment\":\"Great\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ok"));
+    }
+
+    @Test
+    void documentedFeedbackRouteReturnsOk() throws Exception {
+        when(chatMessageService.getById(any(UUID.class))).thenReturn(message);
+        when(chatSessionService.getById(ChatSurface.COMPANION, sessionId)).thenReturn(companionSession);
+        when(chatFeedbackService.create(any(), any(), any(), any(ChatFeedbackRequest.class)))
+                .thenReturn(new ChatFeedback());
+
+        mockMvc.perform(post("/api/companion/sessions/{sessionId}/messages/{messageId}/feedback", sessionId, message.getId()).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"rating\":\"up\",\"comment\":\"Great\"}"))
                 .andExpect(status().isOk())

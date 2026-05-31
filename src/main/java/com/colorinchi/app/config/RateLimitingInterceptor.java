@@ -24,9 +24,14 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
     private static final PathPattern COMPANION_STREAM_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/stream/{runId}");
     private static final PathPattern CHAT_CREATE_SESSION_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/sessions");
     private static final PathPattern COMPANION_CREATE_SESSION_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/sessions");
+    private static final PathPattern CHAT_UPDATE_TITLE_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/sessions/{sessionId}/title");
+    private static final PathPattern CHAT_DELETE_SESSION_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/sessions/{sessionId}");
+    private static final PathPattern COMPANION_UPDATE_SESSION_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/sessions/{sessionId}");
     private static final PathPattern CHAT_SEND_MESSAGE_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/sessions/{sessionId}/messages");
     private static final PathPattern COMPANION_SEND_MESSAGE_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/sessions/{sessionId}/messages");
     private static final PathPattern CHAT_MESSAGE_FEEDBACK_PATTERN = PathPatternParser.defaultInstance.parse("/api/chat/messages/{messageId}/feedback");
+    private static final PathPattern COMPANION_MESSAGE_FEEDBACK_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/messages/{messageId}/feedback");
+    private static final PathPattern COMPANION_SESSION_MESSAGE_FEEDBACK_PATTERN = PathPatternParser.defaultInstance.parse("/api/companion/sessions/{sessionId}/messages/{messageId}/feedback");
 
     private final RateLimitProperties properties;
     private final CurrentOwnerAccessor currentOwnerAccessor;
@@ -58,13 +63,13 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
 
         if ("chat".equals(endpointKey)) {
             // Check global IP-based limit first
-            checkLimit(request, properties.chat(), request.getRemoteAddr());
+            checkLimit(request, properties.chat(), endpointKey + ":" + request.getRemoteAddr());
             // Then check per-owner limit
             checkPerOwnerLimit(request);
         } else if ("chat-per-owner".equals(endpointKey)) {
             checkPerOwnerLimit(request);
         } else {
-            checkLimit(request, configForKey(endpointKey), request.getRemoteAddr());
+            checkLimit(request, configForKey(endpointKey), endpointKey + ":" + request.getRemoteAddr());
         }
 
         return true;
@@ -85,10 +90,10 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
         String ownerKey;
         try {
             UUID ownerId = currentOwnerAccessor.getCurrentOwnerId();
-            ownerKey = ownerId.toString() + ":chat";
+            ownerKey = ownerId + ":chat-per-owner";
         } catch (IllegalStateException e) {
             // Fallback to IP-based key when owner context is unavailable
-            ownerKey = request.getRemoteAddr() + ":chat";
+            ownerKey = "chat-per-owner:" + request.getRemoteAddr();
         }
         checkLimit(request, properties.chatPerOwner(), ownerKey);
     }
@@ -97,9 +102,9 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
     String resolveOwnerKey(HttpServletRequest request) {
         try {
             UUID ownerId = currentOwnerAccessor.getCurrentOwnerId();
-            return ownerId.toString() + ":chat";
+            return ownerId + ":chat-per-owner";
         } catch (IllegalStateException e) {
-            return request.getRemoteAddr() + ":chat";
+            return "chat-per-owner:" + request.getRemoteAddr();
         }
     }
 
@@ -115,17 +120,28 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
                 && (CHAT_STREAM_PATTERN.matches(parsedPath) || COMPANION_STREAM_PATTERN.matches(parsedPath))) {
             return "chat";
         }
-        if (!"POST".equalsIgnoreCase(method)) {
+        if (!isLimitedWriteMethod(method)) {
             return null;
         }
         if (CHAT_CREATE_SESSION_PATTERN.matches(parsedPath)
                 || COMPANION_CREATE_SESSION_PATTERN.matches(parsedPath)
+                || CHAT_UPDATE_TITLE_PATTERN.matches(parsedPath)
+                || CHAT_DELETE_SESSION_PATTERN.matches(parsedPath)
+                || COMPANION_UPDATE_SESSION_PATTERN.matches(parsedPath)
                 || CHAT_SEND_MESSAGE_PATTERN.matches(parsedPath)
                 || COMPANION_SEND_MESSAGE_PATTERN.matches(parsedPath)
-                || CHAT_MESSAGE_FEEDBACK_PATTERN.matches(parsedPath)) {
+                || CHAT_MESSAGE_FEEDBACK_PATTERN.matches(parsedPath)
+                || COMPANION_MESSAGE_FEEDBACK_PATTERN.matches(parsedPath)
+                || COMPANION_SESSION_MESSAGE_FEEDBACK_PATTERN.matches(parsedPath)) {
             return "chat-per-owner";
         }
         return null;
+    }
+
+    private boolean isLimitedWriteMethod(String method) {
+        return "POST".equalsIgnoreCase(method)
+                || "PATCH".equalsIgnoreCase(method)
+                || "DELETE".equalsIgnoreCase(method);
     }
 
     // visible for testing

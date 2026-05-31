@@ -14,7 +14,7 @@ Aplicación local en Java 21 + Spring Boot 3 para gestionar un armario cápsula:
 | IA chat          | Streaming SSE con WebClient reactivo       |
 | Almacenamiento   | Filesystem local en `uploads/`             |
 | Caché            | Caffeine (classification en 24h, rate limiting, analytics buffer) |
-| Testing          | JUnit 5, Mockito, WireMock, H2, TestContainers |
+| Testing          | JUnit 5, Mockito, WireMock, H2 |
 | Observabilidad   | Spring Boot Actuator, logstash-logback-encoder (opcional) |
 
 ## Índice
@@ -82,7 +82,7 @@ La aplicación sigue una arquitectura MVC clásica con controladores, servicios 
 
 | Track | Área | Descripción |
 |-------|------|-------------|
-| **A** | Anonymous Ownership | Sesiones de propietario sin autenticación (cookie-based). Cada navegador obtiene un `owner_id` UUID persistente. |
+| **A** | Anonymous Ownership | Sesiones de propietario sin autenticación (cookie-based). Cada navegador obtiene un `owner_token` opaco (SHA-256 hasheado en `anonymous_owners.token_hash`). Legado `owner_id` ignorado. |
 | **B** | Chat Persistence | Sesiones de chat, mensajes, runs (intentos de ejecución) y feedback. Todo con owner isolation. |
 | **C** | AI Streaming Gateway | SSE bidireccional con WebClient reactivo. Soporte multi-modelo (Gemma 4, Qwen 3.6, DeepSeek V4 Flash). |
 | **D** | Wardrobe Context + Policy Engine | Contexto del guardarropa ensamblado en tiempo real. Policy engine con clasificación de intención (regex) y rate limiting. |
@@ -99,7 +99,7 @@ La aplicación sigue una arquitectura MVC clásica con controladores, servicios 
 
 **Repository layer (8 JPA repositories)**: Los 2 originales (`GarmentRepository`, `WeekPlanRepository`) más `ChatSessionRepository`, `ChatMessageRepository`, `ChatRunRepository`, `ChatFeedbackRepository`, `ChatAnalyticsEventRepository`, `AnonymousOwnerRepository`.
 
-**Config layer (17 clases)**: Las 11 originales más `ApiExceptionHandler`, `AsyncConfig`, `HealthConfig`, `AiModelConfig`, `CurrentOwnerFilter`, `ChatAnalyticsEventRepository` (count methods).
+**Config layer (18+ clases)**: `SecurityConfig`, `WebMvcConfig`, `WebClientConfig`, `AiServerPropertiesValidator`, `GlobalExceptionHandler`, `ApiExceptionHandler`, `AsyncConfig`, `HealthConfig`, `AiModelConfig`, `CurrentOwnerFilter`, `RateLimitingInterceptor`, `RateLimitExceededException`, `AdminProperties`, `ChatRetentionProperties`, y los `@ConfigurationProperties` (`WardrobeProperties`, `UploadProperties`, `AiServerProperties`, `RateLimitProperties`).
 
 ---
 
@@ -125,7 +125,9 @@ La aplicación sigue una arquitectura MVC clásica con controladores, servicios 
 | GET | `/api/companion/sessions/{id}/messages` | Obtener mensajes |
 | POST | `/api/companion/sessions/{id}/messages` | Enviar mensaje (respuesta streaming SSE) |
 | POST | `/api/companion/sessions/{id}/messages/{msgId}/feedback` | Feedback de mensaje |
-| GET | `/api/companion/tips` | Tip contextual de estilo |
+| POST | `/api/companion/messages/{msgId}/feedback` | Ruta compatible de feedback |
+| GET | `/api/companion/context` | Resumen contextual y tips de estilo |
+| GET | `/api/companion/tips` | Alias de contexto/tips |
 
 ### Flujo de mensaje
 
@@ -145,7 +147,7 @@ Modal JS (navegador) → POST /api/companion/sessions/{id}/messages
 
 ### Decisiones técnicas
 
-- **Panel `position: absolute`** (no `fixed`) — sigue al trigger al arrastrar; viewport clipping via JS en `positionPanelForViewport()`
+- **Panel `position: fixed`** como overlay sibling del trigger — Playwright y el navegador miden el panel dentro del viewport real; viewport clipping via JS en `positionPanelForViewport()`
 - **Reset conversación** forza `DELETE + POST` nuevo en vez de reusar `ensureSession()` (que busca sesiones existentes)
 - **Guard `isResetting`** anti race condition en reset
 - **Rate limiting** via `HandlerInterceptor` + Caffeine para los endpoints de companion
@@ -162,6 +164,8 @@ Modal JS (navegador) → POST /api/companion/sessions/{id}/messages
 
 Esto evita RAG externo — el modelo ya conoce el armario en cada request.
 
+**Stateless design**: La caché de clasificación es method-local (no hay campo mutable compartido), lo que hace al componente thread-safe por construcción. Los helpers reciben la caché como parámetro explícito.
+
 **Métricas operativas** (`ChatMetricsService`): contadores atómicos en memoria para `sessions.created`, `streams.completed`, `policy.blocks`, `tokens.total`, `latency.avg_ms`, etc. Expuestas vía `GET /api/admin/metrics`.
 
 ---
@@ -172,20 +176,20 @@ Esto evita RAG externo — el modelo ya conoce el armario en cada request.
 src/
 ├── main/
 │   ├── java/com/colorinchi/app/
-│   │   ├── ColorinchiApplication.java          # Entry point (@EnableCaching, @EnableRetry, @EnableAsync, @EnableScheduling)
+│   │   ├── ColorinchiApplication.java          # Entry point (@EnableCaching, @EnableAsync, @EnableScheduling)
 │   │   ├── config/
 │   │   │   ├── AiServerProperties.java         # app.ai.* — servidor IA
 │   │   │   ├── AiServerPropertiesValidator.java # Validación al startup
 │   │   │   ├── AiModelConfig.java             # Record para modelos múltiples
 │   │   │   ├── ApiExceptionHandler.java       # @RestControllerAdvice con RFC 7807 ProblemDetail
 │   │   │   ├── AsyncConfig.java               # analyticsTaskExecutor (core 2, max 4)
-│   │   │   ├── CurrentOwnerFilter.java        # Filtro que propaga owner_id desde cookie
+│   │   │   ├── CurrentOwnerFilter.java        # Filtro que propaga owner_token desde cookie
 │   │   │   ├── GlobalExceptionHandler.java    # @ControllerAdvice global para vistas
 │   │   │   ├── HealthConfig.java              # AI provider health indicator custom
 │   │   │   ├── RateLimitExceededException.java # Excepción 429
 │   │   │   ├── RateLimitingInterceptor.java   # Rate limiter por IP + owner con Caffeine
 │   │   │   ├── RateLimitProperties.java       # app.rate-limit.*
-│   │   │   ├── SecurityConfig.java            # CSRF + CSP headers + localhost-restricted admin
+│   │   │   ├── SecurityConfig.java            # CSRF + CSP headers + admin token protection
 │   │   │   ├── UploadProperties.java          # app.upload.*
 │   │   │   ├── WardrobeProperties.java        # app.wardrobe.*
 │   │   │   ├── WebClientConfig.java           # WebClient reactivo
@@ -260,13 +264,23 @@ src/
 │   └── resources/
 │       ├── application.yml                    # Configuración principal
 │       ├── db/migration/
-│       │   ├── V1__create_garments.sql        # Tabla garments + índices
+│       │   ├── V1__create_garments.sql          # Tabla garments + índices
 │       │   ├── V2__add_favorite_to_garments.sql
 │       │   ├── V3__create_week_plans.sql
-│       │   ├── V4__seed_test_data.sql         # 70 prendas + 88 week plans de prueba
-│       │   ├── V5__add_anonymous_owners.sql   # Tabla anonymous_owners + owner_id en garments/week_plans
-│       │   ├── V6__create_chat_tables.sql     # Tablas chat_sessions, messages, runs, feedback, analytics
-│       │   └── V7__add_chat_session_archived.sql # Columna archived + índices
+│       │   ├── V4__seed_test_data.sql           # 70 prendas + 88 week plans de prueba
+│       │   ├── V5__add_anonymous_owners.sql     # Tabla anonymous_owners + owner_id en garments/week_plans
+│       │   ├── V6__create_chat_tables.sql       # Tablas chat_sessions, messages, runs, feedback, analytics
+│       │   ├── V7__add_chat_session_archived.sql # Columna archived + índices
+│       │   ├── V10__add_chat_session_surface.sql # Columna surface para aislamiento Companion
+│       │   ├── V13__improve_chat_sessions_main_chat_index.sql # Índices compuestos
+│       │   ├── V14__drop_legacy_chat_sessions_owner_index.sql
+│       │   ├── V15__add_message_id_to_chat_feedback.sql # Feedback linkeado a message_id
+│       │   ├── V16__add_chat_sessions_active_updated_at_index.sql # Índice sesiones activas
+│       │   ├── V17__add_anonymous_owner_token_hash.sql # token_hash SHA-256 en anonymous_owners
+│       │   ├── V18__enforce_week_plan_ordering.sql # UNIQUE deferred day_of_week+position
+│       │   ├── V18__enforce_week_plan_ordering.sql # UNIQUE deferred day_of_week+position
+│       │   ├── V19__link_chat_messages_to_runs.sql # run_id FK en chat_messages
+│       │   └── V20__drop_chat_session_model_default.sql # Sin DEFAULT en model
 │       └── templates/
 │           ├── layout.html                    # Layout base
 │           ├── dashboard.html                 # Panel principal
@@ -371,15 +385,17 @@ pom.xml                                         # Dependencias y configuración 
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW()      | Fecha de creación              |
 | updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW()      | Fecha de modificación          |
 
-### AnonymousOwner (`anonymous_owners`)
+**Restricciones**: `UNIQUE (day_of_week, position)` DEFERRABLE INITIALLY DEFERRED (V18).
 
-| Columna    | Tipo        | Restricciones          | Descripción                             |
-|------------|-------------|------------------------|-----------------------------------------|
-| id         | UUID        | PK                     | Identificador único del owner           |
-| bootstrap  | BOOLEAN     | NOT NULL DEFAULT FALSE | Owner por defecto para migración        |
-| claimed_at | TIMESTAMPTZ |                        | Cuándo se asoció a un navegador         |
-| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Fecha de creación                       |
-| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Fecha de modificación                   |
+| Columna    | Tipo        | Restricciones          | Descripción                                      |
+|------------|-------------|------------------------|--------------------------------------------------|
+| id         | UUID        | PK                     | Identificador único del owner                    |
+| token_hash | VARCHAR(64) | NOT NULL               | SHA-256 del `owner_token` opaco (V17)            |
+| bootstrap  | BOOLEAN     | NOT NULL DEFAULT FALSE | Owner por defecto para migración                 |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Fecha de creación                                |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Fecha de modificación                            |
+
+**Índices**: `token_hash`.
 
 ### ChatSession (`chat_sessions`)
 
@@ -402,6 +418,7 @@ pom.xml                                         # Dependencias y configuración 
 |------------|-------------|-----------------------------------------|--------------------------------|
 | id         | UUID        | PK                                      | Identificador único            |
 | session_id | UUID        | NOT NULL FK → chat_sessions ON DELETE CASCADE | Sesión padre              |
+| run_id     | UUID        | FK → chat_runs                          | Run que produjo el mensaje (V19) |
 | owner_id   | UUID        | NOT NULL FK → anonymous_owners          | Propietario                    |
 | role       | VARCHAR(50) | NOT NULL                                | `user` o `assistant`           |
 | content    | TEXT        | NOT NULL DEFAULT ''                     | Contenido del mensaje          |
@@ -474,7 +491,7 @@ Todas las rutas están en `GarmentController`. La aplicación usa HTMX para las 
 | GET    | `/wardrobe/{id}`            | `garment-detail`               | `id` (path)                             | Detalle + prendas compatibles + acompañantes        |
 | GET    | `/wardrobe/{id}/edit`       | `garment-edit`                 | `id` (path)                             | Formulario de edición                               |
 | PUT    | `/wardrobe/{id}`            | redirect → `/wardrobe/{id}`    | `id` (path), `GarmentReviewForm` (body) | Actualiza prenda (no modifica campos IA ni imagen) |
-| POST   | `/wardrobe/{id}/favorite`   | fragment HTMX                  | `id` (path), `variant=card/detail`      | Marca/desmarca favorito                             |
+| POST   | `/wardrobe/{id}/favorite`   | fragment HTMX                  | `id` (path), `variant=card/detail`, `category` (preserves active filter) | Marca/desmarca favorito                             |
 | DELETE | `/wardrobe/{id}`            | `@ResponseBody ""`             | `id` (path), `source=card/detail`       | Elimina prenda (con redirect si es detail)          |
 | GET    | `/inspiration`              | `inspiration`                  | —                                       | Looks de inspiración con tags                       |
 | GET    | `/recommendation`           | `recommendation`               | —                                       | Recomendaciones de outfits por IA                   |
@@ -500,11 +517,11 @@ Todas las rutas están en `GarmentController`. La aplicación usa HTMX para las 
 | GET    | `/api/chat/stream/{runId}`             | ChatApiController      | SSE endpoint: consume el stream de la IA en tiempo real  |
 | POST   | `/api/chat/runs/{runId}/feedback`      | ChatApiController      | Envía feedback (`rating`, `comment` opcional) para un run |
 | GET    | `/api/chat/models`                     | ChatApiController      | Lista los modelos de IA disponibles                      |
-| GET    | `/api/admin/metrics`                   | ChatMetricsController  | Métricas operativas (solo acceso localhost)              |
+| GET    | `/api/admin/metrics`                   | ChatMetricsController  | Métricas operativas (requiere X-Admin-Token)              |
 
 ### Rate limiting
 
-Las rutas de análisis, recomendación y chat tienen rate limiting por IP y/o por owner:
+Las rutas de análisis, recomendación y chat tienen rate limiting por IP y/o por owner. Las claves son **por endpoint** (`endpointKey:ip`) para evitar colisiones entre diferentes ventanas de rate limit:
 
 | Endpoint          | Capacidad | Ventana     | Ámbito |
 |-------------------|-----------|-------------|--------|
@@ -513,6 +530,7 @@ Las rutas de análisis, recomendación y chat tienen rate limiting por IP y/o po
 | POST /api/chat/sessions/{id}/messages | 10 solicitudes | 1 minuto | Owner |
 | POST /api/chat/runs/{id}/feedback    | 10 solicitudes | 1 minuto | Owner |
 | GET /api/chat/stream/{runId}         | 30 solicitudes | 1 minuto | IP (global) |
+| Companion API feedback POST/PATCH/DELETE | cubierto por chat-per-owner | 1 minuto | Owner |
 
 Además, el **Policy Engine** aplica un rate limit interno de 30 mensajes por minuto por owner antes de llegar al AI provider.
 
@@ -575,6 +593,14 @@ Las imágenes se redimensionan a 900×900 px con calidad 0.88 mediante Thumbnail
 | `app.rate-limit.chat.refill-minutes`    | `1`     | Minutos para recarga completa        |
 | `app.rate-limit.chat-per-owner.capacity`| `10`    | Máximo de mensajes/feedback por owner |
 | `app.rate-limit.chat-per-owner.refill-minutes` | `1` | Minutos para recarga completa    |
+
+### `app.admin.*` — Token de administración
+
+| Propiedad                 | Default | Descripción                                    |
+|---------------------------|---------|------------------------------------------------|
+| `app.admin.token`         | `""` (vacío) | Token opcional para endpoints `/api/admin/**` y `/admin/**` |
+
+Si no se configura, los endpoints admin están cerrados.
 
 ### `app.chat.retention.*` — Retención de datos
 
@@ -669,11 +695,11 @@ Configurados en `SecurityConfig`:
 
 ### Admin endpoint restriction
 
-El endpoint `/api/admin/metrics` solo es accesible desde **localhost** (`127.0.0.1`, `::1`). Cualquier intento desde otra IP recibe `403 Forbidden`.
+Los endpoints `/api/admin/**` y `/admin/**` están protegidos por token vía header `X-Admin-Token`. Configurar `app.admin.token` en `application.yml`. Si no se configura ningún token, los endpoints admin están cerrados por defecto.
 
 ### CSRF
 
-CSRF está habilitado con `CsrfTokenRequestAttributeHandler`. Los endpoints REST (`/api/chat/**`) deben incluir el token CSRF en las solicitudes mutantes (POST, DELETE, PATCH). Las vistas Thymeleaf lo incluyen automáticamente via `_csrf`.
+CSRF está habilitado con `CsrfTokenRequestAttributeHandler`. Los endpoints REST (`/api/chat/**`) deben incluir el token CSRF en las solicitudes mutantes (POST, DELETE, PATCH). Las vistas Thymeleaf lo incluyen automáticamente via `_csrf` en los metatags para HTMX, y mediante hidden inputs (`<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />`) en los formularios normales (`garment-new`, `garment-confirm`, `garment-edit`, `wardrobe`). La cobertura de integración CSRF se mantiene en `ChatSecurityIntegrationTest` y `WardrobeFormSecurityIntegrationTest`.
 
 ---
 
@@ -732,7 +758,7 @@ mvn spring-boot:run
 http://localhost:8081
 ```
 
-> **Nota:** La primera vez que se ejecuta, Flyway aplica automáticamente las migraciones (`V1` a `V7`).
+> **Nota:** La primera vez que se ejecuta, Flyway aplica automáticamente las migraciones (`V1` a `V20`).
 
 ### Test profile
 
@@ -796,7 +822,7 @@ mvn test
 
 Todos los tests usan JUnit 5. Los tests de integración con base de datos usan **H2 en memoria** (no PostgreSQL), configurado en `src/test/resources/application-test.yml`.
 
-### Tests existentes (40+ clases)
+### Tests existentes (40+ clases, 476 tests — 0 fallos)
 
 #### Gestión de armario (12 tests originales)
 
@@ -807,8 +833,8 @@ Todos los tests usan JUnit 5. Los tests de integración con base de datos usan *
 | `AiRecommendationServiceTest`        | WireMock + Mockito    | Recomendación exitosa, pocas prendas (< 3), servidor caído, formato inválido |
 | `GarmentServiceTest`                 | Mockito               | CRUD completo, toggle favorito, estadísticas, colores principales |
 | `GarmentCompatibilityServiceTest`    | Mockito               | Compatibilidad por categoría y temporada, sin categoría, límite de 6 resultados |
-| `GarmentRepositoryTest`              | H2 + TestContainers   | Consultas por categoría, favoritos, agrupaciones, paginación |
-| `WeekPlanRepositoryTest`             | H2 + TestContainers   | Consultas por día, por prenda, reordenamiento, días distintos |
+| `GarmentRepositoryTest`              | H2                    | Consultas por categoría, favoritos, agrupaciones, paginación |
+| `WeekPlanRepositoryTest`             | H2                    | Consultas por día, por prenda, reordenamiento, días distintos |
 | `WeekPlanServiceTest`                | Mockito               | Asignación, reordenamiento, eliminación, acompañantes    |
 | `InspirationServiceTest`             | Unitario              | Looks predefinidos, tags, estructura de datos             |
 | `LocalImageStorageServiceTest`       | TempDir + imágenes reales | Validación de tipos, tamaño, formato, redimensionado |
@@ -837,9 +863,16 @@ Todos los tests usan JUnit 5. Los tests de integración con base de datos usan *
 | `ChatMessageRepositoryTest`          | H2                   | Consultas por sesión, creación, owner isolation          |
 | `AnonymousOwnerServiceTest`          | Mockito               | Creación, resolución, cookie management                  |
 | `CurrentOwnerFilterTest`             | MockMvc               | Filtro HTTP, cookie reading, fallback a nuevo owner      |
-| `SecurityConfigTest`                 | MockMvc               | CSP headers, admin localhost restriction, CSRF protection|
+| `SecurityConfigTest`                 | MockMvc               | CSP headers, admin token restriction, CSRF protection|
+| `ChatSecurityIntegrationTest`        | MockMvc + Security    | CSRF en endpoints de chat, admin token requerido |
+| `CompanionChatApiControllerTest`     | MockMvc               | CRUD companion, tips/context aliases, feedback, rename |
+| `ChatFeedbackServiceTest`            | Mockito               | Creación de feedback, owner isolation |
+| `ChatConversationOrchestratorTest`   | Mockito               | Orchestración de mensajes, transactional |
+| `ChatEndToEndIntegrationTest`        | SpringBootTest + H2   | Flujo completo de chat con persistencia |
+| `ChatDataRetentionIntegrationTest`   | SpringBootTest + H2   | Limpieza de eventos, archive de sesiones |
 | `GlobalExceptionHandlerTest`         | MockMvc               | Errores 400, 429, 500 con vistas amigables               |
 | `WebMvcConfigTest`                   | MockMvc               | Recursos estáticos, interceptors registrados             |
+| `WardrobeFormSecurityIntegrationTest`| MockMvc + Security    | CSRF en formularios de prendas, isolated per-test config |
 
 ### Tests con WireMock
 
@@ -914,8 +947,8 @@ Con IA desactivada, las prendas se cargan completamente a mano (el formulario de
 | Las vistas no se actualizan | Caché del navegador | Hard refresh (Cmd+Shift+R) o abrir en incógnito |
 | Error al hacer clic en "Guardar" | Validación del formulario | Revisar que todos los campos obligatorios estén completos |
 | El chat no stremea respuestas | AI provider timeout o API key inválida | Verificar `NAN_API_KEY` y `app.ai.read-timeout` (default 60s) |
-| `Chat run not found` | Owner mismatch o sesión eliminada | Verificar que la cookie `owner_id` esté presente y la sesión no haya sido borrada |
+| `Chat run not found` | Owner mismatch o sesión eliminada | Verificar que la cookie `owner_token` esté presente y la sesión no haya sido borrada |
 | `Stream timeout` | La respuesta de la IA tarda más de 5 minutos | Aumentar `SSE_TIMEOUT` en `ChatApiController` o verificar conectividad |
-| Las métricas de admin dan 403 | No se accede desde localhost | Usar `curl http://localhost:8081/api/admin/metrics` |
+| Las métricas de admin dan 403 | Falta el token de admin o es inválido | Configurar `app.admin.token` y enviar header `X-Admin-Token` |
 | Los eventos de analytics no se persisten | El buffer no se flushó aún | Esperar hasta 30s (flush automático) o enviar 10 eventos para flush temprano |
 | El rate limit de chat se excede muy rápido | Aplicación compartida o requests automáticas | Revisar `app.rate-limit.chat-per-owner.capacity` o el interceptor de rate limiting |

@@ -10,12 +10,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.colorinchi.app.config.AiModelConfig;
 import com.colorinchi.app.dto.chat.ChatSendResponse;
 import com.colorinchi.app.dto.chat.PolicyDecision;
 import com.colorinchi.app.dto.chat.StreamChunk;
+import com.colorinchi.app.dto.chat.ValidationResult;
 import com.colorinchi.app.model.ChatMessage;
 import com.colorinchi.app.model.ChatRun;
 import com.colorinchi.app.model.ChatSession;
@@ -38,6 +40,7 @@ public class ChatConversationOrchestrator {
     private final ModelRouter modelRouter;
     private final StreamingChatClient streamingChatClient;
     private final ChatStreamPersistenceService chatStreamPersistenceService;
+    private final ChatResponseValidator chatResponseValidator;
 
     public ChatConversationOrchestrator(
             ChatSessionService chatSessionService,
@@ -47,7 +50,8 @@ public class ChatConversationOrchestrator {
             ChatPromptFactory chatPromptFactory,
             ModelRouter modelRouter,
             StreamingChatClient streamingChatClient,
-            ChatStreamPersistenceService chatStreamPersistenceService) {
+            ChatStreamPersistenceService chatStreamPersistenceService,
+            ChatResponseValidator chatResponseValidator) {
         this.chatSessionService = chatSessionService;
         this.chatMessageService = chatMessageService;
         this.chatRunService = chatRunService;
@@ -56,8 +60,10 @@ public class ChatConversationOrchestrator {
         this.modelRouter = modelRouter;
         this.streamingChatClient = streamingChatClient;
         this.chatStreamPersistenceService = chatStreamPersistenceService;
+        this.chatResponseValidator = chatResponseValidator;
     }
 
+    @Transactional
     public ChatSendResponse sendMessage(ChatSurface surface, UUID sessionId, Map<String, String> body) {
         if (body == null) throw new EmptyChatMessageException();
         String raw = body.get("content");
@@ -125,7 +131,7 @@ public class ChatConversationOrchestrator {
         AtomicBoolean resolved = new AtomicBoolean(false);
 
         Disposable subscription = streamingChatClient
-                .stream(run.getModelRequested(), aiMessages)
+                .stream(run.getModelRequested(), aiMessages, runId, capturedOwnerId)
                 .publishOn(Schedulers.boundedElastic())
                 .subscribe(
                         chunk -> {
@@ -155,6 +161,18 @@ public class ChatConversationOrchestrator {
                             if (!resolved.compareAndSet(false, true)) return;
                             try {
                                 String fullContent = accumulated.toString();
+                                ValidationResult validation = chatResponseValidator.validate(fullContent);
+                                if (!validation.isValid()) {
+                                    chatStreamPersistenceService.failRun(
+                                            runId, capturedOwnerId,
+                                            "Invalid AI response: " + String.join("; ", validation.warnings()),
+                                            surface);
+                                    emitter.send(SseEmitter.event()
+                                            .name("stream-error")
+                                            .data(StreamChunk.error("La respuesta no cumplió las reglas del asistente.")));
+                                    emitter.complete();
+                                    return;
+                                }
                                 int tokens = fullContent.length() / 4;
                                 ChatMessage assistantMsg = chatStreamPersistenceService
                                         .persistAssistantMessageAndCompleteRun(
@@ -166,6 +184,17 @@ public class ChatConversationOrchestrator {
                                         .data(StreamChunk.done(assistantMsg.getId())));
                             } catch (Exception e) {
                                 log.warn("Error completing {} stream for run {}: {}", surface, runId, e.getMessage());
+                                try {
+                                    chatStreamPersistenceService.failRun(
+                                            runId, capturedOwnerId,
+                                            "Assistant persistence failed: " + e.getMessage(),
+                                            surface);
+                                    emitter.send(SseEmitter.event()
+                                            .name("stream-error")
+                                            .data(StreamChunk.error("Error al guardar la respuesta del asistente")));
+                                } catch (Exception failException) {
+                                    log.warn("Error marking {} run {} as failed after persistence failure", surface, runId);
+                                }
                             }
                             emitter.complete();
                         });

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.colorinchi.app.colorimetry.service.ColorSeasonClassifier;
 import com.colorinchi.app.dto.chat.CategoryInfo;
 import com.colorinchi.app.dto.chat.ColorInfo;
 import com.colorinchi.app.dto.chat.DailyPlanInfo;
@@ -25,17 +26,20 @@ class ChatPromptFactoryTest {
     @Mock
     private WardrobeContextAssembler wardrobeContextAssembler;
 
+    @Mock
+    private ColorSeasonClassifier classifier;
+
     private ChatPromptFactory chatPromptFactory;
 
     @BeforeEach
     void setUp() {
-        CompanionTipService companionTipService = new CompanionTipService(wardrobeContextAssembler);
+        CompanionTipService companionTipService = new CompanionTipService(wardrobeContextAssembler, classifier);
         chatPromptFactory = new ChatPromptFactory(wardrobeContextAssembler, companionTipService);
 
         when(wardrobeContextAssembler.assemble()).thenReturn(new WardrobeContext(
                 6,
                 List.of(new CategoryInfo("Tops", 3)),
-                List.of(new ColorInfo("Negro", "#000000", 4)),
+                List.of(new ColorInfo("Negro", "#000000", 4, null)),
                 List.of(new MaterialInfo("Algodón", 3)),
                 Map.of("Invierno", 4L),
                 0,
@@ -43,7 +47,8 @@ class ChatPromptFactoryTest {
                 3,
                 new DailyPlanInfo("Lunes", 0, List.of()),
                 List.of(new DailyPlanInfo("Martes", 2, List.of("Remera negra", "Jean"))),
-                List.of()));
+                List.of(),
+                Map.of()));
     }
 
     @Test

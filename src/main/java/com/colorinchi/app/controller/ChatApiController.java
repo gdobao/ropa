@@ -184,7 +184,7 @@ public class ChatApiController {
             ChatMessage msg = chatMessageService.getById(messageId);
             // SURFACE CHECK: verify the message's session is MAIN_CHAT
             chatSessionService.getById(ChatSurface.MAIN_CHAT, msg.getSessionId());
-            chatFeedbackService.create(messageId, null, msg.getSessionId(), request);
+            chatFeedbackService.create(messageId, msg.getRunId(), msg.getSessionId(), request);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()

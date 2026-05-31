@@ -195,7 +195,7 @@ class RateLimitingInterceptorTest {
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
 
         String key = interceptor.resolveOwnerKey(request);
-        assertThat(key).isEqualTo("00000000-0000-0000-0000-000000000001:chat");
+        assertThat(key).isEqualTo("00000000-0000-0000-0000-000000000001:chat-per-owner");
     }
 
     @Test
@@ -204,7 +204,7 @@ class RateLimitingInterceptorTest {
         when(request.getRemoteAddr()).thenReturn("192.168.1.99");
 
         String key = interceptor.resolveOwnerKey(request);
-        assertThat(key).isEqualTo("192.168.1.99:chat");
+        assertThat(key).isEqualTo("chat-per-owner:192.168.1.99");
     }
 
     @Test
@@ -245,6 +245,30 @@ class RateLimitingInterceptorTest {
         when(request.getRequestURI()).thenReturn("/api/chat/messages/00000000-0000-0000-0000-000000000001/feedback");
         when(request.getMethod()).thenReturn("POST");
         when(request.getRemoteAddr()).thenReturn("10.0.0.60");
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
+
+        boolean result = interceptor.preHandle(request, response, null);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void allowsCompanionMessageFeedbackPostWithinLimit() {
+        when(request.getRequestURI()).thenReturn("/api/companion/messages/00000000-0000-0000-0000-000000000001/feedback");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.64");
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
+
+        boolean result = interceptor.preHandle(request, response, null);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void allowsDocumentedCompanionFeedbackPostWithinLimit() {
+        when(request.getRequestURI()).thenReturn("/api/companion/sessions/00000000-0000-0000-0000-000000000002/messages/00000000-0000-0000-0000-000000000001/feedback");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRemoteAddr()).thenReturn("10.0.0.65");
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(testOwnerId);
 
         boolean result = interceptor.preHandle(request, response, null);

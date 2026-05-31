@@ -18,6 +18,7 @@ import jakarta.servlet.http.Cookie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,10 +37,11 @@ class AnonymousOwnerServiceTest {
     @Test
     void resolveOwnerIdReusesExistingValidCookieWithoutReissuingCookie() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.setCookies(new Cookie("owner_id", OWNER_ID.toString()));
+        request.setCookies(new Cookie("owner_token", "known-token"));
         MockHttpServletResponse response = new MockHttpServletResponse();
+        AnonymousOwner owner = owner(OWNER_ID, false);
 
-        when(anonymousOwnerRepository.existsById(OWNER_ID)).thenReturn(true);
+        when(anonymousOwnerRepository.findByTokenHash(anyString())).thenReturn(Optional.of(owner));
 
         UUID resolved = service.resolveOwnerId(request, response);
 
@@ -63,11 +65,12 @@ class AnonymousOwnerServiceTest {
 
         assertThat(resolved).isEqualTo(OWNER_ID);
         assertThat(response.getHeader("Set-Cookie"))
-                .contains("owner_id=" + OWNER_ID)
+                .contains("owner_token=")
                 .contains("HttpOnly")
                 .contains("SameSite=Lax")
                 .contains("Path=/")
                 .doesNotContain("Secure");
+        assertThat(bootstrapOwner.getTokenHash()).isNotBlank();
     }
 
     @Test
@@ -85,6 +88,40 @@ class AnonymousOwnerServiceTest {
         service.resolveOwnerId(request, response);
 
         assertThat(response.getHeader("Set-Cookie")).contains("Secure");
+    }
+
+    @Test
+    void resolveOwnerIdIssuesSecureCookieBehindHttpsProxy() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("X-Forwarded-Proto", "https");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        AnonymousOwner bootstrapOwner = owner(OWNER_ID, true);
+
+        when(anonymousOwnerRepository.findFirstByBootstrapTrueOrderByCreatedAtAsc())
+                .thenReturn(Optional.of(bootstrapOwner));
+        when(anonymousOwnerRepository.save(any(AnonymousOwner.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.resolveOwnerId(request, response);
+
+        assertThat(response.getHeader("Set-Cookie")).contains("Secure");
+    }
+
+    @Test
+    void resolveOwnerIdIgnoresLegacyUnsignedOwnerIdCookie() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setCookies(new Cookie("owner_id", OWNER_ID.toString()));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        AnonymousOwner bootstrapOwner = owner(OWNER_ID, true);
+
+        when(anonymousOwnerRepository.findFirstByBootstrapTrueOrderByCreatedAtAsc())
+                .thenReturn(Optional.of(bootstrapOwner));
+        when(anonymousOwnerRepository.save(any(AnonymousOwner.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.resolveOwnerId(request, response);
+
+        assertThat(response.getHeader("Set-Cookie")).contains("owner_token=");
     }
 
     private AnonymousOwner owner(UUID ownerId, boolean bootstrap) {

@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import com.colorinchi.app.dto.chat.PolicyDecision;
+import com.colorinchi.app.config.RateLimitProperties;
 import com.colorinchi.app.service.analytics.ChatAnalyticsService;
 import com.colorinchi.app.service.analytics.ChatMetricsService;
 
@@ -40,7 +41,13 @@ class ChatPolicyServiceTest {
 
     @BeforeEach
     void setUp() {
-        policyService = new ChatPolicyService(intentClassifier, currentOwnerAccessor, chatAnalyticsService, chatMetricsService);
+        RateLimitProperties rateLimits = new RateLimitProperties(
+                new RateLimitProperties.EndpointConfig(1000, 1),
+                new RateLimitProperties.EndpointConfig(1000, 1),
+                new RateLimitProperties.EndpointConfig(1000, 1),
+                new RateLimitProperties.EndpointConfig(30, 1));
+        policyService = new ChatPolicyService(
+                intentClassifier, currentOwnerAccessor, chatAnalyticsService, chatMetricsService, rateLimits);
         when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
     }
 

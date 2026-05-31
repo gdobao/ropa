@@ -19,7 +19,7 @@
                 hx-target="#wardrobe-grid" hx-swap="outerHTML"
                 hx-disabled-elt="this"
                 aria-live="polite"
-                th:attr="hx-post=@{/wardrobe/{id}/favorite(id=${garment.id})}, aria-label=${garment.favorite} ? 'Quitar favorito' : 'Agregar favorito'">
+                th:attr="hx-post=@{/wardrobe/{id}/favorite(id=${garment.id}, category=${activeCategory})}, aria-label=${garment.favorite} ? 'Quitar favorito' : 'Agregar favorito'">
           <span th:text="${garment.favorite} ? '&#10084;' : '&#9825;'">&#9825;</span>
         </button>
         <button class="del-btn"
@@ -48,6 +48,7 @@
         <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;justify-content:center">
           <a class="btn primary" th:href="@{/wardrobe/new}">Añadir prenda</a>
           <form method="post" th:action="@{/wardrobe/seed}" style="display:inline">
+            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
             <button type="submit" class="btn secondary" onclick="this.textContent='Generando…';this.disabled=true">🎲 Generar armario de prueba</button>
           </form>
         </div>

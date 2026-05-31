@@ -21,6 +21,9 @@ public class AnonymousOwner {
     @Column(nullable = false)
     private boolean bootstrap;
 
+    @Column(name = "token_hash", unique = true, length = 64)
+    private String tokenHash;
+
     @Column(name = "claimed_at")
     private OffsetDateTime claimedAt;
 
@@ -47,6 +50,9 @@ public class AnonymousOwner {
 
     public boolean isBootstrap() { return bootstrap; }
     public void setBootstrap(boolean bootstrap) { this.bootstrap = bootstrap; }
+
+    public String getTokenHash() { return tokenHash; }
+    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
 
     public OffsetDateTime getClaimedAt() { return claimedAt; }
     public void setClaimedAt(OffsetDateTime claimedAt) { this.claimedAt = claimedAt; }

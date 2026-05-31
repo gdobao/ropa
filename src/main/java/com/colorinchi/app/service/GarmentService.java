@@ -132,6 +132,9 @@ public class GarmentService {
     @Transactional
     public void seed() {
         UUID ownerId = currentOwnerId();
+        if (garmentRepository.countByOwnerId(ownerId) > 0) {
+            throw new IllegalArgumentException("El armario de prueba solo se puede generar si está vacío");
+        }
         List<SeedItem> items = List.of(
             new SeedItem("Top Negro", "Top", "Negro", "#1A1A1A", "Algodón", "Todo el año"),
             new SeedItem("Top Blanco", "Top", "Blanco", "#FFFFFF", "Algodón", "Todo el año"),
