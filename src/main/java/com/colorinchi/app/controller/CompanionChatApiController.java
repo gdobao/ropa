@@ -88,6 +88,9 @@ public class CompanionChatApiController {
                     session.getId(), session.getTitle(), session.getModel(),
                     session.getStatus(), session.getCreatedAt(), session.getUpdatedAt()));
         } catch (IllegalArgumentException e) {
+            if (isInvalidTitle(e)) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of("invalid_request", "Title is too long"));
+            }
             return ResponseEntity.badRequest().body(ErrorResponse.of("not_found", "Sesión no encontrada"));
         } catch (Exception e) {
             log.error("Failed to update companion session title {}", sessionId, e);
@@ -151,6 +154,8 @@ public class CompanionChatApiController {
             return ResponseEntity.ok(chatConversationOrchestrator.sendMessage(ChatSurface.COMPANION, sessionId, body));
         } catch (ChatConversationOrchestrator.EmptyChatMessageException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of("validation_error", "El mensaje no puede estar vacío"));
+        } catch (ChatConversationOrchestrator.ChatMessageTooLongException e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.of("validation_error", "El mensaje es demasiado largo"));
         } catch (IllegalArgumentException e) {
             String error = e.getMessage() != null && e.getMessage().startsWith("Modelo no soportado")
                     ? "invalid_model"
@@ -196,6 +201,10 @@ public class CompanionChatApiController {
             chatFeedbackService.create(messageId, msg.getRunId(), msg.getSessionId(), request);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
+            if (isInvalidFeedback(e)) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("validation_error", "Valoración no válida"));
+            }
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of("not_found", "Message not found"));
         } catch (Exception e) {
@@ -218,5 +227,14 @@ public class CompanionChatApiController {
             log.error("Failed to delete companion session {}", sessionId, e);
             return ResponseEntity.internalServerError().body(ErrorResponse.of("delete_failed", "Error al eliminar la sesión"));
         }
+    }
+
+    private boolean isInvalidTitle(IllegalArgumentException e) {
+        return e.getMessage() != null && e.getMessage().contains("title");
+    }
+
+    private boolean isInvalidFeedback(IllegalArgumentException e) {
+        return e.getMessage() != null
+                && (e.getMessage().startsWith("Rating") || e.getMessage().startsWith("Comment"));
     }
 }

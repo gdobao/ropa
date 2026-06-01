@@ -19,7 +19,7 @@ Project-level AGENTS.md for future AI sessions. Supersedes global defaults only 
 | Layer | Technology |
 |---|---|
 | Language | Java 21 |
-| Framework | Spring Boot 3.4.5 |
+| Framework | Spring Boot 3.5.14 |
 | Build | Maven |
 | Templates | Thymeleaf (server-side, NOT REST API) |
 | Interactivity | HTMX 2.0.4 (partial page updates, fragments) |
@@ -51,7 +51,7 @@ CompanionChatApiController → ChatConversationOrchestrator → Ai provider (SSE
 
 | Type | Count | Details |
 |---|---|---|
-| Controllers | 3 | `GarmentController` (20 endpoints), `FashionChatController`, `CompanionChatApiController` |
+| Controllers | 6 | `GarmentController` (20 endpoints), `FashionChatController`, `ChatApiController`, `CompanionChatApiController`, `ChatMetricsController`, `AdminChatMetricsController` |
 | Services | 16+ | `GarmentService`, `GarmentCompatibilityService`, `AiClassificationService`, `AiRecommendationService`, `WeekPlanService`, `InspirationService`, `ChatSessionService`, `ChatMessageService`, `ChatRunService`, `ChatFeedbackService`, `ChatConversationOrchestrator`, `ChatStreamPersistenceService`, `ChatPromptFactory`, `WardrobeContextAssembler`, `CompanionTipService`, `ChatPolicyService`, `AnonymousOwnerService`, `ChatDataRetentionService`, `CurrentOwnerAccessor` |
 | Storage | 1 interface + 1 impl | `ImageStorageService` / `LocalImageStorageService` |
 | Repositories | 8 | `GarmentRepository`, `WeekPlanRepository`, `ChatSessionRepository`, `ChatRunRepository`, `ChatFeedbackRepository`, `ChatMessageRepository`, `ChatAnalyticsEventRepository`, `AnonymousOwnerRepository` |
@@ -127,6 +127,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 | DELETE | `/api/companion/sessions/{id}` | Delete session and cascade messages |
 | GET | `/api/companion/sessions/{id}/messages` | Get all messages for session |
 | POST | `/api/companion/sessions/{id}/messages` | Send message (SSE streaming response) |
+| GET | `/api/companion/stream/{runId}` | Stream a companion run over SSE |
 | POST | `/api/companion/sessions/{id}/messages/{msgId}/feedback` | Submit feedback for a message |
 | POST | `/api/companion/messages/{msgId}/feedback` | Backward-compatible feedback route |
 | GET | `/api/companion/context` | Get contextual wardrobe summary and styling tips |
@@ -165,6 +166,12 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - All configurable via `ColorimetryProperties` — weights, sigmoid parameters, thresholds
 - Nearest-neighbor fallback uses CIEDE76 on CIELAB values
 
+### Documentation
+- Documentation is part of the change, not an afterthought: update `README.md` in the same PR whenever behavior, setup, routes, security, validation, dependencies, or testing commands change.
+- Update `.env.example` whenever environment variables are added, renamed, removed, or their safe defaults change.
+- Update this `AGENTS.md` when a project convention, gotcha, architecture decision, or workflow rule should survive into future AI sessions.
+- Keep README reader-first: happy path first, then architecture, security, operations, validation, and troubleshooting.
+
 ---
 
 ## 6. Testing Conventions
@@ -187,8 +194,9 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - AI service tests mock the HTTP endpoint, NOT WebClient itself
 
 ### Test Statistics
-- **22 test classes**, ~200 `@Test` methods (currently **476 tests — 0 failures, 0 errors, 0 skipped**)
+- **57 test classes**, ~490 `@Test` methods
 - Run with: `mvn test`
+- Surefire loads Mockito as a Java agent; keep this when running on JDKs that block Mockito/Byte Buddy self-attach
 
 ---
 
@@ -220,6 +228,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
   - `V1__create_garments.sql` — garments table with indexes on category, color_name, user_confirmed, created_at
   - `V2__add_favorite_to_garments.sql` — add favorite boolean column
   - `V3__create_week_plans.sql` — week_plans table with FK to garments (ON DELETE CASCADE), indexes on day+position and garment_id
+  - `V4__seed_test_data.sql` — deprecated no-op; seed demo data through guarded `/wardrobe/seed` only
   - `V10__add_chat_session_surface.sql` — add surface column to chat_sessions for companion isolation
   - `V13__improve_chat_sessions_main_chat_index.sql` — composite index improvements
   - `V14__drop_legacy_chat_sessions_owner_index.sql` — drop deprecated index
@@ -249,12 +258,14 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 | **`@Cacheable` with `unless = "#result.error() != null"`** | Prevents caching of AI error responses that should retry next time |
 | **Opaque `owner_token` over UUID `owner_id`** | Prevents owner takeover via known UUID bootstrap sequence; SHA-256 hash stored server-side, raw token in cookie only |
 | **Admin token via `X-Admin-Token` header** | Explicit token required for admin endpoints; no token = admin closed, no reliance on `remoteAddr` |
+| **Disable default generated user auto-config** | Security is CSRF-only plus custom admin token checks; excluding `UserDetailsServiceAutoConfiguration` avoids unused generated password logs |
 | **Rate limit keys per endpoint** (`endpointKey:ip`) | Prevents bucket collisions across different rate limit windows; 10/h analyze vs 5/30min recommendation use separate buckets |
 | **ModelRouter for session model resolution** | No more hardcoded `"qwen3.6"` — sessions resolve via `ModelRouter`; UI sends `""`, backend converts to null → default model; V20 drops the `DEFAULT` on `chat_sessions.model` |
 | **WardrobeContextAssembler stateless cache** | Mutable `classificationCache` field removed; cache is now method-local and passed through helpers — thread-safe by design, no shared mutable state |
 | **CSRF hidden inputs in normal forms** | Browser form submissions (`garment-new.html`, `garment-confirm.html`, `garment-edit.html`, `wardrobe.html`) include hidden CSRF fields; HTMX handles CSRF via headers independently |
 | **Prod logging profile separation** | Logback root logger separated by profile: `prod` → JSON appender (logstash-logback-encoder), `!prod` → CONSOLE; avoids structured logging noise in dev |
 | **Prompt injection boundaries via data markers** | Wardrobe data in `AiRecommendationService` is enclosed in `=== INICIO DATOS DE PRENDAS (NO CONFIABLE) ===` markers with clear warnings — prevents prompt injection from garment names/colors |
+| **No seed data in Flyway migrations** | `V4__seed_test_data.sql` is intentionally a no-op so enabling Flyway cannot delete or insert user wardrobe data; use `/wardrobe/seed` for local demo data |
 
 ---
 
@@ -296,6 +307,8 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 
 ### Database
 - If shared PostgreSQL tables get dropped: `mvn flyway:migrate -Dflyway.url=jdbc:postgresql://localhost:55432/ropa -Dflyway.user=ropa -Dflyway.password=ropa`
+- Do not reintroduce tracked root DB probes with hardcoded credentials; `TestDb` is deprecated and must stay credential-free
+- If local startup fails with `Migration checksum mismatch for migration version 4`, the database still has the old destructive seed migration checksum. Do not repair automatically; ask before running `mvn flyway:repair ...` because it mutates `flyway_schema_history`.
 
 ### Colorimetry
 - `ColorSeasonClassifier` uses nearest-neighbor as fallback when the CIELAB matrix is ambiguous (NEUTRAL temperature or MEDIUM depth)
@@ -438,7 +451,7 @@ content: TEXT NOT NULL
 docker compose up -d postgres
 
 # Set AI API key (optional for dev, disable in config to skip)
-export APP_AI_API_KEY=sk-your-key
+export APP_AI_API_KEY=replace-with-your-api-key
 
 # Run application
 mvn spring-boot:run

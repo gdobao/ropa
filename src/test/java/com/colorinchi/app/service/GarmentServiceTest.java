@@ -15,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.colorinchi.app.dto.DashboardStats;
 import com.colorinchi.app.dto.GarmentReviewForm;
+import com.colorinchi.app.config.WardrobeProperties;
 import com.colorinchi.app.model.Garment;
 import com.colorinchi.app.repository.GarmentRepository;
 
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class GarmentServiceTest {
@@ -32,6 +34,9 @@ class GarmentServiceTest {
 
     @Mock
     private CurrentOwnerAccessor currentOwnerAccessor;
+
+    @Mock
+    private WardrobeProperties wardrobeProperties;
 
     @InjectMocks
     private GarmentService service;
@@ -58,7 +63,10 @@ class GarmentServiceTest {
         sampleGarment.setFavorite(false);
         sampleGarment.setOwnerId(ownerId);
         sampleGarment.setUserConfirmed(true);
-        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
+        lenient().when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
+        lenient().when(wardrobeProperties.categories()).thenReturn(List.of(
+                "Top", "Pantalón", "Vestido", "Falda", "Chaqueta", "Abrigo",
+                "Camisa", "Sudadera", "Zapatos", "Accesorio", "Otro"));
     }
 
     @Test
@@ -251,6 +259,54 @@ class GarmentServiceTest {
         assertThat(result.getAiType()).isEqualTo("Pantalón");
         assertThat(result.getOwnerId()).isEqualTo(ownerId);
         assertThat(result.isUserConfirmed()).isTrue();
+    }
+
+    @Test
+    void createRejectsInvalidCategory() {
+        GarmentReviewForm form = new GarmentReviewForm();
+        form.setName("Bad");
+        form.setCategory("Invalid");
+        form.setColorName("Rojo");
+        form.setImageUrl("/uploads/test.jpg");
+
+        assertThatThrownBy(() -> service.create(form))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Categoría no válida");
+    }
+
+    @Test
+    void createRejectsNonUploadImageUrl() {
+        GarmentReviewForm form = new GarmentReviewForm();
+        form.setName("Top");
+        form.setCategory("Top");
+        form.setColorName("Rojo");
+        form.setImageUrl("https://example.com/test.jpg");
+
+        assertThatThrownBy(() -> service.create(form))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Imagen no válida");
+    }
+
+    @Test
+    void createNormalizesBlankOptionalFields() {
+        GarmentReviewForm form = new GarmentReviewForm();
+        form.setName("  Top Azul  ");
+        form.setCategory("Top");
+        form.setColorName("  Azul  ");
+        form.setColorHex("  #0000ff  ");
+        form.setMaterial("   ");
+        form.setSeason("   ");
+        form.setImageUrl("/uploads/top.jpg");
+
+        when(repository.save(any(Garment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Garment result = service.create(form);
+
+        assertThat(result.getName()).isEqualTo("Top Azul");
+        assertThat(result.getColorName()).isEqualTo("Azul");
+        assertThat(result.getColorHex()).isEqualTo("#0000FF");
+        assertThat(result.getMaterial()).isNull();
+        assertThat(result.getSeason()).isNull();
     }
 
     @Test

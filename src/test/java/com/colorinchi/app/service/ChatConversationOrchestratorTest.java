@@ -115,6 +115,18 @@ class ChatConversationOrchestratorTest {
     }
 
     @Test
+    void sendMessageWithTooLongContentThrowsTooLongException() {
+        var orchestrator = new ChatConversationOrchestrator(
+                chatSessionService, chatMessageService, chatRunService,
+                null, chatPromptFactory, modelRouter,
+                streamingChatClient, chatStreamPersistenceService, chatResponseValidator);
+
+        assertThatThrownBy(() ->
+                orchestrator.sendMessage(ChatSurface.COMPANION, UUID.randomUUID(), Map.of("content", "x".repeat(4_001))))
+                .isInstanceOf(ChatConversationOrchestrator.ChatMessageTooLongException.class);
+    }
+
+    @Test
     void streamRunReturnsErrorEmitterOnInitializationFailure() {
         UUID runId = UUID.randomUUID();
         when(chatRunService.getById(runId)).thenThrow(new IllegalArgumentException("Run not found"));

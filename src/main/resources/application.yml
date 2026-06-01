@@ -1,6 +1,8 @@
 spring:
   application:
     name: ropa
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   task:
     execution:
       pool:
@@ -12,10 +14,10 @@ spring:
     password: ${DB_PASSWORD:ropa}
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
     open-in-view: false
   flyway:
-    enabled: false
+    enabled: true
   mvc:
     hiddenmethod:
       filter:
@@ -51,11 +53,11 @@ app:
   admin:
     token: ${ADMIN_TOKEN:}
   ai:
-    enabled: true
+    enabled: ${APP_AI_ENABLED:true}
     base-url: https://api.nan.builders
     chat-path: /v1/chat/completions
     model: qwen3.6
-    api-key: ${NAN_API_KEY:}
+    api-key: ${NAN_API_KEY:${APP_AI_API_KEY:}}
     max-tokens: 2000
     connect-timeout: 5s
     read-timeout: 60s

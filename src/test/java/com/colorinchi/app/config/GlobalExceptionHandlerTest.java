@@ -22,12 +22,12 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handlesSecurityException() {
-        ModelAndView mav = handler.handleSecurity(new SecurityException("forbidden"));
+        ModelAndView mav = handler.handleSecurity(new SecurityException("forbidden /uploads/../secret"));
 
         assertThat(mav.getViewName()).isEqualTo("error");
         assertThat(mav.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(mav.getModel()).containsEntry("errorTitle", "Acceso denegado");
-        assertThat(mav.getModel()).containsEntry("errorMessage", "forbidden");
+        assertThat(mav.getModel()).containsEntry("errorMessage", "La operación no está permitida.");
     }
 
     @Test

@@ -11,14 +11,14 @@ class AiServerPropertiesTest {
     @Test
     void holdsAllValues() {
         var props = new AiServerProperties(
-                "http://localhost", "/chat", "gpt-4", "sk-123",
+                "http://localhost", "/chat", "gpt-4", "test-api-key",
                 2000, true, Duration.ofSeconds(5), Duration.ofSeconds(20),
                 null
         );
         assertThat(props.baseUrl()).isEqualTo("http://localhost");
         assertThat(props.chatPath()).isEqualTo("/chat");
         assertThat(props.model()).isEqualTo("gpt-4");
-        assertThat(props.apiKey()).isEqualTo("sk-123");
+        assertThat(props.apiKey()).isEqualTo("test-api-key");
         assertThat(props.maxTokens()).isEqualTo(2000);
         assertThat(props.enabled()).isTrue();
         assertThat(props.connectTimeout()).isEqualTo(Duration.ofSeconds(5));

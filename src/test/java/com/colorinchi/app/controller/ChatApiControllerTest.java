@@ -260,6 +260,18 @@ class ChatApiControllerTest {
                 .andExpect(jsonPath("$.error").value("validation_error"));
     }
 
+    @Test
+    void sendMessageWithTooLongContentReturnsError() throws Exception {
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.MAIN_CHAT), eq(sessionId), any()))
+                .thenThrow(new ChatConversationOrchestrator.ChatMessageTooLongException());
+
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"too long\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
+    }
+
     // ---- Feedback ----
 
     @Test
@@ -276,6 +288,20 @@ class ChatApiControllerTest {
                 .andExpect(jsonPath("$.status").value("ok"));
 
         verify(chatFeedbackService).create(eq(messageId), isNull(), eq(sessionId), any(ChatFeedbackRequest.class));
+    }
+
+    @Test
+    void submitInvalidFeedbackReturnsValidationError() throws Exception {
+        when(chatMessageService.getById(any(UUID.class))).thenReturn(sampleMessage);
+        when(chatSessionService.getById(ChatSurface.MAIN_CHAT, sessionId)).thenReturn(sampleSession);
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Rating must be 'up' or 'down'"))
+                .when(chatFeedbackService).create(any(), any(), any(), any(ChatFeedbackRequest.class));
+
+        mockMvc.perform(post("/api/chat/messages/{messageId}/feedback", messageId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rating\":\"bad\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
     }
 
     // ---- Delete session ----

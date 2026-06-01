@@ -266,6 +266,20 @@ class CompanionChatApiControllerTest {
     }
 
     @Test
+    void submitInvalidFeedbackReturnsValidationError() throws Exception {
+        when(chatMessageService.getById(any(UUID.class))).thenReturn(message);
+        when(chatSessionService.getById(ChatSurface.COMPANION, sessionId)).thenReturn(companionSession);
+        org.mockito.Mockito.doThrow(new IllegalArgumentException("Rating must be 'up' or 'down'"))
+                .when(chatFeedbackService).create(any(), any(), any(), any(ChatFeedbackRequest.class));
+
+        mockMvc.perform(post("/api/companion/messages/{messageId}/feedback", message.getId()).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"rating\":\"bad\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
+    }
+
+    @Test
     void documentedFeedbackRouteReturnsOk() throws Exception {
         when(chatMessageService.getById(any(UUID.class))).thenReturn(message);
         when(chatSessionService.getById(ChatSurface.COMPANION, sessionId)).thenReturn(companionSession);

@@ -78,6 +78,18 @@ public class ApiExceptionHandler {
         return detail;
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ProblemDetail handleSecurity(SecurityException ex) {
+        log.warn("Rejected REST request: {}", ex.getClass().getSimpleName());
+
+        ProblemDetail detail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN,
+                "La operación no está permitida.");
+        detail.setTitle("Forbidden");
+        detail.setType(URI.create("https://httpstatus.io/403"));
+        return detail;
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleBadRequest(IllegalArgumentException ex) {
         log.error("Bad request: {}", ex.getMessage(), ex);

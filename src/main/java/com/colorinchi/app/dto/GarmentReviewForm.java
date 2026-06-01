@@ -3,25 +3,42 @@ package com.colorinchi.app.dto;
 import java.math.BigDecimal;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public class GarmentReviewForm {
 
     private Long id;
     @NotBlank
+    @Size(max = 500)
     private String imageUrl;
     @NotBlank
+    @Size(max = 120)
     private String name;
     @NotBlank
+    @Size(max = 50)
     private String category;
     @NotBlank
+    @Size(max = 50)
     private String colorName;
+    @Pattern(regexp = "^$|#[0-9A-Fa-f]{6}", message = "Debe ser un color hexadecimal #RRGGBB")
     private String colorHex;
+    @Size(max = 80)
     private String material;
+    @Size(max = 50)
     private String season;
+    @Size(max = 50)
     private String aiType;
+    @Size(max = 50)
     private String aiColorName;
+    @Pattern(regexp = "^$|#[0-9A-Fa-f]{6}", message = "Debe ser un color hexadecimal #RRGGBB")
     private String aiColorHex;
+    @DecimalMin("0.00")
+    @DecimalMax("1.00")
     private BigDecimal aiConfidence;
+    @Size(max = 80)
     private String aiModel;
 
     public Long getId() { return id; }

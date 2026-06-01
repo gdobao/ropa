@@ -24,6 +24,8 @@ import com.colorinchi.app.service.analytics.LogSanitizer;
 public class ChatSessionService {
 
     private static final Logger log = LoggerFactory.getLogger(ChatSessionService.class);
+    private static final int MAX_TITLE_LENGTH = 120;
+    private static final String DEFAULT_TITLE = "Nueva conversación";
 
     private final ChatSessionRepository chatSessionRepository;
     private final CurrentOwnerAccessor currentOwnerAccessor;
@@ -52,8 +54,8 @@ public class ChatSessionService {
     public ChatSession create(CreateSessionRequest request, ChatSurface surface) {
         ChatSession session = new ChatSession();
         session.setOwnerId(currentOwnerId());
-        session.setTitle(request.title() != null ? request.title() : "Nueva conversación");
-        String requestedModel = request.model();
+        session.setTitle(normalizeTitle(request == null ? null : request.title()));
+        String requestedModel = request == null ? null : request.model();
         if (requestedModel != null && requestedModel.isBlank()) {
             requestedModel = null;
         }
@@ -112,7 +114,7 @@ public class ChatSessionService {
     @Transactional
     public ChatSession updateTitle(ChatSurface surface, UUID id, String title) {
         ChatSession session = getById(surface, id);
-        session.setTitle(title);
+        session.setTitle(normalizeTitle(title));
         return chatSessionRepository.save(session);
     }
 
@@ -149,5 +151,16 @@ public class ChatSessionService {
 
     private UUID currentOwnerId() {
         return currentOwnerAccessor.getCurrentOwnerId();
+    }
+
+    private String normalizeTitle(String title) {
+        if (title == null || title.isBlank()) {
+            return DEFAULT_TITLE;
+        }
+        String cleaned = title.trim();
+        if (cleaned.length() > MAX_TITLE_LENGTH) {
+            throw new IllegalArgumentException("Session title is too long");
+        }
+        return cleaned;
     }
 }
