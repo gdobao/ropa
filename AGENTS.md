@@ -308,6 +308,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 
 ### Database
 - If shared PostgreSQL tables get dropped: `mvn flyway:migrate -Dflyway.url=jdbc:postgresql://localhost:55432/ropa -Dflyway.user=ropa -Dflyway.password=ropa`
+- `docker-compose.yml` reads `DB_PASSWORD` for `POSTGRES_PASSWORD`; keep it aligned with `spring.datasource.password`. Changing it after the local Docker volume exists may require a deliberate local DB reset or password update.
 - Do not reintroduce tracked root DB probes with hardcoded credentials; `TestDb` is deprecated and must stay credential-free
 - If local startup fails with `Migration checksum mismatch for migration version 4`, the database still has the old destructive seed migration checksum. Do not repair automatically; ask before running `mvn flyway:repair ...` because it mutates `flyway_schema_history`.
 
