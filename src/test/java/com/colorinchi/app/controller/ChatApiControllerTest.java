@@ -55,6 +55,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -197,6 +198,16 @@ class ChatApiControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].id").value(sessionId.toString()));
+    }
+
+    @Test
+    void updateTitleWithNullJsonBodyReturnsBadRequest() throws Exception {
+        mockMvc.perform(patch("/api/chat/sessions/{sessionId}/title", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("null"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("invalid_request"))
+                .andExpect(jsonPath("$.message").value("Title is required"));
     }
 
     // ---- List messages ----

@@ -292,6 +292,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - `preHandle()` returning `false` in HandlerInterceptor **aborts the request without rendering any view** — throw an exception instead for error page rendering (done in `RateLimitingInterceptor`)
 - `GlobalExceptionHandler` uses `mav.setStatus(...)` for explicit HTTP status codes on MVC error views — don't rely solely on `@ResponseStatus` for controller advice methods
 - If `ChatConversationOrchestrator.persistAssistantMessageAndCompleteRun()` throws, the run is marked `failed` and a `stream-error` SSE event is sent — the run lifecycle must handle persistence failures gracefully
+- REST controllers that accept `@RequestBody Map<String, String>` must handle a JSON `null` body explicitly before accessing fields; title rename endpoints return `invalid_request` instead of a 500.
 
 ### JPA
 - `ChatMessage.content` uses `@Column(columnDefinition = "TEXT")` to match Flyway's schema — H2 create-drop now produces TEXT too; always align `columnDefinition` with the Flyway migration when using DDL-auto=create-drop in tests

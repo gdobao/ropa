@@ -161,6 +161,16 @@ class CompanionChatApiControllerTest {
     }
 
     @Test
+    void updateTitleWithNullJsonBodyReturnsBadRequest() throws Exception {
+        mockMvc.perform(patch("/api/companion/sessions/{sessionId}", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("null"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("invalid_request"))
+                .andExpect(jsonPath("$.message").value("Title is required"));
+    }
+
+    @Test
     void listMessagesChecksCompanionSurface() throws Exception {
         when(chatSessionService.getById(ChatSurface.COMPANION, sessionId)).thenReturn(companionSession);
         when(chatMessageService.listBySession(sessionId)).thenReturn(List.of(message));

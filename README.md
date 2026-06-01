@@ -172,6 +172,7 @@ La columna `chat_sessions.surface` evita mezclar historial entre ambas experienc
 | Upload malicioso | Tamaño máximo, MIME permitido, magic bytes y conversión controlada a JPEG |
 | Path traversal | Las rutas de imagen se normalizan y deben colgar de `/uploads/` |
 | Filtrado de información | `SecurityException` devuelve mensajes genéricos en MVC y REST |
+| Payloads incompletos | APIs REST validan cuerpo nulo, campos obligatorios y tamaños máximos antes de llamar a servicios |
 | Flooding | Rate limits por endpoint/IP y por owner con Caffeine |
 | Prompt injection | Datos del armario delimitados como no confiables en prompts de recomendación |
 | Schema drift | `spring.jpa.hibernate.ddl-auto=validate`; Flyway gobierna el esquema |
@@ -401,6 +402,7 @@ Cada cambio funcional, de seguridad, configuración, dependencia o flujo de usua
 | `NAN_API_KEY or APP_AI_API_KEY is required` | IA activa sin API key | Exportar `NAN_API_KEY` o usar `APP_AI_ENABLED=false` |
 | 403 en admin | Falta `X-Admin-Token` o `ADMIN_TOKEN` no está configurado | Configurar `ADMIN_TOKEN` y enviar el header |
 | 429 Too Many Requests | Rate limit agotado | Esperar la ventana o ajustar `app.rate-limit.*` en desarrollo |
+| `Title is required` | Renombrado de chat sin body JSON válido o sin `title` | Enviar `{ "title": "Nuevo título" }` |
 | La imagen no sube | Formato/tamaño inválido | Usar JPG, PNG o WebP de menos de 8 MB |
 | Error de imagen inválida | Magic bytes no coinciden con MIME | Reexportar la imagen con formato real correcto |
 | El chat no stremea | Provider IA inaccesible, timeout o API key inválida | Revisar `NAN_API_KEY`, `app.ai.base-url` y `app.ai.read-timeout` |
