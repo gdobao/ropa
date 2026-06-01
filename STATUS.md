@@ -94,7 +94,8 @@ ready for the next 6 PRs **without** changing how the app looks today.
 ### Issues encontrados
 | # | Severity | File:line | Issue | Root cause | Designed solution | Fix applied | Verified |
 |---|---|---|---|---|---|---|---|
-| — | — | — | (no reviewer issues yet) | — | — | — | — |
+| 1 | blocker | tokens.css:79-85, 166-220 | 5 radius tokens (`--radius-sm/md/lg/xl/2xl`) missing from LEGACY block — 35 callers in `app.css`, `responsive.css`, `companion-*.css`, and `garment-edit.html` would resolve to the new editorial values and silently regress the look | new token block redefined `--radius-*` to new editorial values; the LEGACY alias block was authored before the full radius scale was copied over | Solution Designer (`Software Architect`): add 5 lines `--radius-sm/md/lg/xl/2xl: 15/18/24/32/40 px;` to the LEGACY `:root` block so the 35 callers keep resolving to the `main` values | yes (commit `1103cb8` `fix(css): keep legacy radius tokens for no-visual-change baseline`) | yes (re-review iter 1 by `Software Architect`: clean) |
+| 2 | minor | docs/REDESIGN_PLAN.md (untracked) | `AGENTS.md` and `STATUS.md` reference `docs/REDESIGN_PLAN.md` as the locked source of truth, but the file was never staged in the initial commit — future clones would lose the plan | working tree had the plan but `git add` covered only the implementation files on the first commit | `git add docs/REDESIGN_PLAN.md` and add `docs/screenshots/pr-01/.gitkeep` so the visual-regression baseline directory is tracked too | yes (commit `4598d2f` `docs(redesign): track REDESIGN_PLAN.md and pr-01 screenshots placeholder`) | yes (re-review iter 1 by `Software Architect`: clean) |
 
 ### Next Steps
 - Hand off to the Reviewer (subagent B = `Software Architect`).
