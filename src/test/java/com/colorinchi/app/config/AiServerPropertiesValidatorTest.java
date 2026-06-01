@@ -27,7 +27,7 @@ class AiServerPropertiesValidatorTest {
 
     @Test
     void throwsWhenBaseUrlMissing() {
-        var props = new AiServerProperties(null, "/chat", "gpt-4", "sk-123", 2000, true, null, null, null);
+        var props = new AiServerProperties(null, "/chat", "gpt-4", "test-api-key", 2000, true, null, null, null);
         var validator = new AiServerPropertiesValidator(props);
         assertThatThrownBy(() -> validator.run(new DefaultApplicationArguments()))
                 .isInstanceOf(IllegalStateException.class)
@@ -36,7 +36,7 @@ class AiServerPropertiesValidatorTest {
 
     @Test
     void throwsWhenChatPathMissing() {
-        var props = new AiServerProperties("http://localhost", null, "gpt-4", "sk-123", 2000, true, null, null, null);
+        var props = new AiServerProperties("http://localhost", null, "gpt-4", "test-api-key", 2000, true, null, null, null);
         var validator = new AiServerPropertiesValidator(props);
         assertThatThrownBy(() -> validator.run(new DefaultApplicationArguments()))
                 .isInstanceOf(IllegalStateException.class)
@@ -45,7 +45,7 @@ class AiServerPropertiesValidatorTest {
 
     @Test
     void throwsWhenModelMissing() {
-        var props = new AiServerProperties("http://localhost", "/chat", null, "sk-123", 2000, true, null, null, null);
+        var props = new AiServerProperties("http://localhost", "/chat", null, "test-api-key", 2000, true, null, null, null);
         var validator = new AiServerPropertiesValidator(props);
         assertThatThrownBy(() -> validator.run(new DefaultApplicationArguments()))
                 .isInstanceOf(IllegalStateException.class)
@@ -54,7 +54,7 @@ class AiServerPropertiesValidatorTest {
 
     @Test
     void succeedsWithAllFieldsPresent() {
-        var props = new AiServerProperties("http://localhost", "/chat", "gpt-4", "sk-123", 2000, true, null, null, null);
+        var props = new AiServerProperties("http://localhost", "/chat", "gpt-4", "test-api-key", 2000, true, null, null, null);
         var validator = new AiServerPropertiesValidator(props);
         validator.run(new DefaultApplicationArguments());
     }

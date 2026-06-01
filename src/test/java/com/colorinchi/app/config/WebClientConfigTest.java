@@ -23,7 +23,7 @@ class WebClientConfigTest {
     @Test
     void aiWebClientUsesProvidedTimeouts() {
         var props = new AiServerProperties(
-                "http://localhost:8080", "/chat", "gpt-4", "sk-123",
+                "http://localhost:8080", "/chat", "gpt-4", "test-api-key",
                 2000, true, Duration.ofSeconds(10), Duration.ofSeconds(30),
                 null
         );

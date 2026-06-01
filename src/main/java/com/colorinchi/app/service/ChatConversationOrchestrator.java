@@ -31,6 +31,7 @@ public class ChatConversationOrchestrator {
 
     private static final Logger log = LoggerFactory.getLogger(ChatConversationOrchestrator.class);
     private static final long SSE_TIMEOUT = 300_000L;
+    private static final int MAX_MESSAGE_LENGTH = 4_000;
 
     private final ChatSessionService chatSessionService;
     private final ChatMessageService chatMessageService;
@@ -70,6 +71,9 @@ public class ChatConversationOrchestrator {
         String content = raw != null ? raw.trim() : "";
         if (content.isBlank()) {
             throw new EmptyChatMessageException();
+        }
+        if (content.length() > MAX_MESSAGE_LENGTH) {
+            throw new ChatMessageTooLongException();
         }
         ChatSession session = chatSessionService.getById(surface, sessionId);
 
@@ -260,6 +264,12 @@ public class ChatConversationOrchestrator {
     public static class EmptyChatMessageException extends RuntimeException {
         public EmptyChatMessageException() {
             super("El mensaje no puede estar vacío");
+        }
+    }
+
+    public static class ChatMessageTooLongException extends RuntimeException {
+        public ChatMessageTooLongException() {
+            super("El mensaje es demasiado largo");
         }
     }
 }

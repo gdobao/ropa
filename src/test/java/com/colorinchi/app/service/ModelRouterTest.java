@@ -24,7 +24,7 @@ class ModelRouterTest {
                 model("deepseek-v4-flash", "DeepSeek V4 Flash", false));
         var props = new AiServerProperties(
                 "https://api.test", "/v1/chat/completions", "qwen3.6",
-                "sk-test", 2000, true,
+                "test-api-key", 2000, true,
                 Duration.ofSeconds(5), Duration.ofSeconds(30),
                 models);
         router = new ModelRouter(props);

@@ -107,6 +107,40 @@ class ChatSessionServiceTest {
     }
 
     @Test
+    void createWithNullRequestUsesDefaults() {
+        AiModelConfig defaultModel = new AiModelConfig();
+        defaultModel.setId("qwen3.6");
+        when(modelRouter.resolve(isNull())).thenReturn(defaultModel);
+        when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatSession result = service.create(null);
+
+        assertThat(result.getTitle()).isEqualTo("Nueva conversación");
+        assertThat(result.getModel()).isEqualTo("qwen3.6");
+    }
+
+    @Test
+    void createTrimsTitle() {
+        AiModelConfig defaultModel = new AiModelConfig();
+        defaultModel.setId("qwen3.6");
+        when(modelRouter.resolve(isNull())).thenReturn(defaultModel);
+        when(repository.save(any(ChatSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatSession result = service.create(new CreateSessionRequest("  My Chat  ", null));
+
+        assertThat(result.getTitle()).isEqualTo("My Chat");
+    }
+
+    @Test
+    void createRejectsTooLongTitle() {
+        String longTitle = "x".repeat(121);
+
+        assertThatThrownBy(() -> service.create(new CreateSessionRequest(longTitle, null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Session title is too long");
+    }
+
+    @Test
     void createWithBlankModelUsesDefaultModel() {
         AiModelConfig defaultModel = new AiModelConfig();
         defaultModel.setId("qwen3.6");
@@ -196,6 +230,16 @@ class ChatSessionServiceTest {
 
         assertThat(result.getTitle()).isEqualTo("Updated Title");
         verify(repository).save(sampleSession);
+    }
+
+    @Test
+    void updateTitleRejectsTooLongTitle() {
+        when(repository.findByIdAndOwnerIdAndSurface(sessionId, ownerId, ChatSurface.MAIN_CHAT))
+                .thenReturn(Optional.of(sampleSession));
+
+        assertThatThrownBy(() -> service.updateTitle(sessionId, "x".repeat(121)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Session title is too long");
     }
 
     @Test

@@ -23,10 +23,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(SecurityException.class)
     public ModelAndView handleSecurity(SecurityException ex) {
+        log.warn("Rejected MVC request: {}", ex.getClass().getSimpleName());
         ModelAndView mav = new ModelAndView("error");
         mav.setStatus(HttpStatus.FORBIDDEN);
         mav.addObject("errorTitle", "Acceso denegado");
-        mav.addObject("errorMessage", ex.getMessage());
+        mav.addObject("errorMessage", "La operación no está permitida.");
         return mav;
     }
 

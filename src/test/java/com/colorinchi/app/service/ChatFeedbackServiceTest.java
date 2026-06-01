@@ -15,6 +15,7 @@ import com.colorinchi.app.repository.ChatFeedbackRepository;
 import com.colorinchi.app.service.analytics.ChatAnalyticsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -78,5 +79,45 @@ class ChatFeedbackServiceTest {
         assertThat(result.getMessageId()).isEqualTo(messageId);
         assertThat(result.getRunId()).isNull();
         verify(chatAnalyticsService, never()).recordFeedback(any(), any(), any());
+    }
+
+    @Test
+    void createRejectsMissingRating() {
+        UUID messageId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID sessionId = UUID.fromString("44444444-4444-4444-4444-444444444444");
+
+        assertThatThrownBy(() -> service.create(messageId, null, sessionId, new ChatFeedbackRequest(" ", null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Rating is required");
+
+        verify(chatFeedbackRepository, never()).save(any());
+    }
+
+    @Test
+    void createRejectsUnsupportedRating() {
+        UUID messageId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID sessionId = UUID.fromString("44444444-4444-4444-4444-444444444444");
+
+        assertThatThrownBy(() -> service.create(messageId, null, sessionId, new ChatFeedbackRequest("maybe", null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Rating must be 'up' or 'down'");
+
+        verify(chatFeedbackRepository, never()).save(any());
+    }
+
+    @Test
+    void createNormalizesRatingAndComment() {
+        UUID ownerId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        UUID messageId = UUID.fromString("22222222-2222-2222-2222-222222222222");
+        UUID sessionId = UUID.fromString("44444444-4444-4444-4444-444444444444");
+        ChatFeedbackRequest request = new ChatFeedbackRequest(" UP ", "  Useful  ");
+
+        when(currentOwnerAccessor.getCurrentOwnerId()).thenReturn(ownerId);
+        when(chatFeedbackRepository.save(any(ChatFeedback.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ChatFeedback result = service.create(messageId, null, sessionId, request);
+
+        assertThat(result.getRating()).isEqualTo("up");
+        assertThat(result.getComment()).isEqualTo("Useful");
     }
 }

@@ -90,6 +90,10 @@ public class ChatApiController {
                     session.getStatus(), session.getCreatedAt(), session.getUpdatedAt());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
+            if (isInvalidTitle(e)) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("invalid_request", "Title is too long"));
+            }
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of("not_found", "Sesión no encontrada"));
         } catch (Exception e) {
@@ -152,6 +156,9 @@ public class ChatApiController {
         } catch (ChatConversationOrchestrator.EmptyChatMessageException e) {
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of("validation_error", "El mensaje no puede estar vacío"));
+        } catch (ChatConversationOrchestrator.ChatMessageTooLongException e) {
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.of("validation_error", "El mensaje es demasiado largo"));
         } catch (IllegalArgumentException e) {
             String error = e.getMessage() != null && e.getMessage().startsWith("Modelo no soportado")
                     ? "invalid_model"
@@ -187,6 +194,10 @@ public class ChatApiController {
             chatFeedbackService.create(messageId, msg.getRunId(), msg.getSessionId(), request);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
+            if (isInvalidFeedback(e)) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("validation_error", "Valoración no válida"));
+            }
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.of("not_found", "Message not found"));
         } catch (Exception e) {
@@ -233,5 +244,14 @@ public class ChatApiController {
             return ResponseEntity.internalServerError()
                     .body(ErrorResponse.of("models_failed", "Error al listar los modelos"));
         }
+    }
+
+    private boolean isInvalidTitle(IllegalArgumentException e) {
+        return e.getMessage() != null && e.getMessage().contains("title");
+    }
+
+    private boolean isInvalidFeedback(IllegalArgumentException e) {
+        return e.getMessage() != null
+                && (e.getMessage().startsWith("Rating") || e.getMessage().startsWith("Comment"));
     }
 }

@@ -20,7 +20,7 @@ public class AiServerPropertiesValidator implements ApplicationRunner {
             return;
         }
         if (!StringUtils.hasText(properties.apiKey())) {
-            throw new IllegalStateException("APP_AI_API_KEY is required when app.ai.enabled=true");
+            throw new IllegalStateException("NAN_API_KEY or APP_AI_API_KEY is required when app.ai.enabled=true");
         }
         if (!StringUtils.hasText(properties.baseUrl())) {
             throw new IllegalStateException("app.ai.base-url is required when app.ai.enabled=true");

@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.colorinchi.app.config.WardrobeProperties;
 import com.colorinchi.app.dto.DashboardStats;
 import com.colorinchi.app.dto.GarmentReviewForm;
 import com.colorinchi.app.model.Garment;
@@ -18,10 +19,14 @@ public class GarmentService {
 
     private final GarmentRepository garmentRepository;
     private final CurrentOwnerAccessor currentOwnerAccessor;
+    private final WardrobeProperties wardrobeProperties;
 
-    public GarmentService(GarmentRepository garmentRepository, CurrentOwnerAccessor currentOwnerAccessor) {
+    public GarmentService(GarmentRepository garmentRepository,
+                          CurrentOwnerAccessor currentOwnerAccessor,
+                          WardrobeProperties wardrobeProperties) {
         this.garmentRepository = garmentRepository;
         this.currentOwnerAccessor = currentOwnerAccessor;
+        this.wardrobeProperties = wardrobeProperties;
     }
 
     @Transactional(readOnly = true)
@@ -79,19 +84,20 @@ public class GarmentService {
 
     @Transactional
     public Garment create(GarmentReviewForm form) {
+        validateForm(form, true);
         Garment garment = new Garment();
-        garment.setName(form.getName());
-        garment.setCategory(form.getCategory());
-        garment.setColorName(form.getColorName());
-        garment.setColorHex(form.getColorHex());
-        garment.setMaterial(form.getMaterial());
-        garment.setSeason(form.getSeason());
-        garment.setImageUrl(form.getImageUrl());
-        garment.setAiType(form.getAiType());
-        garment.setAiColorName(form.getAiColorName());
-        garment.setAiColorHex(form.getAiColorHex());
+        garment.setName(cleanRequired(form.getName(), "Nombre requerido"));
+        garment.setCategory(cleanRequired(form.getCategory(), "Categoría requerida"));
+        garment.setColorName(cleanRequired(form.getColorName(), "Color requerido"));
+        garment.setColorHex(normalizeHex(form.getColorHex()));
+        garment.setMaterial(cleanOptional(form.getMaterial()));
+        garment.setSeason(cleanOptional(form.getSeason()));
+        garment.setImageUrl(cleanRequired(form.getImageUrl(), "Imagen requerida"));
+        garment.setAiType(cleanOptional(form.getAiType()));
+        garment.setAiColorName(cleanOptional(form.getAiColorName()));
+        garment.setAiColorHex(normalizeHex(form.getAiColorHex()));
         garment.setAiConfidence(form.getAiConfidence());
-        garment.setAiModel(form.getAiModel());
+        garment.setAiModel(cleanOptional(form.getAiModel()));
         garment.setOwnerId(currentOwnerId());
         garment.setUserConfirmed(true);
         return garmentRepository.save(garment);
@@ -99,13 +105,14 @@ public class GarmentService {
 
     @Transactional
     public Garment update(Long id, GarmentReviewForm form) {
+        validateForm(form, false);
         Garment garment = get(id);
-        garment.setName(form.getName());
-        garment.setCategory(form.getCategory());
-        garment.setColorName(form.getColorName());
-        garment.setColorHex(form.getColorHex());
-        garment.setMaterial(form.getMaterial());
-        garment.setSeason(form.getSeason());
+        garment.setName(cleanRequired(form.getName(), "Nombre requerido"));
+        garment.setCategory(cleanRequired(form.getCategory(), "Categoría requerida"));
+        garment.setColorName(cleanRequired(form.getColorName(), "Color requerido"));
+        garment.setColorHex(normalizeHex(form.getColorHex()));
+        garment.setMaterial(cleanOptional(form.getMaterial()));
+        garment.setSeason(cleanOptional(form.getSeason()));
         // AI fields and imageUrl are preserved — not updated from edit form
         return garmentRepository.save(garment);
     }
@@ -180,5 +187,50 @@ public class GarmentService {
 
     private UUID currentOwnerId() {
         return currentOwnerAccessor.getCurrentOwnerId();
+    }
+
+    private void validateForm(GarmentReviewForm form, boolean requireImageUrl) {
+        if (form == null) {
+            throw new IllegalArgumentException("Formulario inválido");
+        }
+        String category = cleanRequired(form.getCategory(), "Categoría requerida");
+        if (wardrobeProperties.categories() == null || !wardrobeProperties.categories().contains(category)) {
+            throw new IllegalArgumentException("Categoría no válida");
+        }
+        normalizeHex(form.getColorHex());
+        normalizeHex(form.getAiColorHex());
+        if (requireImageUrl) {
+            String imageUrl = cleanRequired(form.getImageUrl(), "Imagen requerida");
+            if (!imageUrl.startsWith("/uploads/")) {
+                throw new IllegalArgumentException("Imagen no válida");
+            }
+        }
+    }
+
+    private String cleanRequired(String value, String message) {
+        String cleaned = cleanOptional(value);
+        if (cleaned == null) {
+            throw new IllegalArgumentException(message);
+        }
+        return cleaned;
+    }
+
+    private String cleanOptional(String value) {
+        if (value == null) {
+            return null;
+        }
+        String cleaned = value.trim();
+        return cleaned.isEmpty() ? null : cleaned;
+    }
+
+    private String normalizeHex(String value) {
+        String cleaned = cleanOptional(value);
+        if (cleaned == null) {
+            return null;
+        }
+        if (!cleaned.matches("#[0-9A-Fa-f]{6}")) {
+            throw new IllegalArgumentException("Color hexadecimal no válido");
+        }
+        return cleaned.toUpperCase(java.util.Locale.ROOT);
     }
 }

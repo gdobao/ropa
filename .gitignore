@@ -2,6 +2,10 @@ target/
 uploads/
 .DS_Store
 *.log
+*.class
+.env
+.env.*
+!.env.example
 .idea/
 *.iml
 .vscode/
@@ -13,6 +17,7 @@ uploads/
 *.png
 chat-snapshot
 companion-*
+!/src/main/resources/templates/fragments/companion/companion-shell.html
 !src/main/resources/static/js/companion/companion-*.js
 !src/main/resources/static/css/companion/companion-*.css
 !src/main/resources/static/css/companion/skins/companion-*.css
