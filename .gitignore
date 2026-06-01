@@ -12,6 +12,9 @@ uploads/
 .playwright-mcp/page-2026-05-29T18-02-04-294Z.yml
 /.playwright-mcp
 .opencode/
+.atl/
+.hermes/
+public/qa-screenshots/
 
 # Screenshots / test artifacts
 *.png
