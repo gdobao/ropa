@@ -1,40 +1,130 @@
-:root {
-  --bg: #FFFDF9;
-  --surface: #FFFFFF;
-  --fg: #1F2933;
-  --muted: #6B6F72;
-  --border: #E8E2DC;
-  --accent: #FF6B5F;
-  --accent-dark: #D9453A;
-  --sand: #F7F1EA;
-  --teal: #009D8F;
-  --teal-dark: #007A6E;
-  --sage: #A7C7B7;
-  --terracotta: #E76F51;
-  --font-display: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
-  --font-body: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+/* ===========================================================================
+ * Armario Capsula — Design Tokens
+ *
+ * PR 1 (Foundation) — this file is the single source of truth for design
+ * tokens. It carries:
+ *   1) The NEW editorial palette + scales from `docs/REDESIGN_PLAN.md` §2.2
+ *      and §2.6 (neutral ramp, accent, AI, status, spacing 12-step, radius,
+ *      elevation, shadow, motion).
+ *   2) The OLD token names that `app.css`, `responsive.css`, and the
+ *      companion CSS still consume today, aliased to their CURRENT values so
+ *      the rendered app looks IDENTICAL to `main` after this PR. The visual
+ *      refresh (PR 3+) will swap the body of those aliases over to the new
+ *      palette in a follow-up PR. The visual refresh never happens here.
+ *
+ * If you change the value of a legacy alias, you are changing the look. Don't.
+ * If you need a new value, add a NEW token (e.g. `--accent-500`) instead of
+ * mutating the old one.
+ * =========================================================================== */
 
+:root {
+  /* ---------------------------------------------------------------------------
+   * 1. NEW EDITORIAL PALETTE — locked in `docs/REDESIGN_PLAN.md` §2.2
+   *    These are the future values. The next PRs will migrate usage over to
+   *    them. Nothing in `app.css` references them yet, so this PR is safe.
+   * ------------------------------------------------------------------------- */
+
+  /* Bone neutral ramp (50 → 1000). */
+  --neutral-50: #FBF8F3;
+  --neutral-100: #F4EFE7;
+  --neutral-200: #E8E2DC;
+  --neutral-300: #D6CFC6;
+  --neutral-400: #A89F94;
+  --neutral-500: #6B6F72;
+  --neutral-700: #3A3F44;
+  --neutral-900: #1F2933;
+  --neutral-1000: #0F1419;
+
+  /* Accent — refined coral. */
+  --accent-50: #FFF1ED;
+  --accent-200: #FBC4B8;
+  --accent-500: #E5553E;
+  --accent-600: #C9442F;
+  --accent-700: #A23524;
+
+  /* AI-accent — deep teal, reserved for IA / Companion. */
+  --ai-50: #E6F2F0;
+  --ai-200: #7BBDB4;
+  --ai-500: #0E7C72;
+  --ai-600: #085952;
+  --ai-700: #063F3A;
+
+  /* Status — AA-compliant on white. */
+  --danger-500: #C5302A;
+  --danger-100: #FCE7E5;
+  --success-500: #1F7A4D;
+  --success-100: #E0F1E8;
+  --warning-500: #B6791F;
+  --warning-100: #FAEED9;
+
+  /* ---------------------------------------------------------------------------
+   * 2. SPACING — 12-step, 4px base (locked in `docs/REDESIGN_PLAN.md` §2.6).
+   * ------------------------------------------------------------------------- */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --space-10: 56px;
+  --space-11: 72px;
+  --space-12: 96px;
+
+  /* ---------------------------------------------------------------------------
+   * 3. RADIUS — 7-step scale (locked in §2.6).
+   * ------------------------------------------------------------------------- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-pill: 999px;
+
+  /* ---------------------------------------------------------------------------
+   * 4. ELEVATION / SHADOW — 4-step scale (locked in §2.6).
+   *    Shadows are RGBA-based so they don't rely on the new palette tint.
+   * ------------------------------------------------------------------------- */
+  --elevation-e1: 0 1px 0 rgba(15, 20, 25, 0.04);
+  --elevation-e2: 0 12px 24px rgba(15, 20, 25, 0.08);
+  --elevation-e3: 0 28px 48px rgba(15, 20, 25, 0.14);
+  --elevation-e4: 0 56px 80px rgba(15, 20, 25, 0.18);
+
+  /* Same 4 steps under semantic names (consumed by `.lift`, `.card`, modal,
+   * FAB, hero) — see `docs/REDESIGN_PLAN.md` §2.5 and §2.6. */
+  --shadow-1: var(--elevation-e1);
+  --shadow-2: var(--elevation-e2);
+  --shadow-3: var(--elevation-e3);
+  --shadow-4: var(--elevation-e4);
+
+  /* ---------------------------------------------------------------------------
+   * 5. TYPOGRAPHY — locked in §2.1.
+   *    `editorial` is the magazine italic family (Instrument Serif 400/400i).
+   *    `display-bold` is the magazine-weight family (Fraunces 700/700i).
+   *    `ui` is the UI family (Inter variable, 400–700, italic, opsz 14..32).
+   *    These three are new and have no callers yet; the migration is PR 2+.
+   *    Note: we deliberately do NOT redefine `--font-display` or `--font-body`
+   *    here — those are legacy aliases owned by the second `:root` block below
+   *    and still point at the current Playfair / Poppins so PR 1 stays
+   *    visually identical to `main`.
+   * ------------------------------------------------------------------------- */
+  --font-editorial: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+  --font-display-bold: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* ---------------------------------------------------------------------------
+   * 6. LAYOUT TOKENS — kept; used by `app.css` for sidebar / nav heights.
+   * ------------------------------------------------------------------------- */
   --sidebar-w: 260px;
   --nav-h: 78px;
   --top-bar-h: 60px;
 
-  --radius-sm: 15px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-  --radius-xl: 32px;
-  --radius-2xl: 40px;
-  --radius-pill: 999px;
-
-  --space-xs: 6px;
-  --space-sm: 10px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-
-  --shadow-card: 0 4px 16px color-mix(in oklch, var(--fg) 6%, transparent);
-  --shadow-hero: 0 18px 36px color-mix(in oklch, var(--accent) 22%, transparent);
-  --shadow-plus: 0 12px 28px color-mix(in oklch, var(--accent) 32%, transparent);
-
+  /* ---------------------------------------------------------------------------
+   * 7. Z-INDEX SCALE — kept.
+   * ------------------------------------------------------------------------- */
   --z-sidebar: 100;
   --z-bottom-nav: 200;
   --z-companion: 800;
@@ -42,6 +132,9 @@
   --z-skip-link: 1000;
   --z-toast: 9999;
 
+  /* ---------------------------------------------------------------------------
+   * 8. RESPONSIVE TYPE — kept; clamp() values, no media-query dependency.
+   * ------------------------------------------------------------------------- */
   --text-xs: clamp(10px, 1.2vw, 12px);
   --text-sm: clamp(12px, 1.4vw, 14px);
   --text-base: clamp(13px, 1.6vw, 16px);
@@ -49,8 +142,79 @@
   --text-lg: clamp(20px, 3vw, 34px);
   --text-xl: clamp(28px, 5vw, 42px);
 
+  /* ---------------------------------------------------------------------------
+   * 9. BREAKPOINTS — kept. NOT usable inside `@media()` queries (see AGENTS.md
+   *    §10 CSS gotcha). Use the numeric values directly in media queries.
+   * ------------------------------------------------------------------------- */
   --bp-sm: 600px;
   --bp-md: 820px;
   --bp-lg: 1024px;
   --bp-xl: 1366px;
+}
+
+/* ===========================================================================
+ * LEGACY TOKEN ALIASES — visual identity for PR 1.
+ *
+ * The values below are the CURRENT `main` values. `app.css`, `responsive.css`,
+ * and the companion CSS still reference these names. Mutating them would
+ * change the rendered look — that's PR 3+ work, not Foundation.
+ *
+ * After the visual migration (PR 3+), most of these will be deleted and their
+ * callers rewritten to consume the new tokens in §1–§5 above. Until then,
+ * they are load-bearing.
+ * =========================================================================== */
+:root {
+  /* Surfaces. */
+  --bg: #FFFDF9;
+  --surface: #FFFFFF;
+
+  /* Foreground. */
+  --fg: #1F2933;
+  --muted: #6B6F72;
+
+  /* Hairlines. */
+  --border: #E8E2DC;
+
+  /* Brand color palette (current values, NOT the new editorial palette). */
+  --accent: #FF6B5F;
+  --accent-dark: #D9453A;
+  /* `--accent-soft` was referenced by `app.css` `.season-badge` but never
+   * defined on `main` — adding it now with the same 12%-tint mix used by
+   * `.sidebar-nav a.active` so the season badge picks up a real color
+   * instead of `unset`. */
+  --accent-soft: color-mix(in oklch, var(--accent) 12%, var(--surface));
+
+  /* AI / companion palette (current teal). The new editorial palette exposes
+   * `--ai-50..700` in §1; the rename happens in PR 7. */
+  --teal: #009D8F;
+  --teal-dark: #007A6E;
+
+  /* Supporting palette (current). The new palette exposes neutral-50..1000
+   * in §1; the migration happens in PR 3+. */
+  --sand: #F7F1EA;
+  --sage: #A7C7B7;
+  --terracotta: #E76F51;
+
+  /* Legacy font aliases — these names still resolve to the current Playfair
+   * Display + Poppins so the rendered look is preserved. The new editorial
+   * families live in §5 under `--font-editorial` / `--font-display-bold` /
+   * `--font-ui`; the rename happens in PR 3+ when `app.css` swaps to the
+   * editorial families. */
+  --font-display: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+
+  /* Legacy spacing — kept for callers that use the old `xs/sm/md/lg/xl` form.
+   * New callers should use `--space-1`..`--space-12` from §2 directly. */
+  --space-xs: 6px;
+  --space-sm: 10px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Legacy shadows — the existing `app.css` uses the `color-mix` form tied to
+   * the current `--accent`. We keep that math intact. The new editorial
+   * shadows in §4 will replace them in PR 3+. */
+  --shadow-card: 0 4px 16px color-mix(in oklch, var(--fg) 6%, transparent);
+  --shadow-hero: 0 18px 36px color-mix(in oklch, var(--accent) 22%, transparent);
+  --shadow-plus: 0 12px 28px color-mix(in oklch, var(--accent) 32%, transparent);
 }
