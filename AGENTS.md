@@ -265,6 +265,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 | **CSRF hidden inputs in normal forms** | Browser form submissions (`garment-new.html`, `garment-confirm.html`, `garment-edit.html`, `wardrobe.html`) include hidden CSRF fields; HTMX handles CSRF via headers independently |
 | **Prod logging profile separation** | Logback root logger separated by profile: `prod` → JSON appender (logstash-logback-encoder), `!prod` → CONSOLE; avoids structured logging noise in dev |
 | **Prompt injection boundaries via data markers** | Wardrobe data in `AiRecommendationService` is enclosed in `=== INICIO DATOS DE PRENDAS (NO CONFIABLE) ===` markers with clear warnings — prevents prompt injection from garment names/colors |
+| **AI health checks verify reachability, not auth success** | `HealthConfig` reports `UP` for any HTTP response status from `app.ai.base-url`; only network/timeout failures are `DOWN`, and disabled AI is `UNKNOWN` |
 | **No seed data in Flyway migrations** | `V4__seed_test_data.sql` is intentionally a no-op so enabling Flyway cannot delete or insert user wardrobe data; use `/wardrobe/seed` for local demo data |
 
 ---

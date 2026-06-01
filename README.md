@@ -278,6 +278,8 @@ Las migraciones viven en `src/main/resources/db/migration/`.
 | GET | `/actuator/health/liveness` | Público | Liveness probe |
 | GET | `/actuator/health/readiness` | Público | Readiness probe |
 
+El indicador `aiProvider` considera saludable cualquier respuesta HTTP del proveedor configurado. Un `401`, `403` o `404` prueba conectividad y no debe tumbar readiness; los errores de red o timeout sí devuelven `DOWN`.
+
 ## Configuración
 
 ### Variables recomendadas
