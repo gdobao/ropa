@@ -178,6 +178,18 @@
   /* Brand color palette (current values, NOT the new editorial palette). */
   --accent: #FF6B5F;
   --accent-dark: #D9453A;
+
+  /* Legacy radius aliases — keep the OLD `main` values (15/18/24/32/40) so
+   * every caller of `var(--radius-sm|md|lg|xl|2xl)` resolves to the same
+   * pixel corner it did on `main`. The new scale lives in the new-token
+   * block at the top of this file; the migration to those new values is
+   * PR 3+ work, never PR 1. */
+  --radius-sm: 15px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-2xl: 40px;
+
   /* `--accent-soft` was referenced by `app.css` `.season-badge` but never
    * defined on `main` — adding it now with the same 12%-tint mix used by
    * `.sidebar-nav a.active` so the season badge picks up a real color
