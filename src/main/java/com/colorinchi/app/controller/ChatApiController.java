@@ -77,9 +77,9 @@ public class ChatApiController {
     }
 
     @PatchMapping("/sessions/{id}/title")
-    public ResponseEntity<?> updateTitle(@PathVariable UUID id, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> updateTitle(@PathVariable UUID id, @RequestBody(required = false) Map<String, String> body) {
         try {
-            String title = body.get("title");
+            String title = body == null ? null : body.get("title");
             if (title == null || title.isBlank()) {
                 return ResponseEntity.badRequest()
                         .body(ErrorResponse.of("invalid_request", "Title is required"));

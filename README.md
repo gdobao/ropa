@@ -50,7 +50,7 @@ La base local queda en `localhost:55432` para evitar conflictos con un PostgreSQ
 
 ### 3. Configurar entorno
 
-Usá `.env.example` como referencia. Spring Boot no carga `.env` por sí solo; exportá las variables en la terminal o configuralas en tu IDE.
+Usá `.env.example` como referencia. Docker Compose lee `.env` automáticamente para PostgreSQL; Spring Boot no lo carga por sí solo, así que exportá las variables en la terminal o configuralas en tu IDE.
 
 ```bash
 export DB_PASSWORD=ropa
@@ -172,6 +172,7 @@ La columna `chat_sessions.surface` evita mezclar historial entre ambas experienc
 | Upload malicioso | Tamaño máximo, MIME permitido, magic bytes y conversión controlada a JPEG |
 | Path traversal | Las rutas de imagen se normalizan y deben colgar de `/uploads/` |
 | Filtrado de información | `SecurityException` devuelve mensajes genéricos en MVC y REST |
+| Payloads incompletos | APIs REST validan cuerpo nulo, campos obligatorios y tamaños máximos antes de llamar a servicios |
 | Flooding | Rate limits por endpoint/IP y por owner con Caffeine |
 | Prompt injection | Datos del armario delimitados como no confiables en prompts de recomendación |
 | Schema drift | `spring.jpa.hibernate.ddl-auto=validate`; Flyway gobierna el esquema |
@@ -397,10 +398,12 @@ Cada cambio funcional, de seguridad, configuración, dependencia o flujo de usua
 | Problema | Causa probable | Solución |
 |---|---|---|
 | `Connection refused: localhost:55432` | PostgreSQL no está levantado | `docker compose up -d postgres` y esperar el healthcheck |
+| `password authentication failed for user "ropa"` | `DB_PASSWORD` de la app no coincide con la contraseña inicial del volumen PostgreSQL | Usar el mismo `DB_PASSWORD` para `docker compose` y Spring. Si cambiaste la contraseña después de crear el volumen, recreá solo la DB local conscientemente. |
 | `Migration checksum mismatch for migration version 4` | La DB local tenía aplicada la antigua V4 con seed destructivo | En DB de desarrollo, decidir entre `flyway:repair` para conservar datos o recrear la DB. No reparar producción sin revisión. |
 | `NAN_API_KEY or APP_AI_API_KEY is required` | IA activa sin API key | Exportar `NAN_API_KEY` o usar `APP_AI_ENABLED=false` |
 | 403 en admin | Falta `X-Admin-Token` o `ADMIN_TOKEN` no está configurado | Configurar `ADMIN_TOKEN` y enviar el header |
 | 429 Too Many Requests | Rate limit agotado | Esperar la ventana o ajustar `app.rate-limit.*` en desarrollo |
+| `Title is required` | Renombrado de chat sin body JSON válido o sin `title` | Enviar `{ "title": "Nuevo título" }` |
 | La imagen no sube | Formato/tamaño inválido | Usar JPG, PNG o WebP de menos de 8 MB |
 | Error de imagen inválida | Magic bytes no coinciden con MIME | Reexportar la imagen con formato real correcto |
 | El chat no stremea | Provider IA inaccesible, timeout o API key inválida | Revisar `NAN_API_KEY`, `app.ai.base-url` y `app.ai.read-timeout` |
