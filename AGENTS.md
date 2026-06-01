@@ -34,6 +34,38 @@ Project-level AGENTS.md for future AI sessions. Supersedes global defaults only 
 | Test HTTP mock | WireMock 3.9.1 |
 | Test frameworks | Mockito, MockMvc, @DataJpaTest, Playwright (E2E) |
 
+### Design system (PR 1 — Foundation)
+
+- **Source of truth**: `src/main/resources/static/css/tokens.css`. Plan and
+  design rationale live in `docs/REDESIGN_PLAN.md`; the implementation log
+  lives in `STATUS.md`.
+- **Palette** (locked in §2.2 of the plan, scaffolded in PR 1, consumed in
+  PR 3+): bone neutral ramp 50→1000 (`--neutral-50..1000`), refined coral
+  accent (`--accent-50..700`, primary `--accent-500: #E5553E`), deep teal AI
+  accent (`--ai-50..700`, primary `--ai-500: #0E7C72`), and AA-compliant
+  status (`--danger-500`, `--success-500`, `--warning-500` + matching 100
+  tints).
+- **Scales** (locked in §2.6, scaffolded in PR 1): spacing 12-step
+  (`--space-1` 2px → `--space-12` 96px), radius 7-step (`--radius-xs`
+  4 / `sm` 8 / `md` 12 / `lg` 16 / `xl` 24 / `2xl` 32 / `pill` 999),
+  elevation/shadow 4-step (`--elevation-e1..e4` and the semantic
+  `--shadow-1..4` aliases).
+- **Typography** (locked in §2.1, scaffolded in PR 1, consumed in PR 2+):
+  Instrument Serif 400/400i (editorial italic), Fraunces 700/700i
+  variable (display-bold, `opsz 9..144`), Inter 400–700 variable
+  italic (`opsz 14..32`) for body. New token names:
+  `--font-editorial`, `--font-display-bold`, `--font-ui`. Legacy names
+  `--font-display` and `--font-body` keep resolving to the current
+  Playfair Display / Poppins so PR 1 stays visually identical to `main`
+  — the migration is PR 3+.
+- **Legacy alias policy**: `tokens.css` carries two `:root` blocks. The
+  first publishes the new editorial tokens. The second is the
+  LEGACY block that re-publishes the old names (`--accent`, `--bg`,
+  `--font-display`, etc.) with their **current `main` values** so the
+  rendered look does not change until the visual migration PRs (3–7)
+  rewrite the callers. Do not mutate a legacy alias value to swap the
+  look — that belongs in a follow-up PR, with a Playwright before/after.
+
 ---
 
 ## 3. Architecture
@@ -152,6 +184,10 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - HTMX fragments use stable wrapper IDs
 - `th:attr` with multiple HTMX attributes needs careful quoting
 - Layout via `th:replace` on `layout.html` with fragment parameters
+- **No emojis in chrome** (nav, buttons, empty states, sidebars, top bars,
+  bottom nav, FAB). Use the Lucide sprite via
+  `~{fragments/icons :: icon-name(class='icon')}` (defined in PR 2). Emojis
+  are still fine in user-generated content and AI output.
 
 ### CSS
 - Design tokens in `tokens.css` as CSS custom properties on `:root`
@@ -351,7 +387,80 @@ When tasks don't share files, launch agents in **parallel**.
 
 ---
 
-## 13. Data Model
+## 13. Multi-agent Orchestration Patterns
+
+When work requires more than one agent, follow these patterns instead of improvising. The **chained-PR quality loop** below is the default for any non-trivial PR-bearing change in this project. The same pattern is also packaged as the `skill-orquestacion` skill for cross-project reuse.
+
+### 13.1 Chained-PR Quality Loop (default for any PR)
+
+Use whenever a change is delivered as a PR and must pass review before being opened. The loop ensures implementation, review, and fix are owned by **separate** subagents so the fix doesn't inherit the implementation's blind spots.
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ 1. IMPLEMENT       Subagente A: implementa el PR                │
+│ 2. REVIEW          Subagente B: revisa código + visual + tests  │
+│ 3. ¿Issues?                                                     │
+│    ├─ NO  → 5. CREATE PR                                         │
+│    └─ SÍ  ↓                                                      │
+│ 4. FIX LOOP                                                      │
+│    ├─ 4a. SOLUTION DESIGN   Subagente C: diseña el fix           │
+│    ├─ 4b. IMPLEMENT FIX     Subagente D (o A): aplica el fix    │
+│    └─ 4c. RE-REVIEW         Subagente B: verifica               │
+│         └─ ¿Limpio? volver a 4a si no                            │
+│ 5. CREATE PR         Subagente E (general): abre el PR           │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Phase rules:**
+
+- **Implement (A)**: writes code + tests + visual proof (captures, axe, lighthouse). Does **NOT** open the PR.
+- **Review (B)**: reads the diff + visual evidence + tests. Emits a single verdict: **`clean`** or **`N issues`** with severity (blocker / major / minor) and `file:line` for each issue.
+- **Fix loop (4a → 4b → 4c)**: C designs the fix (no implementation), D applies it, B re-reviews. **Maximum 3 iterations.** If still dirty after 3, escalate to the user with the issue log.
+- **Create PR (E)**: opens the PR with a structured description (what changed, evidence, review verdict, fix iterations if any).
+
+**Subagent mapping by PR type:**
+
+| PR type | A. Implementer | B. Reviewer | C. Solution Designer | D. Fix Implementer |
+|---|---|---|---|---|
+| Tokens, config, foundational CSS | `Minimal Change Engineer` | `Software Architect` | `Software Architect` | `Minimal Change Engineer` |
+| Reusable components, design system | `Frontend Developer` | `UX Architect` + `Code Reviewer` | `UX Architect` | `Frontend Developer` |
+| Visual page (template + CSS) | `Frontend Developer` | `Evidence Collector` (+ `UI Designer` for hero) | `UI Designer` | `Frontend Developer` |
+| Cross-cutting (refactor, motion, dark mode prep) | `Frontend Developer` | `Evidence Collector` + `Code Reviewer` | `UI Designer` (+ `Backend Architect` if routes touched) | `Frontend Developer` |
+| Pure backend (services, repos, JPA) | `Backend Architect` | `Code Reviewer` | `Software Architect` | `Backend Architect` |
+
+**Required artifact per PR** in `STATUS.md`:
+- Verdict (`clean` / `N issues`)
+- Per issue: severity, `file:line`, root cause, designed solution, applied fix, who verified
+- Links to captures / test runs as evidence
+
+### 13.2 When to use this pattern
+
+- Any non-trivial PR (more than a typo, a config tweak, or a single-line change).
+- Any PR that touches CSS, templates, or visual contracts.
+- Any PR that needs cross-cutting review (frontend + backend, security, performance).
+- Any work that would otherwise be a "blind commit + hope review catches it".
+
+### 13.3 When NOT to use this pattern
+
+- One-line fixes (hotfixes).
+- Pure doc updates (typos, CHANGELOG, comment fixes).
+- Test-only changes.
+- Reversible config tweaks (env vars, profile activation).
+
+For these, follow the `Minimal Change Engineer` or `general` agent alone.
+
+### 13.4 Parallel vs sequential
+
+- **Sequential** (default): the loop above runs phases one after the other. Use this when phases depend on each other (review needs the implementer's output).
+- **Parallel** (when tasks don't share files): launch `Frontend Developer` for templates and `Backend Architect` for services in the same message. Combine results at the end.
+
+### 13.5 STATUS.md contract
+
+The companion `STATUS.md` is the persistent log of the loop. Template per PR is in `docs/REDESIGN_PLAN.md` section 6. Required sections: **Goal**, **Instructions**, **Discoveries**, **Accomplished**, **Issues encontrados** (with table), **Next Steps**, **Relevant Files**. Update it after every phase, not only at the end.
+
+---
+
+## 14. Data Model
 
 ### Garment
 ```
@@ -413,7 +522,7 @@ content: TEXT NOT NULL
 
 ---
 
-## 14. Configuration Properties
+## 15. Configuration Properties
 
 ### `app.wardrobe` (WardrobeProperties)
 - `categories`: List of 11 category strings
@@ -447,7 +556,7 @@ content: TEXT NOT NULL
 
 ---
 
-## 15. Dev Setup
+## 16. Dev Setup
 
 ```bash
 # Start database
