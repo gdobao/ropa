@@ -9,6 +9,7 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -56,17 +57,18 @@ public class HealthConfig {
                 String baseUrl = aiProperties.baseUrl();
                 log.debug("Checking AI provider health at {}", baseUrl);
 
-                client
+                HttpStatusCode status = client
                         .get()
                         .uri(URI.create(baseUrl))
-                        .retrieve()
-                        .toBodilessEntity()
+                        .exchangeToMono(response -> response.releaseBody()
+                                .thenReturn(response.statusCode()))
                         .block(Duration.ofSeconds(5));
 
-                log.debug("AI provider at {} is reachable", baseUrl);
+                log.debug("AI provider at {} is reachable with status {}", baseUrl, status);
                 return Health.up()
                         .withDetail("baseUrl", baseUrl)
                         .withDetail("enabled", true)
+                        .withDetail("status", status != null ? status.value() : "unknown")
                         .build();
             } catch (Exception e) {
                 log.warn("AI provider health check failed: {}", e.getMessage());
