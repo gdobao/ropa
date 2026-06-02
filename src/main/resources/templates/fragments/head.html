@@ -6,7 +6,17 @@
   <title th:text="${title} + ' · Armario Capsula'">Armario Capsula</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Poppins:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <!--
+    PR 1 (Foundation) — extended the Google Fonts request to also load the
+    three editorial families declared in `docs/REDESIGN_PLAN.md` §2.1
+    (Instrument Serif 400/400i, Fraunces 700/700i, Inter variable). The
+    existing Playfair Display + Poppins families are kept so the rendered
+    look in PR 1 stays IDENTICAL to `main` — the migration to the editorial
+    families happens in PR 3+. All three new families have no callers yet;
+    they are simply pre-loaded so PR 2+ can start consuming them without an
+    extra round-trip to Google Fonts.
+  -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Poppins:wght@400;500;700;800;900&family=Instrument+Serif:ital@0;1&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,700&family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400..700&display=swap" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/tokens.css}">
   <link rel="stylesheet" th:href="@{/css/app.css}">
   <link rel="stylesheet" th:href="@{/css/companion/companion-base.css}">
