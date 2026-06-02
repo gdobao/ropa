@@ -25,15 +25,15 @@ public class ChatPolicyService {
 
     private static final List<String> REFUSAL_MESSAGES = List.of(
         "Entiendo que quieras un look armado, pero mi rol es ayudarte a entender mejor tu guardarropa, "
-        + "no elegir por vos. Te cuento que combinaciones de colores funcionan con lo que tenes?",
+        + "no elegir por ti. ¿Te cuento qué combinaciones de colores funcionan con lo que tienes?",
 
-        "Preferis que te de ideas y sugerencias en vez de elegir un outfit directamente. "
-        + "Decime que tipo de look estas buscando (formal, casual, para una ocasion) y te comento "
-        + "que opciones de tu armario podrian funcionar.",
+        "Prefiero darte ideas y sugerencias en vez de elegir un outfit directamente. "
+        + "Dime qué tipo de look buscas (formal, casual, para una ocasión) y te comento "
+        + "qué opciones de tu armario podrían funcionar.",
 
-        "Elegir un outfit definitivo no es mi funcion - la decision final siempre es tuya. "
-        + "Lo que SI puedo hacer es contarte como combinar ciertas prendas, "
-        + "que colores armonizan mejor, o que opciones tenes para una ocasion especifica."
+        "Elegir un outfit definitivo no es mi función: la decisión final siempre es tuya. "
+        + "Lo que sí puedo hacer es contarte cómo combinar ciertas prendas, "
+        + "qué colores armonizan mejor o qué opciones tienes para una ocasión específica."
     );
 
     private final ChatIntentClassifier intentClassifier;
@@ -116,7 +116,7 @@ public class ChatPolicyService {
             log.warn("Rate limit exceeded for owner {}: {} messages in window", ownerId, current);
             return PolicyDecision.block(
                 "rate_limit: demasiados mensajes en la ventana de " + config.refillMinutes() + " minuto(s)",
-                "Estas enviando muchos mensajes. Espera un momento antes de continuar.");
+                "Estás enviando muchos mensajes. Espera un momento antes de continuar.");
         }
 
         return PolicyDecision.allow("rate_ok");

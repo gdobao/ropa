@@ -2,21 +2,21 @@
 <html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Inspiración', activeNav='inspiration', backUrl='/dashboard', topTitle='Inspiración', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
 <body>
 <main>
-  <h1>Inspiracion</h1>
-  <p class="lead">Descubri ideas para combinar prendas y recrearlas con tu armario.</p>
+  <h1>Inspiración</h1>
+  <p class="lead">Descubre ideas para combinar prendas y recrearlas con tu armario.</p>
 
-  <section class="search" aria-label="Buscar inspiracion">
+  <section class="search" aria-label="Buscar inspiración">
     <span class="search-icon" aria-hidden="true">⌕</span>
-    <input type="search" placeholder="Buscar looks, estilos o colores" aria-label="Buscar inspiracion" />
+    <input type="search" placeholder="Buscar looks, estilos o colores" aria-label="Buscar inspiración" data-inspiration-search />
   </section>
 
   <section class="chips" aria-label="Filtros por etiquetas">
-    <span class="chip active">Todas</span>
-    <span class="chip" th:each="tag : ${allTags}" th:text="${tag}">Casual</span>
+    <button type="button" class="chip active" data-tag-filter="" aria-pressed="true">Todas</button>
+    <button type="button" class="chip" th:each="tag : ${allTags}" th:text="${tag}" th:attr="data-tag-filter=${tag}, aria-pressed=false">Casual</button>
   </section>
 
-  <section class="inspiration-grid" th:if="${inspirations != null and !inspirations.isEmpty()}" aria-label="Galeria de inspiracion">
-    <article class="inspiration-card" th:each="look : ${inspirations}">
+  <section class="inspiration-grid" th:if="${inspirations != null and !inspirations.isEmpty()}" aria-label="Galería de inspiración" data-inspiration-grid>
+    <article class="inspiration-card" th:each="look : ${inspirations}" data-inspiration-card>
       <div class="inspiration-visual" aria-hidden="true">
         <span class="block block-1" th:style="|background-color:${look.color1};|"></span>
         <span class="block block-2" th:style="|background-color:${look.color2};|"></span>
@@ -25,24 +25,83 @@
 
       <div class="inspiration-body">
         <h2 th:text="${look.name}">Look urbano</h2>
-        <p class="meta" th:text="${look.description}">Una combinacion equilibrada para el dia a dia.</p>
+        <p class="meta" th:text="${look.description}">Una combinación equilibrada para el día a día.</p>
 
         <div class="chips inspiration-chips" th:if="${look.tags != null and !look.tags.isEmpty()}">
-          <span class="chip" th:each="tag : ${look.tags}" th:text="${tag}">Neutros</span>
+          <button type="button" class="chip" th:each="tag : ${look.tags}" th:text="${tag}" th:attr="data-tag-filter=${tag}, aria-pressed=false">Neutros</button>
         </div>
 
-        <a class="btn" th:href="@{/wardrobe}">Ver como recrearlo</a>
+        <a class="btn" th:href="@{/wardrobe}">Ver cómo recrearlo</a>
       </div>
     </article>
   </section>
 
-  <section class="empty section" th:if="${inspirations == null or inspirations.isEmpty()}">
+  <section class="empty section" id="inspiration-empty-results" hidden>
     <div>
-      <h2>Aun no hay inspiracion disponible</h2>
-      <p class="meta">Sumaremos nuevos looks en breve para que puedas recrearlos con tu armario.</p>
-      <a class="btn primary" th:href="@{/wardrobe}">Ver como recrearlo</a>
+      <h2>No encontramos looks</h2>
+      <p class="meta">Prueba con otra búsqueda o quita el filtro activo.</p>
     </div>
   </section>
+
+  <section class="empty section" th:if="${inspirations == null or inspirations.isEmpty()}">
+    <div>
+      <h2>Aún no hay inspiración disponible</h2>
+      <p class="meta">Sumaremos nuevos looks en breve para que puedas recrearlos con tu armario.</p>
+      <a class="btn primary" th:href="@{/wardrobe}">Ver cómo recrearlo</a>
+    </div>
+  </section>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var search = document.querySelector('[data-inspiration-search]');
+    var cards = Array.from(document.querySelectorAll('[data-inspiration-card]'));
+    var empty = document.getElementById('inspiration-empty-results');
+    var activeTag = '';
+
+    function normalize(value) {
+      return (value || '').toLocaleLowerCase('es-ES').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function setActiveTag(tag) {
+      activeTag = tag || '';
+      document.querySelectorAll('[data-tag-filter]').forEach(function(button) {
+        var isActive = (button.dataset.tagFilter || '') === activeTag;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+      applyFilters();
+    }
+
+    function cardTags(card) {
+      return Array.from(card.querySelectorAll('.inspiration-chips [data-tag-filter]'))
+        .map(function(button) { return button.dataset.tagFilter || button.textContent.trim(); });
+    }
+
+    function applyFilters() {
+      var query = normalize(search ? search.value : '');
+      var visibleCount = 0;
+      cards.forEach(function(card) {
+        var haystack = normalize(card.innerText);
+        var tagMatch = !activeTag || cardTags(card).some(function(tag) { return tag === activeTag; });
+        var searchMatch = !query || haystack.includes(query);
+        var visible = tagMatch && searchMatch;
+        card.hidden = !visible;
+        if (visible) visibleCount += 1;
+      });
+      if (empty) empty.hidden = visibleCount !== 0;
+    }
+
+    document.addEventListener('click', function(event) {
+      var button = event.target.closest('[data-tag-filter]');
+      if (!button) return;
+      setActiveTag(button.dataset.tagFilter || '');
+    });
+
+    if (search) {
+      search.addEventListener('input', applyFilters);
+    }
+  });
+  </script>
 </main>
 </body>
 </html>

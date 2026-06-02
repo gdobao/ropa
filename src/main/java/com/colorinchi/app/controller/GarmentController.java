@@ -96,8 +96,8 @@ public class GarmentController {
     }
 
     private String usageMessage(int pct) {
-        if (pct == 0) return "Arrancá a planificar";
-        if (pct < 50) return "Vas bien, seguí sumando";
+        if (pct == 0) return "Empieza a planificar";
+        if (pct < 50) return "Vas bien, sigue sumando";
         if (pct < 100) return "Buen ritmo";
         return "Semana completa";
     }

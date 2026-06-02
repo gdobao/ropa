@@ -19,7 +19,7 @@
                 hx-target="#wardrobe-grid" hx-swap="outerHTML"
                 hx-disabled-elt="this"
                 aria-live="polite"
-                th:attr="hx-post=@{/wardrobe/{id}/favorite(id=${garment.id}, category=${activeCategory})}, aria-label=${garment.favorite} ? 'Quitar favorito' : 'Agregar favorito'">
+                th:attr="hx-post=@{/wardrobe/{id}/favorite(id=${garment.id}, category=${activeCategory})}, aria-label=${garment.favorite} ? 'Quitar de favoritos' : 'Añadir a favoritos'">
           <span th:text="${garment.favorite} ? '&#10084;' : '&#9825;'">&#9825;</span>
         </button>
         <button class="del-btn"
@@ -43,13 +43,13 @@
     </div>
     <div class="empty" th:if="${garments.isEmpty() and #strings.isEmpty(activeCategory)}">
       <div>
-        <h2>Tu armario esta esperando</h2>
-        <p class="meta">Carga tu primera prenda con una foto o genera un armario de prueba.</p>
-        <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;justify-content:center">
+        <h2>Tu armario está esperando</h2>
+        <p class="meta">Sube tu primera prenda con una foto o genera un armario de prueba.</p>
+        <div class="empty-actions">
           <a class="btn primary" th:href="@{/wardrobe/new}">Añadir prenda</a>
-          <form method="post" th:action="@{/wardrobe/seed}" style="display:inline">
+          <form method="post" th:action="@{/wardrobe/seed}" class="inline-form" data-loading-submit>
             <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-            <button type="submit" class="btn secondary" onclick="this.textContent='Generando…';this.disabled=true">🎲 Generar armario de prueba</button>
+            <button type="submit" class="btn secondary" data-loading-button data-loading-text="Generando…">Generar armario de prueba</button>
           </form>
         </div>
       </div>
@@ -102,6 +102,18 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
       region.textContent = heading.textContent;
     }
   }
+});
+
+document.querySelectorAll('[data-loading-submit]').forEach(function(form) {
+  form.addEventListener('submit', function() {
+    var button = form.querySelector('[data-loading-button]');
+    if (!button) return;
+    window.setTimeout(function() {
+      button.textContent = button.dataset.loadingText || 'Enviando…';
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+    }, 0);
+  });
 });
   </script>
 </main>

@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
         ModelAndView mav = new ModelAndView("error");
         mav.setStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         mav.addObject("errorTitle", "Error interno");
-        mav.addObject("errorMessage", "Ocurrió un error inesperado. Intenta de nuevo.");
+        mav.addObject("errorMessage", "Ocurrió un error inesperado. Inténtalo de nuevo.");
         return mav;
     }
 }

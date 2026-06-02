@@ -5,7 +5,7 @@
     <th:block th:replace="~{fragments/companion/sprite/default-sprite :: sprite}"></th:block>
 
     <div class="companion-bubble" id="companion-bubble" aria-hidden="true" data-companion-bubble>
-      <p id="companion-bubble-text" data-companion-bubble-text>¡Eh! Que estoy aquí, ¿no me ves?</p>
+      <p id="companion-bubble-text" data-companion-bubble-text>Estoy aquí si necesitas ideas para combinar.</p>
     </div>
 
     <button type="button"
@@ -34,12 +34,13 @@
 
   <section id="companion-panel"
            class="companion-panel"
+           role="dialog"
            aria-label="Conversación con Colorín"
            hidden
            data-companion-panel>
     <header class="companion-panel-header" data-companion-header>
       <div>
-        <p class="companion-kicker">Tu companion de estilo</p>
+        <p class="companion-kicker">Tu asistente de estilo</p>
         <h2 id="companion-title">Colorín</h2>
       </div>
       <div class="companion-panel-actions" data-companion-actions>
@@ -56,12 +57,12 @@
     </header>
 
     <div class="companion-context" id="companion-context" role="status" aria-live="polite" data-companion-context>
-      Preparando señales de tu armario...
+      Preparando señales de tu armario…
     </div>
 
     <div class="companion-thread" id="companion-thread" aria-live="polite" aria-label="Conversación con el ayudante" data-companion-thread>
       <div class="companion-message companion-message-assistant" data-companion-message>
-        <div class="companion-message-content" data-companion-message-content>¡Hola! Soy Colorín. Cuéntame qué necesitas y le damos una vuelta a tu armario.</div>
+        <div class="companion-message-content" data-companion-message-content>¡Hola! Soy Colorín. Cuéntame qué necesitas y revisamos tu armario.</div>
       </div>
     </div>
 
@@ -74,7 +75,7 @@
     </form>
 
     <p id="companion-status" class="sr-only" role="status" aria-live="polite" data-companion-status>
-      Ayudante de estilo cerrado. Usá Shift más flechas para moverlo cuando esté cerrado.
+      Ayudante de estilo cerrado. Usa Shift más flechas para moverlo cuando esté cerrado.
     </p>
   </section>
 </th:block>

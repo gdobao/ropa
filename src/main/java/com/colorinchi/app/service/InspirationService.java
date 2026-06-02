@@ -25,11 +25,11 @@ public class InspirationService {
 
     private List<InspirationLook> seedLooks() {
         return List.of(
-            new InspirationLook(1, "Cápsula oficina", "6 piezas para toda la semana laboral. Combiná neutros con un toque de color.",
+            new InspirationLook(1, "Cápsula oficina", "6 piezas para toda la semana laboral. Combina neutros con un toque de color.",
                 List.of("Minimal", "Oficina"), "Oficina",
                 List.of("Top", "Pantalón", "Chaqueta", "Zapatos"),
                 "var(--accent)", "var(--sand)", "var(--terracotta)"),
-            new InspirationLook(2, "Cena elegante", "Look sofisticado con prendas que ya tenés. Vestido + tacon + cartera.",
+            new InspirationLook(2, "Cena elegante", "Look sofisticado con prendas que ya tienes. Vestido + tacón + bolso.",
                 List.of("Elegante", "Cena"), "Cena",
                 List.of("Vestido", "Zapatos", "Accesorio"),
                 "var(--fg)", "var(--teal)", "var(--accent)"),

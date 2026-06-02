@@ -4,7 +4,7 @@
 <main>
   <div class="preview"><img th:src="${garmentReviewForm.imageUrl}" alt="Imagen de prenda"></div>
   <p class="notice">Revisá los datos sugeridos. La foto puede cambiar el color por la luz o las sombras.</p>
-  <p class="notice" th:if="${garmentReviewForm.aiConfidence != null && garmentReviewForm.aiConfidence > 0 && garmentReviewForm.aiType != null && !garmentReviewForm.aiType.isBlank()}">Detectamos la prenda automaticamente. Revisa y corrige antes de guardar.</p>
+  <p class="notice" th:if="${garmentReviewForm.aiConfidence != null && garmentReviewForm.aiConfidence > 0 && garmentReviewForm.aiType != null && !garmentReviewForm.aiType.isBlank()}">Detectamos la prenda automáticamente. Revisa y corrige antes de guardar.</p>
   <p class="notice error" th:if="${aiError}" th:text="${aiError}" role="alert" aria-live="polite">Error IA</p>
   <form th:action="@{/wardrobe}" th:object="${garmentReviewForm}" method="post" class="section">
     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">

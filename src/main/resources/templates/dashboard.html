@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Inicio', activeNav='dashboard', backUrl=null, topTitle='Colorinchi', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" th:replace="~{layout :: layout(content=~{::main}, title='Inicio', activeNav='dashboard', backUrl='', topTitle='Colorinchi', actionUrl='', actionIcon='')}" xmlns:th="http://www.thymeleaf.org">
 <body>
 <main>
 
@@ -8,7 +8,7 @@
     <div>
       <span class="big-num" th:text="${usagePercent + '%'}">0%</span>
       <p>Índice de uso</p>
-      <p class="meta" style="color:color-mix(in oklch, var(--surface) 82%, transparent);" th:text="${usageMessage}">Arrancá a planificar</p>
+      <p class="meta" style="color:color-mix(in oklch, var(--surface) 82%, transparent);" th:text="${usageMessage}">Empieza a planificar</p>
     </div>
     <div class="ring"></div>
   </article>
@@ -37,7 +37,7 @@
   <!-- CTA -->
   <section class="section">
     <p class="lead">Alta asistida</p>
-    <p class="meta">Subí una foto de tu prenda y la IA te ayuda a clasificarla.</p>
+    <p class="meta">Sube una foto de tu prenda y la IA te ayuda a clasificarla.</p>
     <a th:href="@{/wardrobe/new}" class="btn primary full">+ Nueva prenda</a>
   </section>
 
@@ -45,7 +45,7 @@
   <section class="challenge" th:if="${garmentCount > 0}">
     <div>
       <h2>Reto cápsula</h2>
-      <p>7 días · 7 looks creados solo con lo que ya tenés.</p>
+      <p>7 días · 7 looks creados solo con lo que ya tienes.</p>
       <a class="mini-btn" th:href="@{/weekly-plan}" th:text="${stats.plannedDays + '/7 looks listos'}">0/7 looks listos</a>
     </div>
     <div class="outfit" aria-label="Look cápsula">👗</div>

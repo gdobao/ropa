@@ -1,9 +1,17 @@
 <!doctype html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <header th:fragment="topBar(backUrl, title, actionUrl, actionIcon)" class="top-bar">
-  <a th:href="${backUrl}" class="icon" aria-label="Volver">‹</a>
+  <a th:href="${backUrl}" class="icon" aria-label="Volver">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M15.5 5.5 9 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
   <h1 th:text="${title}">Titulo</h1>
-  <a th:if="${actionUrl != null and !actionUrl.isEmpty()}" th:href="${actionUrl}" class="icon" th:attr="aria-label=${actionIcon == '+' ? 'Añadir prenda' : 'Acción principal'}" th:text="${actionIcon}">+</a>
+  <a th:if="${actionUrl != null and !actionUrl.isEmpty()}" th:href="${actionUrl}" class="icon" th:attr="aria-label=${actionIcon == '+' ? 'Añadir prenda' : 'Acción principal'}">
+    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+  </a>
   <span th:unless="${actionUrl != null and !actionUrl.isEmpty()}"></span>
 </header>
 </html>

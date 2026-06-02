@@ -3,7 +3,7 @@
 <head th:fragment="head(title)">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="${title} + ' · Armario Capsula'">Armario Capsula</title>
+  <title th:text="${title} + ' · Armario Cápsula'">Armario Cápsula</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Poppins:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -35,7 +35,7 @@
                 div.id = "rate-limit-toast";
                 div.className = "notice error";
                 div.style.cssText = "position:fixed;top:var(--space-md);left:50%;transform:translateX(-50%);z-index:9999;max-width:400px;text-align:center;";
-                div.innerHTML = "<p><strong>Demasiadas solicitudes</strong></p><p style='font-size:.875rem;'>Esper\u00E1 unos minutos antes de intentar de nuevo.</p><a href='/wardrobe' class='btn' style='margin-top:var(--space-sm);'>Volver al armario</a>";
+                div.innerHTML = "<p><strong>Demasiadas solicitudes</strong></p><p style='font-size:.875rem;'>Espera unos minutos antes de intentarlo de nuevo.</p><a href='/wardrobe' class='btn' style='margin-top:var(--space-sm);'>Volver al armario</a>";
                 document.body.insertBefore(div, document.body.firstChild);
             }
             setTimeout(function() {

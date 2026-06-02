@@ -1,20 +1,20 @@
 <!doctype html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <nav th:fragment="nav(activeNav)" class="bottom-nav">
-  <a th:href="@{/wardrobe}" th:classappend="${activeNav == 'wardrobe' || activeNav == 'dashboard'} ? 'active'">
-    <span>⌂</span>Armario
+  <a th:href="@{/wardrobe}" th:classappend="${activeNav == 'wardrobe' || activeNav == 'dashboard'} ? 'active'" th:attr="aria-current=${activeNav == 'wardrobe' || activeNav == 'dashboard'} ? 'page' : null">
+    <span aria-hidden="true"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M8 4h8l3 4-2 2v10H7V10L5 8Z"/></svg></span>Armario
   </a>
-  <a th:href="@{/chat}" th:classappend="${activeNav == 'chat'} ? 'active'">
-    <span>💬</span>Chat
+  <a th:href="@{/chat}" th:classappend="${activeNav == 'chat'} ? 'active'" th:attr="aria-current=${activeNav == 'chat'} ? 'page' : null">
+    <span aria-hidden="true"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M5 5h14v10H9l-4 4Z"/></svg></span>Chat
   </a>
-  <a th:href="@{/wardrobe/new}" th:classappend="${activeNav == 'add'} ? 'active'" class="nav-plus" aria-label="Añadir prenda">
-    <span class="plus">+</span>
+  <a th:href="@{/wardrobe/new}" th:classappend="${activeNav == 'add'} ? 'active'" th:attr="aria-current=${activeNav == 'add'} ? 'page' : null" class="nav-plus" aria-label="Añadir prenda">
+    <span class="plus" aria-hidden="true"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
   </a>
-  <a th:href="@{/weekly-plan}" th:classappend="${activeNav == 'weekly'} ? 'active'">
-    <span>▦</span>Plan
+  <a th:href="@{/weekly-plan}" th:classappend="${activeNav == 'weekly'} ? 'active'" th:attr="aria-current=${activeNav == 'weekly'} ? 'page' : null">
+    <span aria-hidden="true"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M5 4h14v16H5Zm4 0v16M15 4v16M5 10h14M5 16h14" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></span>Plan
   </a>
-  <a th:href="@{/profile}" th:classappend="${activeNav == 'profile'} ? 'active'">
-    <span>♙</span>Perfil
+  <a th:href="@{/profile}" th:classappend="${activeNav == 'profile'} ? 'active'" th:attr="aria-current=${activeNav == 'profile'} ? 'page' : null">
+    <span aria-hidden="true"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0Z"/></svg></span>Perfil
   </a>
 </nav>
 </html>

@@ -47,6 +47,6 @@ class GlobalExceptionHandlerTest {
         assertThat(mav.getViewName()).isEqualTo("error");
         assertThat(mav.getStatus()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(mav.getModel()).containsEntry("errorTitle", "Error interno");
-        assertThat(mav.getModel()).containsEntry("errorMessage", "Ocurrió un error inesperado. Intenta de nuevo.");
+        assertThat(mav.getModel()).containsEntry("errorMessage", "Ocurrió un error inesperado. Inténtalo de nuevo.");
     }
 }

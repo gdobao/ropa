@@ -9,7 +9,7 @@
   <section class="empty section" th:if="${stats == null or stats.totalGarments() == 0}">
     <p class="empty-emoji">👤</p>
     <h3>Aún no hay datos</h3>
-    <p class="meta">Agregá tus primeras prendas para ver estadísticas.</p>
+    <p class="meta">Añade tus primeras prendas para ver estadísticas.</p>
     <a class="btn primary" th:href="@{/wardrobe/new}">Añadir prenda</a>
   </section>
 
@@ -23,7 +23,7 @@
       </div>
       <div>
         <h2>Uso semanal</h2>
-        <p class="meta" th:text="${usageMessage}">Arrancá a planificar</p>
+        <p class="meta" th:text="${usageMessage}">Empieza a planificar</p>
       </div>
     </article>
 

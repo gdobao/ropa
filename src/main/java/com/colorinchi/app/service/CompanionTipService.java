@@ -32,17 +32,17 @@ public class CompanionTipService {
             return new CompanionTipContext(
                     "Todavía no hay prendas cargadas en el armario.",
                     List.of(
-                            "Cargá algunas prendas base para que el companion pueda detectar combinaciones y huecos reales.",
-                            "Priorizá prendas de uso frecuente con color y material completos para mejorar las sugerencias.",
-                            "Armá al menos un día del plan semanal para que el companion pueda detectar repeticiones o faltantes."));
+                            "Carga algunas prendas base para que el asistente pueda detectar combinaciones y huecos reales.",
+                            "Prioriza prendas de uso frecuente con color y material completos para mejorar las sugerencias.",
+                            "Prepara al menos un día del plan semanal para que el asistente pueda detectar repeticiones o faltantes."));
         }
 
         List<String> tips = new ArrayList<>();
 
         if (context.plannedDays() == 0) {
-            tips.add("No hay días planificados todavía: armá aunque sea 1 o 2 días para que el companion pueda detectar repeticiones y huecos.");
+            tips.add("No hay días planificados todavía: prepara al menos 1 o 2 días para que el asistente pueda detectar repeticiones y huecos.");
         } else if (context.plannedDays() < 3) {
-            tips.add("La planificación semanal todavía es corta: sumar más días te va a dar mejor continuidad entre looks.");
+            tips.add("La planificación semanal todavía es corta: sumar más días te dará mejor continuidad entre looks.");
         }
 
         if (context.todayPlan() != null && context.todayPlan().garmentCount() == 0 && context.plannedDays() > 0) {
@@ -50,7 +50,7 @@ public class CompanionTipService {
         }
 
         if (context.colors().isEmpty()) {
-            tips.add("Faltan colores registrados en las prendas: completar ese dato mejora mucho las recomendaciones del companion.");
+            tips.add("Faltan colores registrados en las prendas: completar ese dato mejora mucho las recomendaciones del asistente.");
         } else if (hasDominantColor(context)) {
             ColorInfo dominant = context.colors().get(0);
             tips.add("El armario está muy concentrado en " + dominant.colorName()
@@ -69,7 +69,7 @@ public class CompanionTipService {
 
             if (unknownCount > 0) {
                 tips.add(unknownCount + " prenda(s) no tienen una estación colorimétrica definida: "
-                        + "revisá sus colores para obtener mejores sugerencias.");
+                        + "revisa sus colores para obtener mejores sugerencias.");
             }
 
             List<Map.Entry<String, Long>> realSeasons = context.colorSeasons().entrySet().stream()
@@ -94,7 +94,7 @@ public class CompanionTipService {
         }
 
         if (context.favoritesCount() == 0) {
-            tips.add("Todavía no hay prendas favoritas marcadas: eso le va a dar al companion una señal clara de preferencia real.");
+            tips.add("Todavía no hay prendas favoritas marcadas: eso le dará al asistente una señal clara de preferencia real.");
         }
 
         if (context.seasons().isEmpty()) {
@@ -102,7 +102,7 @@ public class CompanionTipService {
         }
 
         if (tips.isEmpty()) {
-            tips.add("El armario ya tiene buena base de datos: el companion puede enfocarse en optimizar rotación, contraste y planificación fina.");
+            tips.add("El armario ya tiene buena base de datos: el asistente puede enfocarse en optimizar rotación, contraste y planificación fina.");
         }
 
         return new CompanionTipContext(buildSummary(context), tips.stream().distinct().limit(3).toList());
