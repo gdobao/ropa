@@ -966,6 +966,19 @@ h3 { margin: 0; font-size: var(--text-md); }
   text-align: center;
 }
 
+.toast-message p {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-sm);
+}
+
+.toast-message p:last-child {
+  margin-bottom: 0;
+}
+
+.toast-message a.btn {
+  margin-top: var(--space-sm);
+}
+
 /* Responsive */
 @media (min-width: 820px) {
   .stat-grid { grid-template-columns: repeat(4, 1fr); }
@@ -1938,6 +1951,10 @@ h3 { margin: 0; font-size: var(--text-md); }
   color: var(--muted);
   background: color-mix(in oklch, var(--sand) 70%, var(--surface));
   border-top: 1px solid var(--border);
+}
+
+.chat-reconnecting[hidden] {
+  display: none;
 }
 
 .chat-reconnecting-dot {
