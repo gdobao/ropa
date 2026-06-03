@@ -312,6 +312,21 @@ El indicador `aiProvider` considera saludable cualquier respuesta HTTP del prove
 | `app.upload.max-pixels` | `24000000` | Total máximo de píxeles antes de redimensionar |
 | `app.admin.token` | vacío | Token admin opcional |
 
+### Perfil de producción (`prod`)
+
+Activar con `--spring.profiles.active=prod` o `SPRING_PROFILES_ACTIVE=prod`.
+
+| Variable | Requerida | Comportamiento |
+|---|---|---|
+| `DB_PASSWORD` | Sí | Sin default; Spring Boot falla si no está configurada |
+| `ADMIN_TOKEN` | Recomendado | Vacío = admin cerrado; se registra warning al arrancar |
+
+```bash
+export SPRING_PROFILES_ACTIVE=prod
+export DB_PASSWORD=secreto-produccion
+export ADMIN_TOKEN=token-admin-produccion
+```
+
 ### Modelos IA configurados
 
 | ID | Nombre | Provider | Default |
