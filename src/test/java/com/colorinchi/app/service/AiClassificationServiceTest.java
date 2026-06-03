@@ -82,7 +82,7 @@ class AiClassificationServiceTest {
         AiClassificationResponse response = service(Duration.ofSeconds(3)).classify("/uploads/" + image.getFileName());
 
         assertThat(response.hasPrediction()).isFalse();
-        assertThat(response.error()).contains("Cargala manualmente");
+        assertThat(response.error()).contains("Cárgala manualmente");
     }
 
     @Test
@@ -102,7 +102,7 @@ class AiClassificationServiceTest {
         AiClassificationResponse response = service(Duration.ofMillis(500)).classify("/uploads/" + image.getFileName());
 
         assertThat(response.hasPrediction()).isFalse();
-        assertThat(response.error()).contains("Cargala manualmente");
+        assertThat(response.error()).contains("Cárgala manualmente");
     }
 
     @Test
@@ -120,7 +120,7 @@ class AiClassificationServiceTest {
         AiClassificationResponse response = service(Duration.ofSeconds(3)).classify("/uploads/" + image.getFileName());
 
         assertThat(response.hasPrediction()).isFalse();
-        assertThat(response.error()).contains("Cargala manualmente");
+        assertThat(response.error()).contains("Cárgala manualmente");
     }
 
     @Test
@@ -158,7 +158,7 @@ class AiClassificationServiceTest {
         AiClassificationResponse response = service(Duration.ofSeconds(3)).classify("/uploads/nonexistent.jpg");
 
         assertThat(response.hasPrediction()).isFalse();
-        assertThat(response.error()).contains("Cargala manualmente");
+        assertThat(response.error()).contains("Cárgala manualmente");
     }
 
     @Test
@@ -169,7 +169,7 @@ class AiClassificationServiceTest {
         AiClassificationResponse response = service(Duration.ofSeconds(3)).classify("/etc/passwd");
 
         assertThat(response.hasPrediction()).isFalse();
-        assertThat(response.error()).contains("Cargala manualmente");
+        assertThat(response.error()).contains("Cárgala manualmente");
     }
 
     @Test
@@ -213,7 +213,7 @@ class AiClassificationServiceTest {
         AiClassificationResponse response = service(Duration.ofSeconds(3)).classify("/uploads/" + image.getFileName());
 
         assertThat(response.hasPrediction()).isFalse();
-        assertThat(response.error()).contains("Cargala manualmente");
+        assertThat(response.error()).contains("Cárgala manualmente");
     }
 
     @Test

@@ -3,7 +3,7 @@
 <body>
 <main>
   <h1>Nueva prenda</h1>
-  <p class="lead">Sacá o subí una foto clara de una sola prenda. Después vas a poder revisar y corregir los datos antes de guardarla.</p>
+  <p class="lead">Haz o sube una foto clara de una sola prenda. Después podrás revisar y corregir los datos antes de guardarla.</p>
   <p class="notice error" th:if="${error}" th:text="${error}" role="alert" aria-live="polite">Error</p>
   <form class="upload-card" id="garment-upload-form" th:action="@{/wardrobe/analyze}" method="post" enctype="multipart/form-data" novalidate>
     <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -69,7 +69,7 @@
 
     if (!file) {
       meta.textContent = 'Todavía no seleccionaste una imagen.';
-      setError('Seleccioná una imagen para continuar.');
+      setError('Selecciona una imagen para continuar.');
       return;
     }
 
@@ -90,7 +90,7 @@
       preview.hidden = false;
       submit.disabled = false;
       if (previewImage.naturalWidth < 600 || previewImage.naturalHeight < 600) {
-        setWarning('La imagen es chica. Si podés, usá una foto de al menos 600 × 600 px para mejorar el análisis.');
+        setWarning('La imagen es pequeña. Si puedes, usa una foto de al menos 600 × 600 px para mejorar el análisis.');
       }
     };
     previewImage.src = objectUrl;
@@ -99,7 +99,7 @@
   form.addEventListener('submit', function (event) {
     if (submit.disabled) {
       event.preventDefault();
-      setError('Seleccioná una imagen válida para continuar.');
+      setError('Selecciona una imagen válida para continuar.');
       return;
     }
     submit.disabled = true;

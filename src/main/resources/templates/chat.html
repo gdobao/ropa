@@ -22,7 +22,7 @@
           </a>
         </th:block>
         <th:block th:if="${#lists.isEmpty(sessions)}">
-          <div style="padding: var(--space-md); text-align: center; color: var(--muted); font-size: var(--text-xs);">
+          <div class="chat-session-empty">
             Sin conversaciones todavía
           </div>
         </th:block>
@@ -54,11 +54,19 @@
             <div class="chat-empty-icon">💬</div>
             <h2>Asistente de Moda</h2>
             <p th:if="${currentSession == null}">
-              Iniciá una conversación sobre moda. Consultá sobre combinaciones, colores, o pedí consejos de estilo usando tu armario como referencia.
+              Empieza una conversación sobre moda. Consulta combinaciones, colores o consejos de estilo usando tu armario como referencia.
             </p>
             <p th:if="${currentSession != null}">
-              Enviá un mensaje para empezar. Consultá sobre tus prendas, combinaciones, o pedí consejos de estilo.
+              Envía un mensaje para empezar. Consulta sobre tus prendas, combinaciones o consejos de estilo.
             </p>
+            <button th:if="${currentSession == null}" type="button" class="btn primary chat-empty-cta" data-chat-new-session>
+              Crear conversación
+            </button>
+            <div th:if="${currentSession != null}" class="chat-quick-prompts" aria-label="Sugerencias rápidas">
+              <button type="button" data-chat-prompt="¿Qué puedo combinar esta semana?">Qué combinar esta semana</button>
+              <button type="button" data-chat-prompt="¿Qué colores funcionan mejor con mi armario?">Colores que encajan</button>
+              <button type="button" data-chat-prompt="Dame ideas para un look casual.">Look casual</button>
+            </div>
           </div>
         </div>
 
@@ -69,7 +77,7 @@
                  class="chat-message"
                  th:attr="data-message-id=${msg.id}, data-role=${msg.role}">
               <div class="chat-message-role">
-                <th:block th:if="${msg.role == 'user'}">Vos</th:block>
+                <th:block th:if="${msg.role == 'user'}">Tú</th:block>
                 <th:block th:if="${msg.role == 'assistant'}">Asistente</th:block>
               </div>
               <div class="chat-message-content" th:text="${msg.content}">contenido</div>
@@ -114,7 +122,7 @@
 
       <!-- Copy banner -->
       <div class="chat-copy-banner">
-        <span>✨</span> Te ayudo a pensar el look, no a elegirlo por vos
+        <span>✨</span> Te ayudo a pensar el look, no a elegirlo por ti
       </div>
 
       <!-- Input area -->
@@ -122,7 +130,7 @@
         <div class="chat-input-wrapper">
           <div class="chat-input-row">
             <form id="chat-form" style="display:contents;">
-              <textarea class="chat-input" id="chat-input" rows="1" placeholder="Consultá sobre moda..." aria-label="Mensaje"></textarea>
+              <textarea class="chat-input" id="chat-input" rows="1" placeholder="Consulta sobre moda..." aria-label="Mensaje"></textarea>
               <button class="chat-send-btn" id="chat-send-btn" type="submit" aria-label="Enviar">→</button>
             </form>
           </div>
@@ -146,8 +154,8 @@
       </div>
 
       <!-- No session selected state -->
-      <div th:if="${currentSession == null}" style="padding: var(--space-md); text-align: center; color: var(--muted); font-size: var(--text-sm); border-top: 1px solid var(--border);">
-        Seleccioná una conversación o <a href="#" onclick="Chat.createNewSession(); return false;" style="color: var(--accent); font-weight: 700;">creá una nueva</a>
+      <div th:if="${currentSession == null}" class="chat-no-session">
+        Selecciona una conversación o <button type="button" data-chat-new-session>crea una nueva</button>.
       </div>
     </div>
   </div>

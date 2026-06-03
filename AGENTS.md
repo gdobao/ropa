@@ -152,6 +152,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - HTMX fragments use stable wrapper IDs
 - `th:attr` with multiple HTMX attributes needs careful quoting
 - Layout via `th:replace` on `layout.html` with fragment parameters
+- **Map access: use `map.get(key)`, NOT `map[key]`** — in Thymeleaf 3.1.x with SpEL (Spring Boot 3.5), `${map[var]}` does not evaluate correctly for `Map<String, ?>`. The page renders the map as empty even when it has data. Use `${map.get(var)}` and `${map.containsKey(var)}` explicitly. Affected file: `weekly-plan.html` (bug discovered June 2026).
 
 ### CSS
 - Design tokens in `tokens.css` as CSS custom properties on `:root`
@@ -297,6 +298,13 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 
 ### JPA
 - `ChatMessage.content` uses `@Column(columnDefinition = "TEXT")` to match Flyway's schema — H2 create-drop now produces TEXT too; always align `columnDefinition` with the Flyway migration when using DDL-auto=create-drop in tests
+
+### Week Plan Day Names (deliberate inconsistency, do NOT normalize)
+- `application.yml:86` configures `days: Lunes, Martes, Miercoles, Jueves, Viernes, Sabado, Domingo` (no tildes).
+- `WardrobeContextAssembler.DAY_MAP` (`service/WardrobeContextAssembler.java:40,43`) maps the same ASCII keys.
+- `weekly-plan.html:20,28` displays the day via a ternary that adds the tildes for `Miércoles`/`Sábado` (display only).
+- `data-day`, form values, validation, and the `week_plans.day_of_week` column all carry the ASCII form end-to-end — this is internally consistent and the UI shows tildes correctly.
+- **Do NOT "fix" this by adding tildes to the config/Java/tests.** Doing so would break validation against existing DB rows, which still hold `Miercoles`/`Sabado`, and would require a Flyway V21 data migration (`UPDATE week_plans SET day_of_week = ...`). User decision (June 2026): keep as code smell, do not migrate. If normalization is ever requested, see commit message in `fix/ui-review-foundations` branch (June 2026) for the full migration checklist.
 
 ### Tests
 - **NEVER run tests against the shared PostgreSQL** — H2 with `create-drop` will destroy your data

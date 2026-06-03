@@ -18,18 +18,48 @@
 
   function savePosition() {
     const rect = root.getBoundingClientRect();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      left: rect.left,
+      top: rect.top,
+      viewport: window.matchMedia('(min-width: 820px)').matches ? 'desktop' : 'mobile'
+    }));
   }
 
-  function restorePosition() {
+  function savedPosition() {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
       if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
-        window.CompanionPositioning.setPosition(root, saved.left, saved.top);
+        const currentViewport = window.matchMedia('(min-width: 820px)').matches ? 'desktop' : 'mobile';
+        if (saved.viewport !== currentViewport) {
+          localStorage.removeItem(STORAGE_KEY);
+          return null;
+        }
+        return saved;
       }
     } catch (ignored) {
       // ignore corrupted localStorage
     }
+    return null;
+  }
+
+  function hasSavedPosition() {
+    return savedPosition() !== null;
+  }
+
+  function clearRootPosition() {
+    root.style.left = '';
+    root.style.top = '';
+    root.style.right = '';
+    root.style.bottom = '';
+  }
+
+  function restorePosition() {
+    const saved = savedPosition();
+    if (saved) {
+      window.CompanionPositioning.setPosition(root, saved.left, saved.top);
+      return;
+    }
+    clearRootPosition();
   }
 
   function setStatus(message) {
@@ -127,7 +157,11 @@
   }
 
   function repositionOpenPanel() {
-    window.CompanionPositioning.ensureRootInViewport(root);
+    if (hasSavedPosition()) {
+      window.CompanionPositioning.ensureRootInViewport(root);
+    } else {
+      clearRootPosition();
+    }
     if (!state.isOpen) return;
     state.anchorRect = window.CompanionPositioning.currentAnchorRect(root);
     window.CompanionPositioning.positionPanelForViewport(root, els.panel, state.anchorRect);
@@ -152,7 +186,7 @@
 
   function resetPosition() {
     localStorage.removeItem(STORAGE_KEY);
-    root.removeAttribute('style');
+    clearRootPosition();
     repositionOpenPanel();
     setStatus('Posición del ayudante restablecida.');
     els.input.focus();
@@ -171,7 +205,7 @@
     const done = function () {
       state.isResetting = false;
       els.newChat.disabled = false;
-      addMessage('assistant', '¡Hola! Soy Colorín. Cuéntame qué necesitas y le damos una vuelta a tu armario.');
+      addMessage('assistant', '¡Hola! Soy Colorín. Cuéntame qué necesitas y revisamos tu armario.');
       setStatus('Conversación reiniciada.');
     };
 
@@ -263,7 +297,7 @@
       state.retryCount = (state.retryCount || 0) + 1;
       if (state.retryCount > 3) {
         if (!state.isSending) return;
-        addMessage('error', 'Se perdió la conexión con el ayudante. Intentá de nuevo.');
+        addMessage('error', 'Se perdió la conexión con el ayudante. Inténtalo de nuevo.');
         finishStream();
       }
     });
@@ -297,7 +331,7 @@
         startStream(data.runId);
       })
       .catch(function (err) {
-        addMessage('error', err.message || 'No pude enviar el mensaje. Probá de nuevo.');
+        addMessage('error', err.message || 'No pude enviar el mensaje. Prueba de nuevo.');
         state.isSending = false;
         setInputDisabled(false);
       });

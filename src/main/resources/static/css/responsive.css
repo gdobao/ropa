@@ -21,7 +21,7 @@
   }
 
   .app {
-    padding: var(--space-lg) var(--space-lg) calc(var(--nav-h) + var(--space-md));
+    padding: var(--space-lg) var(--space-lg) calc(var(--nav-h) + 104px + env(safe-area-inset-bottom));
   }
 }
 

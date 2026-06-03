@@ -80,8 +80,8 @@ public class RateLimitingInterceptor implements HandlerInterceptor {
         int current = counter.incrementAndGet();
         if (current > config.capacity()) {
             throw new RateLimitExceededException(
-                    "Demasiadas solicitudes. Esperá " + config.refillMinutes()
-                            + " minutos antes de intentar de nuevo."
+                    "Demasiadas solicitudes. Espera " + config.refillMinutes()
+                            + " minutos antes de intentarlo de nuevo."
             );
         }
     }

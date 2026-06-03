@@ -39,7 +39,7 @@ class CompanionTipServiceTest {
 
         assertThat(result.summary()).isEqualTo("Todavía no hay prendas cargadas en el armario.");
         assertThat(result.tips()).hasSize(3);
-        assertThat(result.tips().get(0)).contains("Cargá algunas prendas base");
+        assertThat(result.tips().get(0)).contains("Carga algunas prendas base");
     }
 
     @Test
@@ -64,7 +64,7 @@ class CompanionTipServiceTest {
 
         assertThat(result.summary()).contains("Armario con 6 prendas, dominado por Negro.");
         assertThat(result.tips()).containsExactly(
-                "La planificación semanal todavía es corta: sumar más días te va a dar mejor continuidad entre looks.",
+                "La planificación semanal todavía es corta: sumar más días te dará mejor continuidad entre looks.",
                 "Hay prendas planificadas en la semana, pero hoy no tiene look armado: conviene cerrar ese hueco primero.",
                 "El armario está muy concentrado en Negro: conviene sumar acentos o neutros de apoyo para ampliar combinaciones.");
     }
@@ -90,8 +90,8 @@ class CompanionTipServiceTest {
         assertThat(result.summary()).contains("Armario con 3 prendas, dominado por Negro.");
         assertThat(result.summary()).endsWith("Todavía no hay planificación semanal cargada.");
         assertThat(result.tips()).contains(
-                "No hay días planificados todavía: armá aunque sea 1 o 2 días para que el companion pueda detectar repeticiones y huecos.",
-                "Todavía no hay prendas favoritas marcadas: eso le va a dar al companion una señal clara de preferencia real.");
+                "No hay días planificados todavía: prepara al menos 1 o 2 días para que el asistente pueda detectar repeticiones y huecos.",
+                "Todavía no hay prendas favoritas marcadas: eso le dará al asistente una señal clara de preferencia real.");
         assertThat(result.tips()).hasSize(2);
     }
 
@@ -117,7 +117,7 @@ class CompanionTipServiceTest {
         assertThat(result.summary()).contains("Hay 4 día(s) planificados esta semana");
         assertThat(result.summary()).contains("Hay 2 favorita(s) marcadas");
         assertThat(result.tips()).containsExactly(
-                "Faltan colores registrados en las prendas: completar ese dato mejora mucho las recomendaciones del companion.",
+                "Faltan colores registrados en las prendas: completar ese dato mejora mucho las recomendaciones del asistente.",
                 "No hay temporadas cargadas en las prendas: completar ese dato ayuda a filtrar mejor qué combinar según clima y uso.");
     }
 }

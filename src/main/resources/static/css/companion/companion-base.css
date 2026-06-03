@@ -5,7 +5,7 @@
 .companion-assistant {
   position: fixed;
   right: calc(env(safe-area-inset-right) + var(--space-md));
-  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--space-md));
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);
   z-index: var(--z-companion);
   display: grid;
   justify-items: end;
@@ -132,9 +132,9 @@
     position: fixed;
     left: var(--space-sm);
     right: var(--space-sm);
-    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--space-sm));
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--space-md));
     width: auto;
-    max-height: calc(100vh - var(--top-bar-h) - var(--nav-h) - var(--space-sm));
+    max-height: calc(100vh - var(--top-bar-h) - var(--nav-h) - 32px);
   }
 }
 

@@ -59,7 +59,7 @@ public class AiClassificationService {
             return parseResponse(response);
         } catch (Exception ex) {
             log.warn("Garment AI classification failed: {}", ex.getMessage(), ex);
-            return AiClassificationResponse.empty(properties.model(), "No pudimos analizar la imagen automaticamente. Cargala manualmente.");
+            return AiClassificationResponse.empty(properties.model(), "No pudimos analizar la imagen automáticamente. Cárgala manualmente.");
         }
     }
 

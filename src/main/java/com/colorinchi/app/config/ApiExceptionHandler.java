@@ -35,7 +35,7 @@ public class ApiExceptionHandler {
 
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_GATEWAY,
-                "El proveedor de IA respondió con un error. Intenta de nuevo más tarde.");
+                "El proveedor de IA respondió con un error. Inténtalo de nuevo más tarde.");
         detail.setTitle("Bad Gateway");
         detail.setType(URI.create("https://httpstatus.io/502"));
         detail.setProperty("upstreamStatus", ex.getStatusCode().value());
@@ -48,7 +48,7 @@ public class ApiExceptionHandler {
 
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
-                "El cuerpo de la solicitud no es válido. Verificá que el JSON esté bien formado.");
+                "El cuerpo de la solicitud no es válido. Verifica que el JSON esté bien formado.");
         detail.setTitle("Bad Request");
         detail.setType(URI.create("https://httpstatus.io/400"));
         return detail;
@@ -108,7 +108,7 @@ public class ApiExceptionHandler {
 
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "Ocurrió un error inesperado. Intenta de nuevo.");
+                "Ocurrió un error inesperado. Inténtalo de nuevo.");
         detail.setTitle("Internal Server Error");
         detail.setType(URI.create("https://httpstatus.io/500"));
         return detail;

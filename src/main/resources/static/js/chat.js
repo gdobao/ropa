@@ -59,7 +59,7 @@
   function formatTime(iso) {
     if (!iso) return '';
     const d = new Date(iso);
-    return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   }
 
   function escapeHtml(text) {
@@ -97,7 +97,7 @@
     div.dataset.role = isPolicy ? 'policy' : role;
 
     var inner = '<div class="chat-message-role">'
-      + (isUser ? 'Vos' : (isPolicy ? 'Asistente (política)' : 'Asistente'))
+      + (isUser ? 'Tú' : (isPolicy ? 'Asistente (política)' : 'Asistente'))
       + '</div>'
       + '<div class="chat-message-content">' + renderMarkdown(content) + '</div>';
 
@@ -214,7 +214,7 @@
       try {
         var data = e.data ? JSON.parse(e.data) : null;
         var message = data ? data.content : null;
-        failStreaming(message || 'Error de conexión. Intentá de nuevo.');
+        failStreaming(message || 'Error de conexión. Inténtalo de nuevo.');
       } catch (err) {
         // If we got data but can't parse, it might be a connection issue
         State.retryCount++;
@@ -235,7 +235,7 @@
         showReconnecting();
       } else {
         // Give up after max retries
-        failStreaming('Se perdió la conexión. Recargá la página para reconectar.');
+        failStreaming('Se perdió la conexión. Recarga la página para reconectar.');
       }
     };
   }
@@ -311,7 +311,7 @@
     ensureEls();
     var sessionId = document.getElementById('chat-session-id')?.value;
     if (!sessionId) {
-      showError('No hay una sesión activa. Creá una nueva conversación.');
+      showError('No hay una sesión activa. Crea una nueva conversación.');
       return;
     }
     if (!content || !content.trim() || State.isSending) return;
@@ -361,7 +361,7 @@
       })
       .catch(function (err) {
         State.isSending = false;
-        showError('Error de conexión. Verificá tu conexión e intentá de nuevo.');
+        showError('Error de conexión. Verifica tu conexión e inténtalo de nuevo.');
         enableInput();
       });
   }
@@ -525,6 +525,26 @@
         }
       });
     }
+
+    document.addEventListener('click', function (e) {
+      var newSessionButton = e.target.closest('[data-chat-new-session]');
+      if (newSessionButton) {
+        e.preventDefault();
+        createNewSession();
+        return;
+      }
+
+      var promptButton = e.target.closest('[data-chat-prompt]');
+      if (promptButton) {
+        e.preventDefault();
+        ensureEls();
+        if (_els.input) {
+          _els.input.value = promptButton.dataset.chatPrompt || promptButton.textContent.trim();
+          _els.input.dispatchEvent(new Event('input'));
+          _els.input.focus();
+        }
+      }
+    });
 
     // Retry button
     if (_els.retryBtn) {

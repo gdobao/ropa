@@ -49,7 +49,7 @@
          th:href="@{/wardrobe/{id}(id=${companion.id})}"
          th:text="${companion.name}">Prenda compañera</a>
     </div>
-    <p class="meta" th:unless="${not #lists.isEmpty(companionGarments)}">Todavía no la usaste en ningún look.</p>
+    <p class="meta" th:unless="${not #lists.isEmpty(companionGarments)}">Todavía no la has usado en ningún look.</p>
   </section>
 </main>
 
