@@ -910,6 +910,75 @@ h3 { margin: 0; font-size: var(--text-md); }
   font-weight: 600;
 }
 
+/* ---- CSP Phase 2: utility classes replacing inline styles ---- */
+.mt-xs { margin-top: 8px; }
+.mt-md { margin-top: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.flex-1 { flex: 1; }
+.ml-auto { margin-left: auto; }
+.contents { display: contents; }
+.cursor-pointer { cursor: pointer; }
+
+.card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.photo-constrain {
+  max-width: 280px;
+  margin: 0 auto 20px;
+}
+.photo-constrain img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+}
+
+.error-content {
+  text-align: center;
+  padding: var(--space-xl) var(--space-md);
+}
+.error-message {
+  color: var(--muted);
+  margin: var(--space-lg) 0;
+}
+
+.hero-meta {
+  color: color-mix(in oklch, var(--surface) 82%, transparent);
+}
+
+.hero-layout {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: var(--space-md);
+  align-items: center;
+}
+
+.toast-message {
+  position: fixed;
+  top: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  max-width: 400px;
+  text-align: center;
+}
+
+.toast-message p {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-sm);
+}
+
+.toast-message p:last-child {
+  margin-bottom: 0;
+}
+
+.toast-message a.btn {
+  margin-top: var(--space-sm);
+}
+
 /* Responsive */
 @media (min-width: 820px) {
   .stat-grid { grid-template-columns: repeat(4, 1fr); }
@@ -1882,6 +1951,10 @@ h3 { margin: 0; font-size: var(--text-md); }
   color: var(--muted);
   background: color-mix(in oklch, var(--sand) 70%, var(--surface));
   border-top: 1px solid var(--border);
+}
+
+.chat-reconnecting[hidden] {
+  display: none;
 }
 
 .chat-reconnecting-dot {

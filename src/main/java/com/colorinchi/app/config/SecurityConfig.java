@@ -38,6 +38,10 @@ public class SecurityConfig {
                 headers.frameOptions(frame -> frame
                     .deny()
                 );
+                // style-src keeps 'unsafe-inline' because CSP nonces only apply to <style>
+                // elements, not style="" attributes. The remaining 12 th:style usages set
+                // server-computed colors and widths for colorimetry UI. Inline styles
+                // cannot execute code and values are server-generated, not user-controlled.
                 headers.contentSecurityPolicy(csp -> csp
                     .policyDirectives("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://unpkg.com; img-src 'self' data: blob: https://placehold.co")
                 );

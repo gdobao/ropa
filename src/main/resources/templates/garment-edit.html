@@ -3,8 +3,8 @@
 <body>
 <main>
   <section>
-    <div class="photo" style="max-width:280px; margin:0 auto 20px;">
-      <img th:src="${garment.imageUrl}" th:alt="${garment.name}" loading="lazy" decoding="async" style="width:100%;height:auto;border-radius:var(--radius-lg);">
+    <div class="photo photo-constrain">
+      <img th:src="${garment.imageUrl}" th:alt="${garment.name}" loading="lazy" decoding="async">
     </div>
     <p class="notice">Revisá los datos sugeridos. La foto puede cambiar el color por la luz o las sombras.</p>
     <form th:action="@{/wardrobe/{id}(id=${garment.id})}" th:object="${garmentReviewForm}" method="post">
@@ -46,7 +46,7 @@
         <label for="season">Temporada</label>
         <input id="season" type="text" th:field="*{season}" placeholder="Verano, invierno, todo el año">
       </div>
-      <div class="actions" style="margin-top:var(--space-lg);">
+      <div class="actions mt-lg">
         <button type="submit" class="btn primary full">Guardar cambios</button>
       </div>
     </form>

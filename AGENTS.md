@@ -159,6 +159,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - CSS `var()` inside `@media()` queries is **INVALID** — hardcode breakpoint values (600px, 820px, 1024px, 1366px, 1440px, 1920px)
 - Mobile-first responsive in `responsive.css`
 - Breakpoints: 600 (small tablet), 820 (tablet portrait), 1024 (tablet landscape), 1366 (laptop), 1440 (desktop), 1920 (wide)
+- **CSP `style-src` keeps `'unsafe-inline'`**: CSP nonces do NOT apply to `style=""` attributes — only to `<style>` elements. The 12 remaining `th:style` usages in templates set server-computed colors/widths (inspiration palette, recommendation palettes, donut chart, category bars). These are low-risk: inline styles cannot execute code and values are server-generated. See SecurityConfig.java comment for rationale.
 
 ### Colorimetry
 - Classification is deterministic O(1) math on existing `colorHex` — no DB migration needed
