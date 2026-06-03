@@ -542,7 +542,7 @@ class GarmentControllerTest {
 
         @Bean
         UploadProperties uploadProperties() {
-            return new UploadProperties(Path.of("uploads"), DataSize.ofMegabytes(8), List.of("image/jpeg"));
+            return new UploadProperties(Path.of("uploads"), DataSize.ofMegabytes(8), List.of("image/jpeg"), 6000, 6000, 24_000_000L);
         }
 
         @Bean

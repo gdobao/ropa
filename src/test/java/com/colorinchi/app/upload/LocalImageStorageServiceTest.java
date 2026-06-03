@@ -6,7 +6,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.List;
+import java.util.zip.CRC32;
 
 import javax.imageio.ImageIO;
 
@@ -47,7 +50,7 @@ class LocalImageStorageServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/jpeg"));
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/jpeg"), 6000, 6000, 24_000_000L);
         service = new LocalImageStorageService(uploadProperties);
 
         BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
@@ -128,6 +131,54 @@ class LocalImageStorageServiceTest {
     }
 
     @Test
+    void storeWithImageOverMaxWidthThrowsIllegalArgument() throws Exception {
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/png"), 6000, 6000, 24_000_000L);
+        service = new LocalImageStorageService(uploadProperties);
+
+        MultipartFile file = imageFile(pngHeaderWithDimensions(6001, 100), "image/png");
+
+        assertThatThrownBy(() -> service.store(file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("demasiado grande")
+                .hasMessageContaining("6000x6000");
+    }
+
+    @Test
+    void storeWithImageOverMaxHeightThrowsIllegalArgument() throws Exception {
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/png"), 6000, 6000, 24_000_000L);
+        service = new LocalImageStorageService(uploadProperties);
+
+        MultipartFile file = imageFile(pngHeaderWithDimensions(100, 6001), "image/png");
+
+        assertThatThrownBy(() -> service.store(file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("demasiado grande")
+                .hasMessageContaining("6000x6000");
+    }
+
+    @Test
+    void storeWithImageOverMaxPixelsThrowsIllegalArgument() throws Exception {
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/png"), 6000, 6000, 24_000_000L);
+        service = new LocalImageStorageService(uploadProperties);
+
+        MultipartFile file = imageFile(pngHeaderWithDimensions(5000, 5000), "image/png");
+
+        assertThatThrownBy(() -> service.store(file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("demasiado grande");
+    }
+
+    @Test
+    void storeWithUnreadableImageDimensionsThrowsIllegalArgument() throws Exception {
+        byte[] invalidJpegWithValidMagic = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x00, 0x01, 0x02};
+        MultipartFile file = imageFile(invalidJpegWithValidMagic, "image/jpeg");
+
+        assertThatThrownBy(() -> service.store(file))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("dimensiones");
+    }
+
+    @Test
     void storeWithNullBytesThrowsIllegalArgument() throws Exception {
         MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
@@ -156,13 +207,10 @@ class LocalImageStorageServiceTest {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void storeWithPngImageReturnsUploadUrl() throws Exception {
-        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/png"));
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/png"), 6000, 6000, 24_000_000L);
         service = new LocalImageStorageService(uploadProperties);
 
-        byte[] pngBytes = {
-            (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
-            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52
-        };
+        byte[] pngBytes = imageBytes("png", 1, 1);
 
         MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
@@ -186,13 +234,10 @@ class LocalImageStorageServiceTest {
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Test
     void storeWithWebPImageReturnsUploadUrl() throws Exception {
-        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/webp"));
+        uploadProperties = new UploadProperties(tempDir, DataSize.ofMegabytes(8), List.of("image/webp"), 6000, 6000, 24_000_000L);
         service = new LocalImageStorageService(uploadProperties);
 
-        byte[] webpBytes = {
-            0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00,
-            0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20
-        };
+        byte[] webpBytes = Base64.getDecoder().decode("UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA");
 
         MultipartFile file = mock(MultipartFile.class);
         when(file.isEmpty()).thenReturn(false);
@@ -235,5 +280,46 @@ class LocalImageStorageServiceTest {
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("guardar");
         }
+    }
+
+    private MultipartFile imageFile(byte[] bytes, String contentType) throws IOException {
+        MultipartFile file = mock(MultipartFile.class);
+        when(file.isEmpty()).thenReturn(false);
+        when(file.getSize()).thenReturn((long) bytes.length);
+        when(file.getContentType()).thenReturn(contentType);
+        when(file.getBytes()).thenReturn(bytes);
+        return file;
+    }
+
+    private byte[] imageBytes(String format, int width, int height) throws IOException {
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(img, format, baos);
+        return baos.toByteArray();
+    }
+
+    private byte[] pngHeaderWithDimensions(int width, int height) {
+        byte[] signature = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+        byte[] ihdrData = ByteBuffer.allocate(13)
+                .putInt(width)
+                .putInt(height)
+                .put((byte) 8)
+                .put((byte) 2)
+                .put((byte) 0)
+                .put((byte) 0)
+                .put((byte) 0)
+                .array();
+        byte[] ihdrType = {0x49, 0x48, 0x44, 0x52};
+        CRC32 crc = new CRC32();
+        crc.update(ihdrType);
+        crc.update(ihdrData);
+
+        ByteBuffer buffer = ByteBuffer.allocate(33);
+        buffer.put(signature);
+        buffer.putInt(13);
+        buffer.put(ihdrType);
+        buffer.put(ihdrData);
+        buffer.putInt((int) crc.getValue());
+        return buffer.array();
     }
 }

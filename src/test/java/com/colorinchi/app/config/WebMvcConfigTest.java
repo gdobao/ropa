@@ -16,7 +16,7 @@ class WebMvcConfigTest {
 
     @Test
     void constructorStoresProperties() {
-        var uploadProps = new UploadProperties(Path.of("/tmp"), DataSize.ofMegabytes(8), List.of("image/jpeg"));
+        var uploadProps = new UploadProperties(Path.of("/tmp"), DataSize.ofMegabytes(8), List.of("image/jpeg"), 6000, 6000, 24_000_000L);
         var rateLimitProps = new RateLimitProperties(
                 new RateLimitProperties.EndpointConfig(5, 1),
                 new RateLimitProperties.EndpointConfig(10, 5),

@@ -114,7 +114,7 @@ La app es un monolito MVC modular. No expone una SPA ni una API pública general
 
 1. La usuaria abre `/wardrobe/new`.
 2. Sube una imagen válida.
-3. La app valida tamaño, tipo MIME y magic bytes.
+3. La app valida tamaño, tipo MIME, magic bytes y dimensiones máximas antes de decodificar.
 4. La imagen se redimensiona y se guarda en `uploads/`.
 5. Si `app.ai.enabled=true`, se envía al proveedor IA.
 6. La pantalla de confirmación permite corregir nombre, categoría, color, material y temporada.
@@ -169,7 +169,7 @@ La columna `chat_sessions.surface` evita mezclar historial entre ambas experienc
 | Acceso admin | `/api/admin/**` y `/admin/**` requieren `X-Admin-Token`; sin token configurado quedan cerrados |
 | Toma de owner | Cookie opaca `owner_token`; el servidor guarda solo SHA-256 en `anonymous_owners.token_hash` |
 | Cookies inseguras | `HttpOnly`, `SameSite=Lax`, `Secure` cuando la petición llega por HTTPS / `X-Forwarded-Proto=https` |
-| Upload malicioso | Tamaño máximo, MIME permitido, magic bytes y conversión controlada a JPEG |
+| Upload malicioso | Tamaño máximo, MIME permitido, magic bytes, límites de dimensiones/píxeles y conversión controlada a JPEG |
 | Path traversal | Las rutas de imagen se normalizan y deben colgar de `/uploads/` |
 | Filtrado de información | `SecurityException` devuelve mensajes genéricos en MVC y REST |
 | Payloads incompletos | APIs REST validan cuerpo nulo, campos obligatorios y tamaños máximos antes de llamar a servicios |
@@ -307,6 +307,9 @@ El indicador `aiProvider` considera saludable cualquier respuesta HTTP del prove
 | `app.ai.model` | `qwen3.6` | Modelo por defecto |
 | `app.upload.directory` | `uploads` | Directorio local de imágenes |
 | `app.upload.max-size` | `8MB` | Límite por archivo |
+| `app.upload.max-width` | `6000` | Anchura máxima en píxeles antes de redimensionar |
+| `app.upload.max-height` | `6000` | Altura máxima en píxeles antes de redimensionar |
+| `app.upload.max-pixels` | `24000000` | Total máximo de píxeles antes de redimensionar |
 | `app.admin.token` | vacío | Token admin opcional |
 
 ### Modelos IA configurados
@@ -406,8 +409,8 @@ Cada cambio funcional, de seguridad, configuración, dependencia o flujo de usua
 | 403 en admin | Falta `X-Admin-Token` o `ADMIN_TOKEN` no está configurado | Configurar `ADMIN_TOKEN` y enviar el header |
 | 429 Too Many Requests | Rate limit agotado | Esperar la ventana o ajustar `app.rate-limit.*` en desarrollo |
 | `Title is required` | Renombrado de chat sin body JSON válido o sin `title` | Enviar `{ "title": "Nuevo título" }` |
-| La imagen no sube | Formato/tamaño inválido | Usar JPG, PNG o WebP de menos de 8 MB |
-| Error de imagen inválida | Magic bytes no coinciden con MIME | Reexportar la imagen con formato real correcto |
+| La imagen no sube | Formato, tamaño o dimensiones inválidas | Usar JPG, PNG o WebP de menos de 8 MB y hasta 6000x6000 px / 24 MP |
+| Error de imagen inválida | Magic bytes no coinciden con MIME o no se pueden leer dimensiones | Reexportar la imagen con formato real correcto |
 | El chat no stremea | Provider IA inaccesible, timeout o API key inválida | Revisar `NAN_API_KEY`, `app.ai.base-url` y `app.ai.read-timeout` |
 | No aparecen prendas de otro navegador | Owner isolation por cookie | Es esperado: cada navegador tiene su propio `owner_token` |
 | Mockito self-attach falla en JDK moderno | Attach dinámico bloqueado | Surefire ya carga Mockito como `-javaagent`; ejecutar vía `mvn test` |
