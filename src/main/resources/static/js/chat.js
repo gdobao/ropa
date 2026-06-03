@@ -527,10 +527,26 @@
     }
 
     document.addEventListener('click', function (e) {
-      var newSessionButton = e.target.closest('[data-chat-new-session]');
+      var newSessionButton = e.target.closest('[data-action="chat-new-session"], [data-chat-new-session]');
       if (newSessionButton) {
         e.preventDefault();
         createNewSession();
+        return;
+      }
+
+      var toggleRail = e.target.closest('[data-action="chat-toggle-rail"]');
+      if (toggleRail) {
+        var rail = document.querySelector('.chat-session-rail');
+        if (rail) {
+          rail.style.display = rail.style.display === 'flex' ? 'none' : 'flex';
+        }
+        return;
+      }
+
+      var toggleContext = e.target.closest('[data-action="chat-toggle-context"]');
+      if (toggleContext) {
+        e.preventDefault();
+        toggleContextCard();
         return;
       }
 
