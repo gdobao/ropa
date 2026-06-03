@@ -76,4 +76,42 @@ class ChatSecurityIntegrationTest {
         mockMvc.perform(get("/admin/chat-metrics"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void adminApiRejectsWrongAdminToken() throws Exception {
+        mockMvc.perform(get("/api/admin/metrics")
+                        .header("X-Admin-Token", "wrong-token"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void companionSessionCreateRequiresCsrfToken() throws Exception {
+        mockMvc.perform(post("/api/companion/sessions")
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"title\":\"Test\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void chatSessionCreateRequiresCsrfToken() throws Exception {
+        mockMvc.perform(post("/api/chat/sessions")
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"title\":\"Test\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void garmentDeleteRequiresCsrfToken() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .delete("/wardrobe/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void weeklyPlanAssignRequiresCsrfToken() throws Exception {
+        mockMvc.perform(post("/weekly-plan/assign")
+                        .param("garmentId", "1")
+                        .param("dayOfWeek", "Lunes"))
+                .andExpect(status().isForbidden());
+    }
 }
