@@ -212,6 +212,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 - **Anonymous owner isolation via opaque token**: Cookie stores an opaque `owner_token` (not the DB UUID `owner_id`). Server hashes it (SHA-256) and persists `token_hash` in `anonymous_owners`. Prevents owner takeover via known UUID bootstrap sequence.
   - Cookie flags: `HttpOnly`, `SameSite=Lax`, `Secure` (with `X-Forwarded-Proto=https` support)
   - Legacy `owner_id` cookie is ignored
+- **Upload hardening**: image uploads validate compressed size, allowed MIME, magic bytes, and decoded dimensions before Thumbnailator runs. Defaults: max 8MB, 6000px width, 6000px height, 24MP total pixels. Dimension checks prevent decompression/CPU DoS from oversized compressed images.
 - **Admin protection**: `AdminProperties` (`app.admin.token`) configures an optional token. Endpoints under `/api/admin/**` and `/admin/**` are protected via `SecurityConfig` — require `X-Admin-Token` header matching the configured value. If no token is set, admin endpoints are effectively closed.
 - Rate limiting via `HandlerInterceptor` + Caffeine (NOT Bucket4j):
   - Keys are **per-endpoint** (`endpointKey:ip`) to avoid bucket collisions
@@ -436,6 +437,9 @@ content: TEXT NOT NULL
 ### `app.upload` (UploadProperties)
 - `directory`: Path (default `uploads/`)
 - `max-size`: DataSize (default 8MB)
+- `max-width`: int (default 6000)
+- `max-height`: int (default 6000)
+- `max-pixels`: long (default 24000000)
 - `allowed-content-types`: List (JPEG, PNG, WebP)
 
 ### `app.rate-limit` (RateLimitProperties)

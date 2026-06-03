@@ -5,7 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.UUID;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +36,7 @@ public class LocalImageStorageService implements ImageStorageService {
             if (!isValidImage(bytes)) {
                 throw new IllegalArgumentException("El archivo no es una imagen válida (JPEG, PNG o WebP)");
             }
+            validateDimensions(bytes);
 
             Files.createDirectories(properties.directory());
             String filename = UUID.randomUUID() + ".jpg";
@@ -45,6 +51,51 @@ public class LocalImageStorageService implements ImageStorageService {
             return "/uploads/" + filename;
         } catch (IOException ex) {
             throw new IllegalStateException("No se pudo guardar la imagen", ex);
+        }
+    }
+
+    private void validateDimensions(byte[] bytes) {
+        ImageDimensions dimensions;
+        try {
+            dimensions = readDimensions(bytes);
+        } catch (IOException ex) {
+            throw new IllegalArgumentException("No se pudieron leer las dimensiones de la imagen.", ex);
+        }
+        if (dimensions.width() <= 0 || dimensions.height() <= 0) {
+            throw new IllegalArgumentException("La imagen no tiene dimensiones válidas.");
+        }
+        if (dimensions.width() > properties.maxWidth()
+                || dimensions.height() > properties.maxHeight()
+                || dimensions.pixels() > properties.maxPixels()) {
+            throw new IllegalArgumentException("La imagen es demasiado grande. Usa una imagen de hasta "
+                    + properties.maxWidth() + "x" + properties.maxHeight() + " píxeles.");
+        }
+    }
+
+    private ImageDimensions readDimensions(byte[] bytes) throws IOException {
+        try (ImageInputStream imageInput = ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
+            if (imageInput == null) {
+                throw new IllegalArgumentException("No se pudieron leer las dimensiones de la imagen.");
+            }
+
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(imageInput);
+            if (!readers.hasNext()) {
+                throw new IllegalArgumentException("No se pudieron leer las dimensiones de la imagen.");
+            }
+
+            ImageReader reader = readers.next();
+            try {
+                reader.setInput(imageInput, true, true);
+                return new ImageDimensions(reader.getWidth(0), reader.getHeight(0));
+            } finally {
+                reader.dispose();
+            }
+        }
+    }
+
+    private record ImageDimensions(int width, int height) {
+        long pixels() {
+            return (long) width * height;
         }
     }
 

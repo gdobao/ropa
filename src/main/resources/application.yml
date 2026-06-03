@@ -77,6 +77,9 @@ app:
   upload:
     directory: uploads
     max-size: 8MB
+    max-width: 6000
+    max-height: 6000
+    max-pixels: 24000000
     allowed-content-types:
       - image/jpeg
       - image/png

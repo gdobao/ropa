@@ -60,7 +60,7 @@ class AiClassificationServiceTest {
         WebClient wc = WebClient.builder()
                 .baseUrl(disabledProps.baseUrl())
                 .build();
-        UploadProperties up = new UploadProperties(tempDir.resolve("uploads"), DataSize.ofMegabytes(8), List.of("image/jpeg"));
+        UploadProperties up = new UploadProperties(tempDir.resolve("uploads"), DataSize.ofMegabytes(8), List.of("image/jpeg"), 6000, 6000, 24_000_000L);
         AiClassificationService svc = new AiClassificationService(disabledProps, up, wc, new ObjectMapper());
 
         AiClassificationResponse response = svc.classify("/uploads/test.jpg");
@@ -245,7 +245,7 @@ class AiClassificationServiceTest {
                 .defaultHeaders(headers -> headers.setBearerAuth(properties.apiKey()))
                 .clientConnector(new ReactorClientHttpConnector(HttpClient.create().responseTimeout(readTimeout)))
                 .build();
-        UploadProperties uploadProperties = new UploadProperties(tempDir.resolve("uploads"), DataSize.ofMegabytes(8), java.util.List.of("image/jpeg"));
+        UploadProperties uploadProperties = new UploadProperties(tempDir.resolve("uploads"), DataSize.ofMegabytes(8), java.util.List.of("image/jpeg"), 6000, 6000, 24_000_000L);
         return new AiClassificationService(properties, uploadProperties, webClient, new ObjectMapper());
     }
 }
