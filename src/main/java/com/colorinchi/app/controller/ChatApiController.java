@@ -148,10 +148,14 @@ public class ChatApiController {
     @PostMapping("/sessions/{sessionId}/messages")
     public ResponseEntity<?> sendMessage(
             @PathVariable UUID sessionId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody(required = false) Map<String, String> body) {
 
         MDC.put("sessionId", sessionId.toString());
         try {
+            if (body == null) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("validation_error", "El cuerpo de la solicitud es obligatorio"));
+            }
             return ResponseEntity.ok(chatConversationOrchestrator.sendMessage(ChatSurface.MAIN_CHAT, sessionId, body));
         } catch (ChatConversationOrchestrator.EmptyChatMessageException e) {
             return ResponseEntity.badRequest()

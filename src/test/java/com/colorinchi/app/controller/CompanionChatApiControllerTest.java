@@ -230,6 +230,26 @@ class CompanionChatApiControllerTest {
     }
 
     @Test
+    void sendMessageWithNullBodyReturnsValidationError() throws Exception {
+        mockMvc.perform(post("/api/companion/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
+    }
+
+    @Test
+    void sendMessageWithEmptyJsonBodyReturnsValidationError() throws Exception {
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.COMPANION), eq(sessionId), any()))
+                .thenThrow(new ChatConversationOrchestrator.EmptyChatMessageException());
+
+        mockMvc.perform(post("/api/companion/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
+    }
+
+    @Test
     void deleteSessionUsesCompanionSurface() throws Exception {
         mockMvc.perform(delete("/api/companion/sessions/{sessionId}", sessionId).with(csrf()))
                 .andExpect(status().isOk())
