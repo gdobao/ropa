@@ -44,6 +44,7 @@
   position: fixed;
   width: min(390px, calc(100vw - (var(--space-md) * 2)));
   max-height: min(680px, calc(100vh - var(--top-bar-h) - var(--space-lg)));
+  max-height: min(680px, calc(100dvh - var(--top-bar-h) - var(--space-lg)));
   z-index: var(--z-companion-panel);
   display: grid;
   grid-template-rows: auto auto 1fr auto;
@@ -135,6 +136,7 @@
     bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + var(--space-md));
     width: auto;
     max-height: calc(100vh - var(--top-bar-h) - var(--nav-h) - 32px);
+    max-height: calc(100dvh - var(--top-bar-h) - var(--nav-h) - 32px);
   }
 }
 

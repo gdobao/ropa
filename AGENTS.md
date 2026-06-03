@@ -333,7 +333,6 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
 ## 11. Next Steps / Known Work
 
 ### Outstanding
-- Fix resize bug in companion panel (ensureRootInViewport + panel max-height)
 - Improve AI prompt to cover all 11 categories more consistently
 - Document Playwright smoke test procedure
 - Consider dark mode support (`prefers-color-scheme` in CSS)
