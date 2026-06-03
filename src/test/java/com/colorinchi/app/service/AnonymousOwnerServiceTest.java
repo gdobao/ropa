@@ -124,6 +124,39 @@ class AnonymousOwnerServiceTest {
         assertThat(response.getHeader("Set-Cookie")).contains("owner_token=");
     }
 
+    @Test
+    void resolveOwnerIdCreatesNewOwnerWhenBootstrapAlreadyClaimed() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        AnonymousOwner claimedOwner = owner(OWNER_ID, false);
+        when(anonymousOwnerRepository.findFirstByBootstrapTrueOrderByCreatedAtAsc())
+                .thenReturn(Optional.of(claimedOwner));
+        when(anonymousOwnerRepository.save(any(AnonymousOwner.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        UUID resolved = service.resolveOwnerId(request, response);
+
+        assertThat(resolved).isNotEqualTo(OWNER_ID);
+        verify(anonymousOwnerRepository).save(any(AnonymousOwner.class));
+    }
+
+    @Test
+    void resolveOwnerIdCreatesNewOwnerWhenLockTimesOut() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(anonymousOwnerRepository.findFirstByBootstrapTrueOrderByCreatedAtAsc())
+                .thenThrow(new org.springframework.dao.PessimisticLockingFailureException("lock timeout", new RuntimeException()));
+        when(anonymousOwnerRepository.save(any(AnonymousOwner.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        UUID resolved = service.resolveOwnerId(request, response);
+
+        assertThat(resolved).isNotNull();
+        assertThat(response.getHeader("Set-Cookie")).contains("owner_token=");
+    }
+
     private AnonymousOwner owner(UUID ownerId, boolean bootstrap) {
         AnonymousOwner owner = new AnonymousOwner();
         owner.setId(ownerId);

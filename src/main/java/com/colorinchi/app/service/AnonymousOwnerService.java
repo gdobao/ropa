@@ -51,9 +51,15 @@ public class AnonymousOwnerService {
         }
 
         String newToken = generateToken();
-        AnonymousOwner owner = anonymousOwnerRepository.findFirstByBootstrapTrueOrderByCreatedAtAsc()
-                .map(bootstrapOwner -> claimBootstrapOwner(bootstrapOwner, newToken))
-                .orElseGet(() -> createAnonymousOwner(newToken));
+        AnonymousOwner owner;
+        try {
+            owner = anonymousOwnerRepository.findFirstByBootstrapTrueOrderByCreatedAtAsc()
+                    .filter(AnonymousOwner::isBootstrap)
+                    .map(bootstrapOwner -> claimBootstrapOwner(bootstrapOwner, newToken))
+                    .orElseGet(() -> createAnonymousOwner(newToken));
+        } catch (Exception e) {
+            owner = createAnonymousOwner(newToken);
+        }
 
         writeOwnerCookie(response, newToken, isSecureRequest(request));
         return owner.getId();
