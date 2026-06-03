@@ -37,6 +37,14 @@ window.CompanionPositioning = (function () {
     panel.style.maxHeight = '';
   }
 
+  function mobilePanelMaxHeight() {
+    const vp = viewportSize();
+    const styles = getComputedStyle(document.documentElement);
+    const topBar = parseFloat(styles.getPropertyValue('--top-bar-h')) || 60;
+    const nav = parseFloat(styles.getPropertyValue('--nav-h')) || 72;
+    return Math.max(120, Math.floor(vp.height - topBar - nav - 32));
+  }
+
   function currentAnchorRect(root) {
     const rect = root.getBoundingClientRect();
     return {
@@ -54,6 +62,7 @@ window.CompanionPositioning = (function () {
 
     if (window.matchMedia('(max-width: 599px)').matches) {
       clearPanelPosition(panel);
+      panel.style.maxHeight = mobilePanelMaxHeight() + 'px';
       return;
     }
 
