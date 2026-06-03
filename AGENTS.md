@@ -57,7 +57,7 @@ CompanionChatApiController → ChatConversationOrchestrator → Ai provider (SSE
 | Repositories | 8 | `GarmentRepository`, `WeekPlanRepository`, `ChatSessionRepository`, `ChatRunRepository`, `ChatFeedbackRepository`, `ChatMessageRepository`, `ChatAnalyticsEventRepository`, `AnonymousOwnerRepository` |
 | DTOs | 12+ | `GarmentReviewForm`, `DashboardStats`, `AiClassificationResponse`, `AiRecommendationResponse`, `OutfitSuggestion`, `OutfitPiece`, `InspirationLook`, `CompanionTipContext`, `GarmentSummary`, `ChatSurface`, `ChatSessionResponse`, `ChatMessageResponse`, `CreateSessionRequest`, `ChatFeedbackRequest`, `WeeklyPlanItem` |
 | @ConfigurationProperties | 6 | `WardrobeProperties`, `UploadProperties`, `AiServerProperties`, `RateLimitProperties`, `AdminProperties`, `ChatRetentionProperties` |
-| Config | 8+ | `SecurityConfig`, `WebMvcConfig`, `WebClientConfig`, `AiServerPropertiesValidator`, `GlobalExceptionHandler`, `ApiExceptionHandler`, `CurrentOwnerFilter`, `AdminProperties`, `ChatRetentionProperties` |
+| Config | 8+ | `SecurityConfig`, `WebMvcConfig`, `WebClientConfig`, `AiServerPropertiesValidator`, `GlobalExceptionHandler`, `ApiExceptionHandler`, `CurrentOwnerFilter`, `AdminProperties`, `ChatRetentionProperties`, `ProdConfigValidator` |
 
 ### Patterns
 - All config via `@ConfigurationProperties` records
@@ -220,6 +220,7 @@ All endpoints in `CompanionChatApiController.java` (prefix `/api/companion`).
   - `GET /recommendation`: 5/30min per IP
   - Companion API feedback POST/PATCH/DELETE covered
 - SRI integrity hashes on external scripts (HTMX)
+- **Prod profile guardrails**: `application-prod.yml` requires `DB_PASSWORD` (no default) and warns if `ADMIN_TOKEN` is empty. Activate with `SPRING_PROFILES_ACTIVE=prod`.
 
 ---
 

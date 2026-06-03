@@ -1,0 +1,17 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+
+app:
+  admin:
+    token: ${ADMIN_TOKEN:}
+
+logging:
+  level:
+    root: WARN
+    com.colorinchi: INFO
