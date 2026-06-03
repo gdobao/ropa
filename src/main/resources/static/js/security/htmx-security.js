@@ -15,8 +15,8 @@
         var div = document.createElement('div');
         div.id = 'rate-limit-toast';
         div.className = 'notice error';
-        div.style.cssText = 'position:fixed;top:var(--space-md);left:50%;transform:translateX(-50%);z-index:9999;max-width:400px;text-align:center;';
-        div.innerHTML = '<p><strong>Demasiadas solicitudes</strong></p><p style="font-size:.875rem;">Espera unos minutos antes de intentarlo de nuevo.</p><a href="/wardrobe" class="btn" style="margin-top:var(--space-sm);">Volver al armario</a>';
+        div.classList.add('toast-message');
+        div.innerHTML = '<p><strong>Demasiadas solicitudes</strong></p><p>Espera unos minutos antes de intentarlo de nuevo.</p><a href="/wardrobe" class="btn">Volver al armario</a>';
         document.body.insertBefore(div, document.body.firstChild);
       }
       setTimeout(function () {

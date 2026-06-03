@@ -4,11 +4,11 @@
 <main>
 
   <!-- Hero with ring -->
-   <article class="hero-card" th:style="'--ring-pct:' + ${usagePercent} + '%;display:grid;grid-template-columns:1.1fr .9fr;gap:var(--space-md);align-items:center;'">
+   <article class="hero-card hero-layout" th:style="'--ring-pct:' + ${usagePercent} + '%'">
     <div>
       <span class="big-num" th:text="${usagePercent + '%'}">0%</span>
       <p>Índice de uso</p>
-      <p class="meta" style="color:color-mix(in oklch, var(--surface) 82%, transparent);" th:text="${usageMessage}">Empieza a planificar</p>
+      <p class="meta hero-meta" th:text="${usageMessage}">Empieza a planificar</p>
     </div>
     <div class="ring"></div>
   </article>
@@ -30,7 +30,7 @@
   </div>
 
   <!-- Category breakdown -->
-  <div class="chips" th:if="${!stats.categoryBreakdown.isEmpty()}" style="margin-bottom:var(--space-sm);">
+  <div class="chips mb-sm" th:if="${!stats.categoryBreakdown.isEmpty()}">
     <span class="chip" th:each="cc : ${stats.categoryBreakdown}" th:text="${cc.category + ' · ' + cc.count}">Top · 5</span>
   </div>
 
@@ -52,11 +52,11 @@
   </section>
 
   <!-- Latest garments -->
-  <section th:if="${!latestGarments.isEmpty()}" style="margin-top:var(--space-lg);">
+  <section th:if="${!latestGarments.isEmpty()}" class="mt-lg">
     <h2>Últimas prendas</h2>
     <div class="grid">
       <div class="card" th:each="garment : ${latestGarments}">
-        <a th:href="@{/wardrobe/{id}(id=${garment.id})}" style="text-decoration:none;color:inherit;display:block">
+        <a th:href="@{/wardrobe/{id}(id=${garment.id})}" class="card-link">
           <div class="thumb"><img th:src="${garment.imageUrl}" th:alt="${garment.name}" loading="lazy" decoding="async"></div>
           <h2 th:text="${garment.name}">Blusa satinada</h2>
           <p><span class="color-dot" th:style="'background:' + ${garment.colorHex}"></span> <span th:text="${garment.colorName}">Rojo</span></p>

@@ -3,9 +3,9 @@
       th:replace="~{layout :: layout(content=~{::main}, title='Error', activeNav='none', backUrl='/wardrobe', topTitle='', actionUrl='', actionIcon='')}">
 <body>
 <main class="error-page">
-  <div style="text-align:center;padding:var(--space-2xl) var(--space-md);">
+  <div class="error-content">
     <h1 th:text="${errorTitle}">Error</h1>
-    <p th:text="${errorMessage}" style="color:var(--text-muted);margin:var(--space-lg) 0;">Mensaje</p>
+    <p th:text="${errorMessage}" class="error-message">Mensaje</p>
     <a href="/wardrobe" class="btn">Volver al armario</a>
   </div>
 </main>

@@ -37,7 +37,7 @@
           ☰ <span th:if="${currentSession != null}" th:text="${currentSession.title}">Chat</span>
           <span th:if="${currentSession == null}">Conversaciones</span>
         </button>
-        <div style="flex:1"></div>
+        <div class="flex-1"></div>
         <!-- Wardrobe context badge -->
         <span th:if="${wardrobeContext != null and wardrobeContext.totalGarments() > 0}"
               class="chat-badge" id="chat-context-badge" role="button" tabindex="0" aria-label="Contexto del armario">
@@ -109,13 +109,13 @@
       </div>
 
       <!-- Error state (hidden by default) -->
-      <div class="chat-error" id="chat-error" style="display:none">
+      <div class="chat-error" id="chat-error" hidden>
         <p></p>
         <button class="chat-retry-btn" id="chat-retry-btn">Reintentar</button>
       </div>
 
       <!-- Reconnecting state (hidden by default) -->
-      <div class="chat-reconnecting" id="chat-reconnecting" style="display:none">
+      <div class="chat-reconnecting" id="chat-reconnecting" hidden>
         <span class="chat-reconnecting-dot"></span>
         Reconectando...
       </div>
@@ -129,7 +129,7 @@
       <div th:if="${currentSession != null}" class="chat-input-area">
         <div class="chat-input-wrapper">
           <div class="chat-input-row">
-            <form id="chat-form" style="display:contents;">
+            <form id="chat-form" class="contents">
               <textarea class="chat-input" id="chat-input" rows="1" placeholder="Consulta sobre moda..." aria-label="Mensaje"></textarea>
               <button class="chat-send-btn" id="chat-send-btn" type="submit" aria-label="Enviar">→</button>
             </form>
@@ -144,8 +144,8 @@
 
             <!-- Wardrobe context badge (desktop) -->
             <span th:if="${wardrobeContext != null and wardrobeContext.totalGarments() > 0}"
-                  class="chat-badge" id="chat-context-badge-desktop" role="button" tabindex="0" aria-label="Contexto del armario"
-                  style="margin-left:auto; cursor:pointer;" data-action="chat-toggle-context">
+                  class="chat-badge ml-auto cursor-pointer" id="chat-context-badge-desktop" role="button" tabindex="0" aria-label="Contexto del armario"
+                  data-action="chat-toggle-context">
               <span class="chat-badge-info">📋</span>
               <span th:text="${wardrobeContext.totalGarments()}">0</span> prendas
             </span>

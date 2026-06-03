@@ -23,8 +23,8 @@
     <a class="btn primary" th:href="@{/wardrobe/new}">Añadir otra</a>
     <a class="btn" th:href="@{/wardrobe/{id}/edit(id=${garment.id})}">Editar</a>
   </div>
-  <div class="actions" style="margin-top:8px">
-    <button class="btn" style="border-color:var(--accent)"
+  <div class="actions mt-xs">
+    <button class="btn"
             th:attr="hx-delete=@{/wardrobe/{id}(id=${garment.id}, source='detail')}"
             hx-confirm="¿Eliminar esta prenda del armario?">Eliminar</button>
     <th:block th:replace="~{garment-detail :: favDetailButton(garment=${garment})}"></th:block>
