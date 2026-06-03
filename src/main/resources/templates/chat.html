@@ -10,7 +10,7 @@
     <aside class="chat-session-rail">
       <div class="chat-session-rail-header">
         <h2>Conversaciones</h2>
-        <button class="chat-new-btn" onclick="Chat.createNewSession()" title="Nueva conversación" aria-label="Nueva conversación">+</button>
+        <button class="chat-new-btn" data-action="chat-new-session" title="Nueva conversación" aria-label="Nueva conversación">+</button>
       </div>
       <div class="chat-session-list" id="chat-session-list">
         <th:block th:each="chatSession : ${sessions}">
@@ -33,7 +33,7 @@
     <div class="chat-thread-container">
       <!-- Mobile: session toggle + current title -->
       <div class="chat-mobile-toggle">
-        <button class="chat-mobile-toggle-btn" type="button" onclick="document.querySelector('.chat-session-rail').style.display = document.querySelector('.chat-session-rail').style.display === 'flex' ? 'none' : 'flex'" aria-label="Mostrar conversaciones">
+        <button class="chat-mobile-toggle-btn" type="button" data-action="chat-toggle-rail" aria-label="Mostrar conversaciones">
           ☰ <span th:if="${currentSession != null}" th:text="${currentSession.title}">Chat</span>
           <span th:if="${currentSession == null}">Conversaciones</span>
         </button>
@@ -145,7 +145,7 @@
             <!-- Wardrobe context badge (desktop) -->
             <span th:if="${wardrobeContext != null and wardrobeContext.totalGarments() > 0}"
                   class="chat-badge" id="chat-context-badge-desktop" role="button" tabindex="0" aria-label="Contexto del armario"
-                  style="margin-left:auto; cursor:pointer;" onclick="Chat.toggleContextCard()">
+                  style="margin-left:auto; cursor:pointer;" data-action="chat-toggle-context">
               <span class="chat-badge-info">📋</span>
               <span th:text="${wardrobeContext.totalGarments()}">0</span> prendas
             </span>
