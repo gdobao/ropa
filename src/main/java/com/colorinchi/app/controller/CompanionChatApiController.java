@@ -148,9 +148,13 @@ public class CompanionChatApiController {
     }
 
     @PostMapping("/sessions/{sessionId}/messages")
-    public ResponseEntity<?> sendMessage(@PathVariable UUID sessionId, @RequestBody Map<String, String> body) {
+    public ResponseEntity<?> sendMessage(@PathVariable UUID sessionId, @RequestBody(required = false) Map<String, String> body) {
         MDC.put("sessionId", sessionId.toString());
         try {
+            if (body == null) {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("validation_error", "El cuerpo de la solicitud es obligatorio"));
+            }
             return ResponseEntity.ok(chatConversationOrchestrator.sendMessage(ChatSurface.COMPANION, sessionId, body));
         } catch (ChatConversationOrchestrator.EmptyChatMessageException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of("validation_error", "El mensaje no puede estar vacío"));

@@ -44,7 +44,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ProblemDetail handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
-        log.error("Malformed JSON request body", ex);
+        log.warn("Malformed JSON request body: {}", ex.getMostSpecificCause().getMessage());
 
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
@@ -56,7 +56,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ProblemDetail handleMissingParam(MissingServletRequestParameterException ex) {
-        log.error("Missing required request parameter: {}", ex.getParameterName(), ex);
+        log.warn("Missing required request parameter: {}", ex.getParameterName());
 
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,
@@ -92,7 +92,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleBadRequest(IllegalArgumentException ex) {
-        log.error("Bad request: {}", ex.getMessage(), ex);
+        log.warn("Bad request: {}", ex.getMessage());
 
         ProblemDetail detail = ProblemDetail.forStatusAndDetail(
                 HttpStatus.BAD_REQUEST,

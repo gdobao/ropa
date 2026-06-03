@@ -283,6 +283,26 @@ class ChatApiControllerTest {
                 .andExpect(jsonPath("$.error").value("validation_error"));
     }
 
+    @Test
+    void sendMessageWithNullBodyReturnsValidationError() throws Exception {
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
+    }
+
+    @Test
+    void sendMessageWithEmptyJsonBodyReturnsValidationError() throws Exception {
+        when(chatConversationOrchestrator.sendMessage(eq(ChatSurface.MAIN_CHAT), eq(sessionId), any()))
+                .thenThrow(new ChatConversationOrchestrator.EmptyChatMessageException());
+
+        mockMvc.perform(post("/api/chat/sessions/{sessionId}/messages", sessionId).with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("validation_error"));
+    }
+
     // ---- Feedback ----
 
     @Test
