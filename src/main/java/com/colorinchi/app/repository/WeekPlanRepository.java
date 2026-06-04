@@ -14,8 +14,10 @@ import com.colorinchi.app.model.WeekPlan;
 
 public interface WeekPlanRepository extends JpaRepository<WeekPlan, Long> {
 
+    @EntityGraph(attributePaths = "garment")
     List<WeekPlan> findByOwnerIdAndDayOfWeekOrderByPositionAsc(UUID ownerId, String dayOfWeek);
 
+    @EntityGraph(attributePaths = "garment")
     List<WeekPlan> findByOwnerIdAndGarmentId(UUID ownerId, Long garmentId);
 
     Optional<WeekPlan> findByIdAndOwnerId(Long id, UUID ownerId);

@@ -42,8 +42,11 @@ public class SecurityConfig {
                 // elements, not style="" attributes. The remaining 12 th:style usages set
                 // server-computed colors and widths for colorimetry UI. Inline styles
                 // cannot execute code and values are server-generated, not user-controlled.
+                // Pinned to HTMX 2.0.4 sha256 hash (no broad CDN allowlist).
+                // The SRI integrity attribute on the <script> tag is the primary integrity control;
+                // the CSP hash acts as a second layer and prevents any other unpkg script from running.
                 headers.contentSecurityPolicy(csp -> csp
-                    .policyDirectives("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' https://unpkg.com; img-src 'self' data: blob: https://placehold.co")
+                    .policyDirectives("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'sha256-4gndpcgjVHnzFm3vx3UOHbzVpcGAi3eS/C5nM3aPtEc='; img-src 'self' data: blob: https://placehold.co")
                 );
                 headers.referrerPolicy(referrer -> referrer
                     .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)

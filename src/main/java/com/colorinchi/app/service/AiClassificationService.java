@@ -8,7 +8,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.cache.annotation.Cacheable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,7 +40,6 @@ public class AiClassificationService {
         this.objectMapper = objectMapper;
     }
 
-    @Cacheable(cacheNames = "garment-classifications", key = "#imageUrl", unless = "#result.error() != null")
     public AiClassificationResponse classify(String imageUrl) {
         if (!properties.enabled()) {
             return AiClassificationResponse.empty(properties.model(), "IA desactivada");
