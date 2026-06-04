@@ -43,15 +43,18 @@ public class LocalImageStorageService implements ImageStorageService {
             String filename = UUID.randomUUID() + ".jpg";
             Path target = properties.directory().resolve(filename).toAbsolutePath().normalize();
             Path tempFile = Files.createTempFile(properties.directory(), "upload-", ".jpg");
-
-            try (InputStream input = new ByteArrayInputStream(bytes)) {
-                Thumbnails.of(input)
-                        .size(900, 900)
-                        .outputQuality(0.88)
-                        .toFile(tempFile.toFile());
+            try {
+                try (InputStream input = new ByteArrayInputStream(bytes)) {
+                    Thumbnails.of(input)
+                            .size(900, 900)
+                            .outputQuality(0.88)
+                            .toFile(tempFile.toFile());
+                }
+                Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE);
+                return "/uploads/" + filename;
+            } finally {
+                Files.deleteIfExists(tempFile);
             }
-            Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE);
-            return "/uploads/" + filename;
         } catch (IOException ex) {
             throw new IllegalStateException("No se pudo guardar la imagen", ex);
         }

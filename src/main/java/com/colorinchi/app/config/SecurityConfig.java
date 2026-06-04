@@ -46,7 +46,7 @@ public class SecurityConfig {
                 // The SRI integrity attribute on the <script> tag is the primary integrity control;
                 // the CSP hash acts as a second layer and prevents any other unpkg script from running.
                 headers.contentSecurityPolicy(csp -> csp
-                    .policyDirectives("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'sha256-4gndpcgjVHnzFm3vx3UOHbzVpcGAi3eS/C5nM3aPtEc='; img-src 'self' data: blob: https://placehold.co")
+                    .policyDirectives("default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'sha256-4gndpcgjVHnzFm3vx3UOHbzVpcGAi3eS/C5nM3aPtEc=' 'sha256-bQqDH8GbS66FF5etM5MVfoYa+3hiRZwRImNZsn4sQzc='; img-src 'self' data: blob: https://placehold.co")
                 );
                 headers.referrerPolicy(referrer -> referrer
                     .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
