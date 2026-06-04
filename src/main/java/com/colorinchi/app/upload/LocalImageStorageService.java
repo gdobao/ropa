@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
 import java.util.UUID;
 
@@ -41,14 +42,19 @@ public class LocalImageStorageService implements ImageStorageService {
             Files.createDirectories(properties.directory());
             String filename = UUID.randomUUID() + ".jpg";
             Path target = properties.directory().resolve(filename).toAbsolutePath().normalize();
-
-            try (InputStream input = new ByteArrayInputStream(bytes)) {
-                Thumbnails.of(input)
-                        .size(900, 900)
-                        .outputQuality(0.88)
-                        .toFile(target.toFile());
+            Path tempFile = Files.createTempFile(properties.directory(), "upload-", ".jpg");
+            try {
+                try (InputStream input = new ByteArrayInputStream(bytes)) {
+                    Thumbnails.of(input)
+                            .size(900, 900)
+                            .outputQuality(0.88)
+                            .toFile(tempFile.toFile());
+                }
+                Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE);
+                return "/uploads/" + filename;
+            } finally {
+                Files.deleteIfExists(tempFile);
             }
-            return "/uploads/" + filename;
         } catch (IOException ex) {
             throw new IllegalStateException("No se pudo guardar la imagen", ex);
         }

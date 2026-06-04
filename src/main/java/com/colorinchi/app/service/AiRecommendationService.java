@@ -151,10 +151,11 @@ public class AiRecommendationService {
     private OutfitSuggestion enrichOutfit(OutfitSuggestion outfit) {
         List<OutfitPiece> sorted = outfit.pieces().stream()
                 .map(p -> {
+                    String hex = sanitizeHex(p.colorHex());
                     String season = null;
-                    if (p.colorHex() != null && !p.colorHex().isBlank()) {
+                    if (hex != null && !hex.isBlank()) {
                         try {
-                            ColorProfile profile = classifier.classify(p.colorHex());
+                            ColorProfile profile = classifier.classify(hex);
                             if (profile.season() != null) {
                                 season = profile.season().displayName();
                             }
@@ -165,13 +166,31 @@ public class AiRecommendationService {
                     return new OutfitPiece(
                             p.category(),
                             p.colorName(),
-                            p.colorHex(),
+                            hex,
                             OutfitPiece.zoneFor(p.category()),
-                            OutfitPiece.isLightText(p.colorHex()),
+                            OutfitPiece.isLightText(hex),
                             season);
                 })
                 .sorted(Comparator.comparingInt(OutfitPiece::bodyZone))
                 .toList();
         return new OutfitSuggestion(outfit.name(), outfit.description(), outfit.score(), sorted);
+    }
+
+    /**
+     * Sanitize colorHex from AI response to prevent CSS injection.
+     * Accepts only valid {@code #RRGGBB} format; returns null for anything else.
+     */
+    private String sanitizeHex(String value) {
+        if (value == null) {
+            return null;
+        }
+        String cleaned = value.trim();
+        if (cleaned.isEmpty()) {
+            return null;
+        }
+        if (cleaned.matches("#[0-9A-Fa-f]{6}")) {
+            return cleaned.toUpperCase(java.util.Locale.ROOT);
+        }
+        return null;
     }
 }
